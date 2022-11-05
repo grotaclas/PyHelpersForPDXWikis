@@ -4,22 +4,22 @@ automatically uploading to the wiki. Support for Europa Universalis IV is also p
 
 The main components are:
 
-ParadoxParser (common/paradox_parser.py)
-: parses paradox game scripts with the help of [rakaly cli](https://github.com/rakaly/cli) and turns them into
+#### ParadoxParser (common/paradox_parser.py)
+parses paradox game scripts with the help of [rakaly cli](https://github.com/rakaly/cli) and turns them into
 Tree objects(a wrapper around dict) and generic python types like list, str, int, float and bool
 
-vic3/vic3lib.py
-: contains classes for many of the vic3 game entities like Country, State, Technology, Building, ProductionMethod
+#### vic3/vic3lib.py
+contains classes for many of the vic3 game entities like Country, State, Technology, Building, ProductionMethod
 
-Vic3Parser (vic3/parser.py)
-: uses ParadoxParser to read the game files and creates vic3lib objects. These objects can be accessed as properties
+#### Vic3Parser (vic3/parser.py)
+uses ParadoxParser to read the game files and creates vic3lib objects. These objects can be accessed as properties
 of the Vic3Parser object. The parser should not be accessed via vic3game.parser so that only one instance exists
 
-Vic3FileGenerator (vic3/vic3_file_generator.py)
-: base class for the wiki text generators. See [Usage](#Usage) for a list of them
+#### Vic3FileGenerator (vic3/vic3_file_generator.py)
+base class for the wiki text generators. See [Usage](#Usage) for a list of them
 
-Victoria3 (vic3/game.py)
-: the main purpose of this game object is to hold a reference to the Vic3Parser parser and other game related
+#### Victoria3 (vic3/game.py)
+the main purpose of this game object is to hold a reference to the Vic3Parser parser and other game related
 information, to allow some code to work for multiple games. It can be accessed via the variable vic3game
 
 # Installation
@@ -54,14 +54,14 @@ all files which they support or a specific function can be specified as command 
 the `generate_` prefix from the method name. For example `python3 vic3/generate_tables.py decree_table`. The following
 scripts exist currently:
 
-generate_tables.py
-: generates many tables
+#### generate_tables.py
+generates many tables
 
-generate_articles.py
-: generates the [Vickypedia](https://vic3.paradoxwikis.com/Vickypedia)
+#### generate_articles.py
+generates the [Vickypedia](https://vic3.paradoxwikis.com/Vickypedia)
 
-generate_building_tables.py
-: generates tables of buildings and production methods
+#### generate_building_tables.py
+generates tables of buildings and production methods
 
 # Sample code
     from vic3.game import vic3game
