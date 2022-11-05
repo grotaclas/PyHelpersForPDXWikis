@@ -1,0 +1,14 @@
+import pathlib
+
+# the location of the rakaly command line tool from https://github.com/rakaly/cli
+# this is either an absolute path, or just 'rakaly' if it is installed somewhere in the PATH
+RAKALY_CLI = 'rakaly'
+
+# the folder where Victoria 3 is installed
+VIC3DIR = pathlib.Path('c:/Program Files (x86)/Steam/steamapps/common/Victoria 3')            # windows
+# VIC3DIR = pathlib.Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Victoria 3') # cygwin
+# VIC3DIR = pathlib.Path('~/.steam/steam/steamapps/common/Victoria 3').expanduser()           # linux
+
+# generated files will be stored in a game/version subfolder of this folder
+# per default we just use output in the base folder of the project
+OUTPATH = pathlib.Path(__file__).absolute().parents[1] / 'output'

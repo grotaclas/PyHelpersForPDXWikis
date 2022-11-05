@@ -1,0 +1,16 @@
+# local settings
+PyHelpersForPDXWikis/localsettings.py
+
+# default output folder
+output
+
+# environment
+.venv
+
+# IDEs
+.idea
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
