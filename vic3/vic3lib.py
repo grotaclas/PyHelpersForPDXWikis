@@ -437,3 +437,7 @@ class InterestGroup(AdvancedEntity):
 class PopType(AdvancedEntity):
     display_name_without_icon: str
 
+
+class Achievement(AdvancedEntity):
+    possible: Tree
+    happened: Tree

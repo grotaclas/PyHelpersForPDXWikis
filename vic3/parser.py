@@ -76,6 +76,8 @@ class Vic3Parser:
             extra_data_functions = {}
         if transform_value_functions is None:
             transform_value_functions = {}
+        if 'display_name' not in extra_data_functions:
+            extra_data_functions['display_name'] = lambda entity_name, entity_data: self.localize(entity_name)
         entities = {}
         class_attributes = inspect.get_annotations(entity_class)
         for name, data in self.parser.parse_folder_as_one_file(folder):
@@ -87,7 +89,7 @@ class Vic3Parser:
                     entity_values[k] = transform_value_functions[k](v)
                 elif k in class_attributes and k not in entity_values:
                     entity_values[k] = v
-            entities[name] = entity_class(name, self.localize(name), **entity_values)
+            entities[name] = entity_class(name, **entity_values)
         return entities
 
     def parse_advanced_entities(self, folder: str, entity_class: Type[AE],
@@ -475,4 +477,11 @@ class Vic3Parser:
     def pop_types(self) -> dict[str, PopType]:
         return self.parse_advanced_entities('common/pop_types', PopType, extra_data_functions={
             'display_name_without_icon': lambda name, data: self.localize(name + '_no_icon')
+        })
+
+    @cached_property
+    def achievements(self) -> dict[str, Achievement]:
+        return self.parse_advanced_entities('common/achievements', Achievement, extra_data_functions={
+            'display_name': lambda name, data: self.localize(f'ACHIEVEMENT_{name}'),
+            'description': lambda name, data: self.localize(f'ACHIEVEMENT_DESC_{name}')
         })
