@@ -476,3 +476,26 @@ class Vic3Parser:
         return self.parse_advanced_entities('common/pop_types', PopType, extra_data_functions={
             'display_name_without_icon': lambda name, data: self.localize(name + '_no_icon')
         })
+    
+    
+    @cached_property
+    def map_data_state_regions(self):
+        states = {}
+        simple_keys = {
+            'id', 'subsistence_building', 'provinces', 'impassable',
+            'prime_land', 'traits', 'city', 'port', 'farm', 'mine', 'wood',
+            'arable_land', 'arable_resources', 'naval_exit_id'
+        }
+        for file, rawstates in self.parser.parse_files('map_data/state_regions/*.txt'):
+            state = {'state_region': file.name[3:-4]}
+            for state_name, data in rawstates:
+                for key in simple_keys:
+                    state[key] = data.get(key, '')
+                for building, amount in data.get('capped_resources', {}):
+                    state[building] = {'amount': amount, 'depleted_type': ''}
+                for d in data.find_all('resource'):
+                    amount = d.get('undiscovered_amount', d.get('discovered_amount', ''))
+                    state[d['type']] = {'amount': amount, 'depleted_type': d.get('depleted_type', '')}
+                states[state_name] = state
+        return states
+    
