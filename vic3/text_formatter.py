@@ -1,13 +1,13 @@
-import math
 import re
 from functools import cached_property
 
 from common.paradox_parser import Tree
+from common.wiki import WikiTextFormatter
 from vic3.vic3_file_generator import vic3game, Vic3FileGenerator
 from vic3.vic3lib import AdvancedEntity
 
 
-class Vic3WikiTextFormatter:
+class Vic3WikiTextFormatter(WikiTextFormatter):
 
     def __init__(self):
         self.parser = vic3game.parser
@@ -231,29 +231,6 @@ class Vic3WikiTextFormatter:
         #     return f'[[{link}|{display_str}]]'
         # return f'[[#{link}|{display_str}]]'
         return f'[[{link}|{display_str}]]'
-
-    @staticmethod
-    def format_big_number(number) -> str:
-        suffixes = {
-            1000*1000*1000: 'B',
-            1000*1000: 'M',
-            1000: 'K',
-        }
-        for threshold, suffix in suffixes.items():
-            if number > threshold:
-                number /= threshold
-                number = math.floor(number * 100.0) / 100.0
-                return f'{number}{suffix}'
-        # below 1k
-        return str(number)
-
-    @staticmethod
-    def create_wiki_list(elements: list[str], indent=1) -> str:
-        if len(elements) == 0:
-            return ''
-        else:
-            line_prefix = '*' * indent
-            return f'\n{line_prefix} ' + f'\n{line_prefix} '.join(elements)
 
     def format_conditions(self, conditions: Tree, indent: int = 1):
         result = []
