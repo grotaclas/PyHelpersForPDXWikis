@@ -33,7 +33,7 @@ class TableGenerator(Vic3FileGenerator):
             'Tag': f'{c.tag}',
             'Type': self.parser.localize(c.type),
             'Tier': self.parser.localize('country_tier_' + c.tier),
-            'Capital': c.capital_state.display_name if c.capital_state is not None else '',
+            'Capital state': c.capital_state.display_name if c.capital_state is not None else '',
             'Region': c.capital_state.get_strategic_region().display_name if c.capital_state is not None else '',
             'Cultures': ', '.join(self.parser.localize(culture) for culture in c.cultures),
             'Notes': self.get_country_notes(c),
