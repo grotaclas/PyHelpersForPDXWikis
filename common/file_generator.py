@@ -1,9 +1,14 @@
 import inspect
 import sys
-from PyHelpersForPDXWikis.localsettings import OUTPATH
 from common.paradox_lib import Game
 from pyradox.filetype.table import make_table, WikiDialect
 
+
+try:  # when used by PyHelpersForPDXWikis
+    from PyHelpersForPDXWikis.localsettings import OUTPATH
+except:  # when used by ck2utils
+    from localpaths import outpath
+    OUTPATH = outpath
 
 class FileGenerator:
 
