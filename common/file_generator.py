@@ -60,8 +60,13 @@ class FileGenerator:
 
         if one_line_per_cell:
             dialect.row_cell_delimiter = '\n|'
+        else:
+            dialect.row_cell_delimiter = ' || '
 
-        if row_id_key is not None:
+        if row_id_key is None:
+            dialect.row_begin = '| '
+            dialect.row_delimiter = '|-\n'
+        else:
             dialect.row_begin = lambda row: f'|- id="{row[row_id_key]}"\n| '
             dialect.row_delimiter = '\n'
 
