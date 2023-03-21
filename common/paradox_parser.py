@@ -13,7 +13,10 @@ from pathlib import Path
 from collections.abc import Iterator, Mapping
 from tempfile import mkstemp
 
-from PyHelpersForPDXWikis.localsettings import RAKALY_CLI
+try:  # when used by PyHelpersForPDXWikis
+    from PyHelpersForPDXWikis.localsettings import RAKALY_CLI
+except:  # when used by ck2utils
+    RAKALY_CLI = ''
 
 
 class ParsingWorkaround:
