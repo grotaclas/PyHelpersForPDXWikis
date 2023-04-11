@@ -112,7 +112,7 @@ class NameableEntity:
         if other is None:
             return False
         if isinstance(other, str):
-            return other == self.display_name
+            return other == self.display_name or other == self.name
         return self.name == other.name
 
     def __lt__(self, other):

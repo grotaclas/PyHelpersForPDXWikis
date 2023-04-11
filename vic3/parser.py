@@ -329,12 +329,13 @@ class Vic3Parser:
             'group': lambda group_name: law_groups[group_name]})
 
     def _get_monument_location(self, name, data):
-        if 'possible' in data:
+        try:
             state_name = data['possible']['error_check']['this']['state_region'].replace('s:', '')
             if state_name in self.states:
                 return self.states[state_name]
-        else:
+        except KeyError:  # no state_region region check in the trigger, so it isn't a monument and we can ignore it
             return None
+        return None
 
     @cached_property
     def buildings(self) -> dict[str, Building]:
@@ -371,7 +372,7 @@ class Vic3Parser:
                     entity_values[k] = v
                 elif k == 'parent_group':
                     entity_values['parent_group'] = building_groups[v]
-                elif k in ['lens', 'inheritable_construction', 'should_auto_expand']:
+                elif k in ['lens', 'inheritable_construction', 'should_auto_expand', 'economy_of_scale_ai_factor']:
                     pass
                 else:
                     raise Exception('Unsupported key {} when parsing BuildingGroup "{}"'.format(k, name))
