@@ -44,9 +44,6 @@ class TableGenerator(Vic3FileGenerator):
     def write_country_table(self):
         self._write_text_file('country_table', self.generate_country_table())
 
-    def create_wiki_list(self, elements: list[str], indent=1) -> str:
-        return Vic3WikiTextFormatter.create_wiki_list(elements, indent)
-
     def get_unlocks(self, tech: Technology):
         unlocks = []
         pm_unlocks = {}

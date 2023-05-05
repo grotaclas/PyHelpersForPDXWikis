@@ -1,6 +1,7 @@
 import inspect
 import sys
 from common.paradox_lib import Game
+from common.wiki import WikiTextFormatter
 from pyradox.filetype.table import make_table, WikiDialect
 
 
@@ -130,3 +131,7 @@ class FileGenerator:
         for example {{Version|1.33}}
         """
         return '{{Version|' + self.game.major_version + '}}'
+
+    @staticmethod
+    def create_wiki_list(elements: list[str], indent=1) -> str:
+        return WikiTextFormatter.create_wiki_list(elements, indent)

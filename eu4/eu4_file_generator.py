@@ -39,6 +39,3 @@ class Eu4FileGenerator(FileGenerator):
     def __init__(self):
         super().__init__(eu4game)
 
-    @staticmethod
-    def create_wiki_list(elements: list[str], indent=1) -> str:
-        return WikiTextFormatter.create_wiki_list(elements, indent)
