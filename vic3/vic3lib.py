@@ -7,7 +7,7 @@ import re
 from functools import cached_property
 from typing import Any
 
-from common.paradox_lib import NameableEntity, PdxColor
+from common.paradox_lib import NameableEntity, PdxColor, IconEntity
 from common.paradox_parser import Tree
 from vic3.game import vic3game
 
@@ -97,48 +97,15 @@ class Modifier(NameableEntity):
             return f'{value} {text}'
 
 
-class AdvancedEntity(NameableEntity):
+class AdvancedEntity(IconEntity):
     """Adds various extra fields. Not all of them are used by all subclasses"""
 
     description: str = ''
-    icon: str = ''
     required_technologies: list['Technology'] = []
     modifiers: list[Modifier] = []
 
     def str_with_type(self) -> str:
         return f'{self.display_name} ({self.__class__.__name__})'
-
-    def get_wiki_link(self) -> str:
-        return f'[[{self.get_wiki_page_name()}#{self.display_name}|{self.display_name}]]'
-
-    def get_class_name_as_wiki_page_title(self):
-        return re.sub(r'(?<!^)(?=[A-Z])', ' ', self.__class__.__name__).capitalize()
-
-    def get_wiki_icon(self) -> str:
-        """assumes that it is in the icon template. Subclasses have to override this function if that's not the case"""
-        return '{{icon|' + self.display_name + '}}'
-
-    def get_wiki_link_with_icon(self) -> str:
-        return self.get_wiki_icon() + ' ' + self.get_wiki_link()
-
-    def get_wiki_file_tag(self, seize: str = '24px') -> str:
-        filename = self.get_wiki_filename()
-        return f'[[File:{filename}|{seize}|{self.display_name}]]'
-
-    def get_wiki_filename(self) -> str:
-        filename = self.icon.split('/')[-1].replace('.dds', '.png')
-        prefix = self.get_wiki_filename_prefix()
-        if not filename.lower().startswith(prefix.lower()):
-            filename = prefix + ' ' + filename
-        return filename
-
-    def get_wiki_filename_prefix(self) -> str:
-        """Defaults to the class name. Subclasses can override it to provide their actual names"""
-        return self.get_class_name_as_wiki_page_title()
-
-    def get_wiki_page_name(self) -> str:
-        """Defaults to the class name. Subclasses can override it to provide their actual names"""
-        return self.get_class_name_as_wiki_page_title()
 
 
 class NamedModifier(AdvancedEntity):

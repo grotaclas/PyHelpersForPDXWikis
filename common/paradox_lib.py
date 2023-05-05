@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any
 
 from colormath.color_conversions import convert_color
@@ -125,3 +126,47 @@ class NameableEntity:
                 and not callable(value)
                 and not isinstance(value, cached_property)
                 }
+
+
+class IconEntity(NameableEntity):
+    """NameableEntity with icons"""
+
+    icon: str = ''
+
+    def get_wiki_link(self) -> str:
+        return f'[[{self.get_wiki_page_name()}#{self.display_name}|{self.display_name}]]'
+
+    def get_class_name_as_wiki_page_title(self):
+        return re.sub(r'(?<!^)(?=[A-Z])', ' ', self.__class__.__name__).capitalize()
+
+    def get_wiki_icon(self, size: str = '') -> str:
+        """assumes that it is in the icon template. Subclasses have to override this function if that's not the case"""
+        if not self.icon:
+            return ''
+        if size:
+            size = '|' + size
+        return f'{{{{icon|{self.display_name}{size}}}}}'
+
+    def get_wiki_link_with_icon(self) -> str:
+        return self.get_wiki_icon() + ' ' + self.get_wiki_link()
+
+    def get_wiki_file_tag(self, size: str = '24px') -> str:
+        if not self.icon:
+            return ''
+        filename = self.get_wiki_filename()
+        return f'[[File:{filename}|{size}|{self.display_name}]]'
+
+    def get_wiki_filename(self) -> str:
+        filename = self.icon.split('/')[-1].replace('.dds', '.png')
+        prefix = self.get_wiki_filename_prefix()
+        if not filename.lower().startswith(prefix.lower()):
+            filename = prefix + ' ' + filename
+        return filename
+
+    def get_wiki_filename_prefix(self) -> str:
+        """Defaults to the class name. Subclasses can override it to provide their actual names"""
+        return self.get_class_name_as_wiki_page_title()
+
+    def get_wiki_page_name(self) -> str:
+        """Defaults to the class name. Subclasses can override it to provide their actual names"""
+        return self.get_class_name_as_wiki_page_title()
