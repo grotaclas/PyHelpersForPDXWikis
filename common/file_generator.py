@@ -60,7 +60,7 @@ class FileGenerator:
         dialect.row_cell_begin = lambda s: ''
 
         if one_line_per_cell:
-            dialect.row_cell_delimiter = '\n|'
+            dialect.row_cell_delimiter = '\n| '
         else:
             dialect.row_cell_delimiter = ' || '
 
