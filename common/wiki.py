@@ -25,6 +25,40 @@ class WikiTextFormatter:
             line_prefix = '*' * indent
             return f'\n{line_prefix} ' + f'\n{line_prefix} '.join(elements)
 
+    @staticmethod
+    def add_red_green(number, positive_is_good: bool = True) -> str:
+        if not isinstance(number, (int, float)):
+            return str(number)
+
+        if number == 0:
+            return f"'''{number}'''"
+        if number > 0:
+            if positive_is_good:
+                color = 'green'
+            else:
+                color = 'red'
+        else:
+            # add the unicode minus sign
+            number = f'−{abs(number)}'
+            if positive_is_good:
+                color = 'red'
+            else:
+                color = 'green'
+        return f'{{{{{color}|{number}}}}}'
+
+    @staticmethod
+    def add_plus_minus(number, bold: bool = False) -> str:
+        if number > 0:
+            formatted_number = f'+{number}'
+        elif number < 0:
+            formatted_number = f'−{number}'
+        else:
+            formatted_number = str(number)
+
+        if bold:
+            formatted_number = f"'''{formatted_number}'''"
+
+        return formatted_number
 
 # the rest of the file is an unfinished version of a better wiki-table generator
 class Cell:
