@@ -9,18 +9,18 @@ class AoW4WikiTextFormatter(WikiTextFormatter):
     # only the ones which are different from the xml
     icons = {
         'happiness': 'morale',
-        'damageBlight': 'dmg blight',
-        'damageFire': 'dmg fire',
-        'damageFrost': 'dmg frost',
-        'damageLightning': 'dmg lightning',
-        'damagePhysical': 'dmg physical',
-        'damageSpirit': 'dmg spirit',
-        'statuseffectresistance': 'rst status',
-        'defenseblight': 'rst blight',
-        'defensefire': 'rst fire',
-        'defensefrost': 'rst frost',
-        'defenselightning': 'rst lightning',
-        'defensespirit': 'rst spirit',
+        'damageBlight': 'blight damage',
+        'damageFire': 'fire damage',
+        'damageFrost': 'frost damage',
+        'damageLightning': 'lightning damage',
+        'damagePhysical': 'physical damage',
+        'damageSpirit': 'spirit damage',
+        'statuseffectresistance': 'status resistance',
+        'defenseblight': 'blight resistance',
+        'defensefire': 'fire resistance',
+        'defensefrost': 'frost resistance',
+        'defenselightning': 'lightning resistance',
+        'defensespirit': 'spirit resistance',
         'resistance': 'resistance',
         'structureprod': 'production',
         'unitprod': 'draft',
@@ -66,12 +66,19 @@ class AoW4WikiTextFormatter(WikiTextFormatter):
             # not sure what this is doing. Maybe it makes the text blue in the game.
             # use italics in the wiki to not completely lose the marking
             r'<abilityblue>(.*?)</abilityblue>': r"''\1''",
-            r'<([^>]*)></\1>': r'{{icon|\1}}',  # assume that the rest are icons
 
+            # assume that the rest are icons
+            r'<([^>]*)></\1>': r'{{icon|\1}}',
+
+            # strip links if they are preceded by an icon with the same name
+            r'(?i)\{\{icon\|([^}]*)\}\}\s*\[\[(\1)\]\]': r'{{icon|\1}} \2',
         }
 
         result = xml_string
-
+        # link with identical icon. strip the link. This is done before the icon replacements to operate on the
+        # not-replaced values
+        # it is repeated for the replaced icons as the last line in the replacements
+        result = re.sub(r'(?i)(<([^>]*)></\2>)\s*<hyperlink>(\2)</hyperlink>', r'\1 \3', result)
         for xml_icon, wiki_icon in self.icons.items():
             result = re.sub(f'<{xml_icon}></{xml_icon}>', f'{{{{icon|{wiki_icon}}}}}', result, flags=re.IGNORECASE)
 
