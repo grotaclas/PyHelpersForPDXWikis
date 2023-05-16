@@ -15,9 +15,11 @@ from eu4.parser import Eu4Parser
 class EuropaUniversalisIV(Game):
     """Never construct this object manually. Use the variable eu4game instead.
     This way all data can be cached without having to pass on references to the game or the parser"""
+    name = 'Europa Universalis IV'
     short_game_name = 'eu4'
     game_path = EU4DIR
     launcher_settings = game_path / 'launcher-settings.json'
+    wiki_domain = 'eu4.paradoxwikis.com'
 
     @cached_property
     def parser(self) -> 'Eu4Parser':

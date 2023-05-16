@@ -18,9 +18,11 @@ class Game:
     by the paradox launcher"""
 
     # these properties have to be set by the subclasses
+    name: str
     short_game_name: str
     game_path: Path
     launcher_settings: Path
+    wiki_domain: str
     parser: Any
 
     @cached_property

@@ -7,9 +7,11 @@ from common.paradox_lib import Game
 class Victoria3(Game):
     """Never construct this object manually. Use the variable vic3game instead.
     This way all data can be cached without having to pass on references to the game or the parser"""
+    name = 'Victoria 3'
     short_game_name = 'vic3'
     game_path = VIC3DIR
     launcher_settings = game_path / 'launcher/launcher-settings.json'
+    wiki_domain = 'vic3.paradoxwikis.com'
 
     @cached_property
     def parser(self) -> 'Vic3Parser':

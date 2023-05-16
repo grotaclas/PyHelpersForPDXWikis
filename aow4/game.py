@@ -7,9 +7,11 @@ from common.paradox_lib import Game
 class AgeOfWonders4(Game):
     """Never construct this object manually. Use the variable aow4game instead.
     This way all data can be cached without having to pass on references to the game or the parser"""
+    name = 'Age of Wonders 4'
     short_game_name = 'aow4'
     game_path = AOW4DIR
     launcher_settings = game_path / 'launcher-settings.json'
+    wiki_domain = 'aow4.paradoxwikis.com'
 
     @cached_property
     def parser(self):
