@@ -164,6 +164,9 @@ class HeroSkill(IconEntity):
         else:
             return super().get_wiki_filename()
 
+    def get_wiki_page_name(self) -> str:
+        return 'Heroes'
+
     @cached_property
     def tome(self) -> Optional['Tome']:
         if self.name in aow4game.parser.hero_skills_to_tome:
@@ -204,6 +207,11 @@ class TomeSkill:
         skill_object.description = self.description
         return skill_object
 
+    def get_wiki_link(self) -> str:
+        if self.skill_type == 'spell':
+            return self.object.get_wiki_link()
+        else:
+            return self.display_name
 
 class Affinity(NameableEntity):
     pass
@@ -254,3 +262,9 @@ class Spell(IconEntity):
 
     def get_wiki_icon(self, size: str = '24px') -> str:
         return self.get_wiki_file_tag(size)
+
+    def get_wiki_page_name(self) -> str:
+        if self.tactical:
+            return 'Tactical spells'
+        else:
+            return 'Strategic spells'

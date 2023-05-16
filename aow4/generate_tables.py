@@ -108,22 +108,28 @@ class TableGenerator(AoW4FileGenerator):
 
         result = [f'= {affinity_short_name} tomes =']
         for tome in sorted([tome for tome in self.parser.tomes.values() if tome.affinity == affinity], key=attrgetter('tier', 'display_name')):
+            result.append(f'== {tome} ==')
+            result.append(f'{{{{main|{tome}}}}}')
             if tome.tier:
-                tier_prefix = f'{self.formatter.format_roman(tome.tier)} - '
+                # if tome.tier:
+                #     result.append(f'Tier {tome.tier}')
+                # tier_prefix = f'{self.formatter.format_roman(tome.tier)} - '
+                tier_prefix = f"'''Tier {tome.tier}''' - "
             else:
                 tier_prefix = ''
-            result.append(f'== {tier_prefix}{tome} ==')
-            result.append(f"{{|\n|-\n| {tome.get_wiki_file_tag('64px')} || ''{tome.gameplay_description}''\n|}}""")
+            result.append(f"{{|\n|-\n| {tome.get_wiki_file_tag('64px')} || {tier_prefix}''{tome.gameplay_description}''\n|}}""")
             result.append(f'=== Skills ===')
             skills = [{
-                'Skill': f'{skill.get_wiki_icon("40px")} {skill.display_name}',
+                'class="unsortable" width=1% |': skill.get_wiki_icon("40px"),
+                'Skill': skill.get_wiki_link(),
                 'Tier': '',
                 'Type': skill.level_name,
                 'Effects': self._get_hero_kill_effect(skill),
             } for skill in tome.hero_skills]
 
             skills.extend([{
-                'Skill': f'{skill.object.get_wiki_icon("40px")} {skill.object.display_name}',
+                'class="unsortable" width=1% |': skill.object.get_wiki_icon("40px"),
+                'Skill': skill.get_wiki_link(),
                 'Tier': f'{skill.tier}' if skill.tier else '',
                 'Type': skill.type_desc,
                 'Effects': skill.object.description,
