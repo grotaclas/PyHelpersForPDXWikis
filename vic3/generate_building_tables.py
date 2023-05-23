@@ -45,7 +45,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
             'can_use_slaves': 'Can use slaves',
             'fired_pops_become_radical': 'Fired pops don\'t become radical',
             'pays_taxes': 'Pays no taxes',
-            'is_government_funded': 'Is government founded',
+            'is_government_funded': 'Is government-funded',
             'created_by_trade_routes': 'Gets created by trade routes',
         }
         for attribute, message in notes_for_building_groups.items():
