@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 from collections.abc import Iterator, Mapping
 from tempfile import mkstemp
+from typing import Callable
 
 try:  # when used by PyHelpersForPDXWikis
     from PyHelpersForPDXWikis.localsettings import RAKALY_CLI
@@ -221,3 +222,6 @@ class Tree(Mapping):
                 self.dictionary[key] = merged
         return self
 
+    def filter_elements(self, filter_func: Callable[[str, any], bool]) -> 'Tree':
+        """create a new tree which only contains the elements for which filter_func returns True"""
+        return Tree({k: v for k, v in self.dictionary.items() if filter_func(k, v)})
