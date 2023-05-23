@@ -27,13 +27,13 @@ class Game:
 
     @cached_property
     def version(self):
-        json_object = json.load(open(self.launcher_settings))
+        json_object = json.load(open(self.launcher_settings, encoding='utf-8'))
         self.full_version = json_object['version']
         return json_object['rawVersion']
 
     @cached_property
     def full_version(self):
-        json_object = json.load(open(self.launcher_settings))
+        json_object = json.load(open(self.launcher_settings, encoding='utf-8'))
         self.version = json_object['rawVersion']
         return json_object['version']
 

@@ -128,7 +128,7 @@ class ParadoxParser:
 
     def _really_parse_file(self, file: Path, workarounds: list[ParsingWorkaround] = None) -> 'Tree':
         if workarounds:
-            with open(file) as fp:
+            with open(file, encoding='utf-8-sig') as fp:
                 contents = fp.read()
             for workaround in workarounds:
                 contents = workaround.apply_to_string(contents)
