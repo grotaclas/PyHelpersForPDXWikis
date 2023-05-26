@@ -134,7 +134,7 @@ class ParadoxParser:
                 contents = workaround.apply_to_string(contents)
             fp, temp_filename = mkstemp(prefix='paradox_parser_workaround', suffix='.txt')
             try:
-                with os.fdopen(fp, mode='w') as temp_file:
+                with os.fdopen(fp, mode='w', encoding='utf-8') as temp_file:
                     temp_file.write(contents)
                 return self._run_rakaly(Path(temp_filename))
             finally:

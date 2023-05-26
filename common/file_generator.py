@@ -47,7 +47,7 @@ class FileGenerator:
 
     def _really_write_file(self, name: str, content: str):
         output_file = self.outpath / '{}{}.txt'.format(self.game.short_game_name, name)
-        with output_file.open('w') as f:
+        with output_file.open('w', encoding='utf-8') as f:
             f.write(content)
 
     def _write_lines_to_text_file(self, name: str, lines: list[str]):

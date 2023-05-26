@@ -22,7 +22,7 @@ class AoW4Parser:
         return AoW4WikiTextFormatter()
 
     def read_json(self, file: str):
-        with open(AOW4DATADIR / (file + '.json')) as skill_file:
+        with open(AOW4DATADIR / (file + '.json'), encoding='utf-8') as skill_file:
             return json.load(skill_file, object_hook=lambda x: Tree(x))
 
     @cached_property
