@@ -27,6 +27,10 @@ information, to allow some code to work for multiple games. It can be accessed v
 
 Age of Wonders 4 has the same files as vic3 in its aow4 folder. Instead of rakaly, it reads json files with a data dump.
 
+#### cs2
+
+Cities Skylines II files are parsed with the help of UnityPy
+
 # Installation
 
 Clone this repository or download it as a zip from https://github.com/grotaclas/PyHelpersForPDXWikis. Then fulfill
@@ -35,8 +39,8 @@ the [dependencies](#Dependencies) and [configure](#Configuration) it.
 # Dependencies
 
 This project needs python version 3.10 or above (older versions might work as well). requirements.txt contains the
-needed python modules. Currently it is only colormath, but more will follow when automatic upload and wiki editing are
-added. They can be installed with pip (preferably in a [venv](https://docs.python.org/3/tutorial/venv.html)):
+needed python modules. Currently, it is only colormath and UnityPy and leb128 for CS2, but more will follow when
+automatic upload and wiki editing are added. They can be installed with pip (preferably in a [venv](https://docs.python.org/3/tutorial/venv.html)):
 
     python3 -m pip install -r requirements.txt
 

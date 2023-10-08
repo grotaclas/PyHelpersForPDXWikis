@@ -1,1 +1,3 @@
 colormath>=3.0.0
+UnityPy>=1.10
+leb128>=1.0.5
