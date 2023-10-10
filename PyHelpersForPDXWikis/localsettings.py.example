@@ -1,4 +1,4 @@
-import pathlib
+from pathlib import Path
 
 # the location of the rakaly command line tool from https://github.com/rakaly/cli
 # this is either an absolute path, or just 'rakaly' if it is installed somewhere in the PATH
@@ -6,25 +6,31 @@ import pathlib
 RAKALY_CLI = 'rakaly'
 
 # the folder where Victoria 3 is installed
-VIC3DIR = pathlib.Path('c:/Program Files (x86)/Steam/steamapps/common/Victoria 3')            # windows
-# VIC3DIR = pathlib.Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Victoria 3') # cygwin
-# VIC3DIR = pathlib.Path('~/.steam/steam/steamapps/common/Victoria 3').expanduser()           # linux
+VIC3DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Victoria 3')            # windows
+# VIC3DIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Victoria 3') # cygwin
+# VIC3DIR = Path('~/.steam/steam/steamapps/common/Victoria 3').expanduser()           # linux
 
 # the folder where Age of Wonders 4 is installed (currently only used for some minor localizations)
-AOW4DIR = pathlib.Path('c:/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4')            # windows
-# AOW4DIR = pathlib.Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4') # cygwin
-# AOW4DIR = pathlib.Path('~/.steam/steam/steamapps/common/Age of Wonders 4').expanduser()           # linux
+AOW4DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4')            # windows
+# AOW4DIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4') # cygwin
+# AOW4DIR = Path('~/.steam/steam/steamapps/common/Age of Wonders 4').expanduser()           # linux
 
 # this folder stores the .json file with the Age of Wonders 4 data
 # it might be possible to export these files within the game. Otherwise an edited version can be found at
 # https://github.com/MinionsArt/aow4db/tree/main/Data
-AOW4DATADIR = pathlib.Path(__file__).absolute().parents[1] / 'aow4data'
+AOW4DATADIR = Path(__file__).absolute().parents[1] / 'aow4data'
 
 # the folder where Cities: Skylines II is installed
-CS2DIR = pathlib.Path('c:/Program Files (x86)/Steam/steamapps/common/Cities Skylines II')          # windows
-# CS2DIR = pathlib.Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Cities Skylines II') # cygwin
-# CS2DIR = pathlib.Path('~/.steam/steam/steamapps/common/Cities Skylines II').expanduser()           # linux
+CS2DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Cities Skylines II')            # windows
+# CS2DIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Cities Skylines II') # cygwin
+# CS2DIR = Path('~/.steam/steam/steamapps/common/Cities Skylines II').expanduser()           # linux
+
+# the location of the TypeTreeGenerator command line tool from https://github.com/K0lb3/TypeTreeGenerator
+# it is used to get type trees for classes in unity games. They are needed to read MonoBehavior assets
+# to run it, the command line tool dotnet is needed
+# (currently only needed for Cities: Skylines II)
+TYPE_TREE_GENERATOR = Path('~/Downloads/TypeTreeGenerator/TypeTreeGeneratorCLI.dll').expanduser() # linux
 
 # generated files will be stored in a game/version subfolder of this folder
 # per default we just use output in the base folder of the project
-OUTPATH = pathlib.Path(__file__).absolute().parents[1] / 'output'
+OUTPATH = Path(__file__).absolute().parents[1] / 'output'
