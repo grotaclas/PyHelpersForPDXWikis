@@ -63,12 +63,24 @@ class CS2Localization:
             self._load_data()
         return self._index_count_dict
 
-    def localize(self, key: str, default: str = None) -> str:
-        """localize the key from the cities skylines II localisation files
+    @staticmethod
+    def get_full_localization_key(group: str, loc_id: str, loc_sub_id: str = None, index: int = None) -> str:
+        key = f'{group}.{loc_id}'
+        if loc_sub_id is not None:
+            key += f'[{loc_sub_id}]'
+        if index is not None:
+            key += f':{index}'
+        return key
 
+    def localize(self, group: str, loc_id: str, loc_sub_id: str = None, default: str = None, index: int = None) -> str:
+        """localize the key from the cities skylines II localization files
+
+        A localization key is compromised of a group, followed by a dot, followed by the loc_id,
+        optionally followed by [local_sub_id], optionally followed by colon
         if the key is not found, the default is returned
         unless it is None in which case the key is returned
         """
+        key = self.get_full_localization_key(group, loc_id, loc_sub_id, index)
         if default is None:
             default = key
 
@@ -77,11 +89,12 @@ class CS2Localization:
         else:
             return self.get_localization_dict().get(key, default)
 
-    def get_indexed_localizations(self, key: str, default: str = None) -> [str]:
+    def get_indexed_localizations(self, group: str, loc_id: str, loc_sub_id: str = None, default: str = None) -> [str]:
         """Indexed localizations have multiple options for the same localization key
 
         These can be items which are naturally indexed like Progression.MILESTONE_NAME and Common.MONTH
         or list of possible options like Assets.CITIZEN_SURNAME_HOUSEHOLD and Chirper.HOUSING_SHORTAGE"""
+        key = self.get_full_localization_key(group, loc_id, loc_sub_id)
         if key not in self.get_index_count_dict():
             raise Exception(f'The key "{key}" is not an indexed localization')
         return [self.localize(f'{key}:{i}', default) for i in range(self.get_index_count_dict()[key])]
