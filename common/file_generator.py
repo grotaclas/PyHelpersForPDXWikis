@@ -1,5 +1,7 @@
 import inspect
 import sys
+from numbers import Number
+
 from common.paradox_lib import Game
 from common.wiki import WikiTextFormatter
 from pyradox.filetype.table import make_table, WikiDialect
@@ -75,9 +77,17 @@ class FileGenerator:
             for key in list(data[0].keys()):
                 is_empty = True
                 for row in data:
-                    if row[key].strip() != '':
-                        is_empty = False
-                        break
+                    value = row[key]
+                    if isinstance(value, Number):
+                        if value != 0:
+                            is_empty = False
+                            break
+                    else:
+                        if not isinstance(value, str):
+                            value = str(value)
+                        if value.strip() != '':
+                            is_empty = False
+                            break
                 if is_empty:
                     for row in data:
                         del row[key]
