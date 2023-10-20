@@ -8,6 +8,12 @@ from functools import cached_property
 from pathlib import Path
 
 from common.paradox_parser import Tree
+try:
+    # when used by PyHelpersForPDXWikis
+    from PyHelpersForPDXWikis.localsettings import CACHEPATH
+except:  # when used by ck2utils
+    from localpaths import cachedir
+    CACHEPATH = cachedir
 
 
 class Game:
@@ -40,6 +46,17 @@ class Game:
     @cached_property
     def major_version(self):
         return '.'.join(self.version.split('.')[0:2])
+
+    @cached_property
+    def cachepath(self) -> Path | None:
+        if CACHEPATH is None:
+            return None
+        # the full version number also includes the checksum or additional build information. Including it ensures that
+        # the cache gets invalidated if the game changes while the version number is unchanged(this can happen in
+        # unreleased versions). The re.sub is to avoid potential problems with weird characters in the version string
+        path = CACHEPATH / self.short_game_name / re.sub(r'[^a-zA-Z0-9._]', '_', self.full_version)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
 
 class PdxColor(sRGBColor):
