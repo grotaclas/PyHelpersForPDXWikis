@@ -6,7 +6,7 @@ from PyHelpersForPDXWikis.localsettings import CS2DIR
 class CS2Localization:
     """Implementation of the custom localization format of Cities Skylines II"""
 
-    # allows the overriding of localisation strings
+    # allows the overriding of localization strings
     localizationOverrides = {}
 
     def __init__(self, locale='en-US'):
@@ -43,6 +43,7 @@ class CS2Localization:
 
         self._localization_dict = localization_dict
         self._index_count_dict = index_count_dict
+        self._data_loaded = True
 
     @staticmethod
     def _read_string(file: BufferedReader):
