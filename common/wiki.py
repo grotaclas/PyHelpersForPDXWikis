@@ -1,15 +1,18 @@
 import math
+from typing import List
 
 
 class WikiTextFormatter:
     @staticmethod
-    def format_big_number(number) -> str:
-        suffixes = {
-            1000*1000*1000: 'B',
-            1000*1000: 'M',
-            1000: 'K',
+    def format_big_number(number, suffixes: List[str] = None) -> str:
+        if not suffixes:
+            suffixes = ['K', 'M', 'B']
+        suffix_map = {
+            1000*1000*1000: suffixes[2],
+            1000*1000: suffixes[1],
+            1000: suffixes[0],
         }
-        for threshold, suffix in suffixes.items():
+        for threshold, suffix in suffix_map.items():
             if number > threshold:
                 number /= threshold
                 number = math.floor(number * 100.0) / 100.0
@@ -57,12 +60,21 @@ class WikiTextFormatter:
         elif number < 0:
             formatted_number = f'−{abs(number):g}'
         else:
-            formatted_number = str(number)
+            formatted_number = f'{number:g}'
 
         if bold:
             formatted_number = f"'''{formatted_number}'''"
 
         return formatted_number
+
+    @staticmethod
+    def add_minus(number) -> str:
+        """add the unicode minus sign if the number is negative"""
+        if number < 0:
+            return f'−{abs(number):g}'
+        else:
+            return f'{number:g}'
+
 
     def format_percent(self, number, add_plus_minus: bool = False):
         number = number * 100
