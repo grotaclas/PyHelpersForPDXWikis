@@ -1,5 +1,6 @@
 import re
 import shutil
+from collections.abc import Mapping
 from functools import cached_property
 from pathlib import Path
 from typing import Callable, TypeVar, Type, Dict
@@ -33,6 +34,7 @@ class CS2Parser:
         return MonoBehaviourReader(cs2game.game_path / 'Cities2_Data')
 
     def read_gameplay_assets(self, toplevel_classes: List[str] = [
+        'Game.Prefabs.AssetCollection',         # can be used to look stuff up
         'Game.Prefabs.BuildingPrefab',
         'Game.Prefabs.BuildingExtensionPrefab', # building upgrades
         'Game.Prefabs.FencePrefab',             # road signs and road upgrades
@@ -57,6 +59,9 @@ class CS2Parser:
                 cls = self.mono_behaviour_reader.get_cls(obj)
                 if cls in toplevel_classes:
                     nodes = self.mono_behaviour_reader.parse_monobehaviour(obj)
+                    if hasattr(nodes, 'm_Name') and nodes.m_Name in ['BusDepotTutorial', 'TutorialsCollection']:
+                        # cant be parsed
+                        continue
                     self.mono_behaviour_reader.remove_unimportant(nodes)
                     self.mono_behaviour_reader.inline_components_recursive(nodes)
                     all_objects.append(nodes)
@@ -82,9 +87,26 @@ class CS2Parser:
         else:
             return None
 
+    def parse_dict(self, nodes: NodeHelper) -> Dict:
+        result = {}
+        for key, value in nodes.items():
+            if isinstance(value, NodeHelper):
+                result[key] = self.parse_asset(nodes[key])
+            elif isinstance(value, list):
+                result[key] = [self.parse_asset(element) if isinstance(element, NodeHelper)
+                               else element
+                               for element in value]
+            elif isinstance(value, int) or isinstance(value, str) or isinstance(value, float) or value is None:
+                result[key] = value
+            else:
+                raise Exception(
+                    f'attribute of type {type(value)} not implemented. Key is {key} in parse_dict')
+
+        return result
+
     def parse_asset(self, nodes: NodeHelper, parent: CS2_ASSET = None) -> CS2_ASSET:
         if not hasattr(nodes, 'file_name'):
-            return nodes.to_dict()
+            return self.parse_dict(nodes)
         asset_id = CS2Asset.calculate_id(nodes.file_name, nodes.path_id)
         if asset_id in self.parsed_assets:
             return self.parsed_assets[asset_id]
@@ -97,6 +119,8 @@ class CS2Parser:
         asset = cls(nodes.cs2_class, nodes.file_name, nodes.path_id, parent)
         self.parsed_assets[asset_id] = asset
 
+        if hasattr(nodes, 'm_Name'):
+            asset.name = nodes.m_Name
         asset_attributes = {}
         class_attributes = cls.all_annotations()
         for key, value in nodes.items():
@@ -109,6 +133,7 @@ class CS2Parser:
             else:  # these are only added if there is a class attribute for them
                 if isinstance(value, list):
                     value = [self.parse_asset(element, parent=asset) if isinstance(element, NodeHelper)
+                             else self.parse_dict(element) if isinstance(element, dict)
                              else element
                              for element in value]
                 elif not isinstance(value, int) and not isinstance(value, str) and not isinstance(value, float) and value is not None:
@@ -145,6 +170,27 @@ class CS2Parser:
                 print(f'    {name}: {typ}')
             print()
             print()
+
+    @cached_property
+    def _theme_speedlimit_map(self) -> Dict[str,Dict[int, int]]:
+        """taking the theme speedlimits from the localized names of the assets which have the speed limit signs
+        this is very fragile"""
+        if len(self.parsed_assets) == 0:
+            self.read_gameplay_assets()
+        speedlimit_map = {}
+        for road_asset_collection in [assets for assets in self.parsed_assets.values() if assets.cs2_class == 'Game.Prefabs.AssetCollection' and assets.name.endswith('DecorationsRoad')]:
+            theme_prefix = road_asset_collection.name.split('_')[0]
+            speedlimit_map[theme_prefix] = {}
+            for asset in road_asset_collection.prefabs:
+                if hasattr(asset, 'TrafficSignObject') and TrafficSignType.SpeedLimit.value in asset.TrafficSignObject.signTypes:
+                    speedlimit_map[theme_prefix][asset.TrafficSignObject.speedLimit] = int(asset.display_name.split(' ')[-1])
+        return speedlimit_map
+
+    def get_theme_speedlimit(self, theme_prefix: str, file_speedlimit: int) -> int|None:
+        if file_speedlimit in self._theme_speedlimit_map[theme_prefix]:
+            return self._theme_speedlimit_map[theme_prefix][file_speedlimit]
+        else:
+            return None
 
     @cached_property
     def landmarks(self) -> Dict[str, CS2_ASSET]:

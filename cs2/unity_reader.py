@@ -20,6 +20,7 @@ class MonoBehaviourReader:
     # A value of 10 or lower can speed up parsing, especially if inefficient algorithms are used on the results
     MAX_RECURSION_DEPTH = 30
 
+
     IGNORED_CLASSES = ['Game.Prefabs.ObjectSubObjects',  # e.g. gates
                        'Game.Prefabs.ObjectSubAreas',  # e.g. pavement
                        'Game.Prefabs.ObjectSubNets',  # pathways
@@ -39,7 +40,7 @@ class MonoBehaviourReader:
                                          # is not implemented. The classes have to be ignored in other ways
                        ]
 
-    def __init__(self, data_folder: Path, unity_version='2022.3.3f1'):
+    def __init__(self, data_folder: Path, unity_version='2022.3.7'):
         self.unity_version = unity_version
         self.data_folder = data_folder
         self.object_cache = {}

@@ -14,3 +14,8 @@ class CS2WikiTextFormatter(WikiTextFormatter):
         else:
             suffix = ' m'
         return f'{number:g}{suffix}'
+
+    @staticmethod
+    def cost(cost: int | float):
+        """add cost template and round number to integer"""
+        return f'{{{{cost|{round(cost)}}}}}'

@@ -97,6 +97,17 @@ class NamedAsset(CS2Asset):
     def __str__(self):
         return self.display_name
 
+    @cached_property
+    def description(self):
+        return cs2game.localizer.localize('Assets', 'DESCRIPTION',
+                                          self.name)
+
+    @cached_property
+    def dlc(self) -> 'DLC':
+        if hasattr(self, 'ContentPrerequisite'):
+            return DLC(self.ContentPrerequisite.contentPrerequisite.DLC_Requirement.dlc['id'])
+        else:
+            return DLC(-1)
 
 ################
 # Enum classes #
@@ -187,6 +198,93 @@ class LocalModifierType(Enum):
         return cs2game.localizer.localize('Properties', 'LOCAL_MODIFIER', self.name)
 
 
+class NetPieceLayer(Enum):
+    Surface = 0
+    Bottom = 1
+    Top = 2
+    Side = 3
+
+
+class NetPieceRequirements(Enum):
+    Node = 0
+    Intersection = 1
+    DeadEnd = 2
+    Crosswalk = 3
+    BusStop = 4
+    Median = 5
+    TrainStop = 6
+    OppositeTrainStop = 7
+    Inverted = 8
+    TaxiStand = 9
+    LevelCrossing = 10
+    Elevated = 11
+    Tunnel = 12
+    Raised = 13
+    Lowered = 14
+    LowTransition = 15
+    HighTransition = 16
+    WideMedian = 17
+    TramTrack = 18
+    TramStop = 19
+    OppositeTramTrack = 20
+    OppositeTramStop = 21
+    MedianBreak = 22
+    ShipStop = 23
+    Sidewalk = 24
+    Edge = 25
+    SubwayStop = 26
+    OppositeSubwayStop = 27
+    MiddlePlatform = 28
+    Underground = 29
+    Roundabout = 30
+    OppositeSidewalk = 31
+    SoundBarrier = 32
+    Overhead = 33
+    TrafficLights = 34
+    PublicTransportLane = 35
+    OppositePublicTransportLane = 36
+    Spillway = 37
+    MiddleGrass = 38
+    MiddleTrees = 39
+    WideSidewalk = 40
+    SideGrass = 41
+    SideTrees = 42
+    OppositeGrass = 43
+    OppositeTrees = 44
+    Opening = 45
+    Front = 46
+    Back = 47
+    Flipped = 48
+    RemoveTrafficLights = 49
+    AllWayStop = 50
+    Pavement = 51
+    Gravel = 52
+    Tiles = 53
+    ForbidLeftTurn = 54
+    ForbidRightTurn = 55
+    OppositeWideSidewalk = 56
+    OppositeForbidLeftTurn = 57
+    OppositeForbidRightTurn = 58
+    OppositeSoundBarrier = 59
+    SidePlatform = 60
+    AddCrosswalk = 61
+    RemoveCrosswalk = 62
+    Lighting = 63
+    OppositeBusStop = 64
+    OppositeTaxiStand = 65
+    OppositeRaised = 66
+    OppositeLowered = 67
+    OppositeLowTransition = 68
+    OppositeHighTransition = 69
+    OppositeShipStop = 70
+    OppositePlatform = 71
+    OppositeAddCrosswalk = 72
+    OppositeRemoveCrosswalk = 73
+    Inside = 74
+    ForbidStraight = 75
+    OppositeForbidStraight = 76
+
+
 class ResourceInEditor(Enum):
     NoResource = 0
     Money = 1
@@ -236,6 +334,32 @@ class ResourceInEditor(Enum):
         return cs2game.localizer.localize('Resources', 'TITLE', self.name)
 
 
+class TrafficSignType(Enum):
+    _None = 0       # it is None in C#, but python doesn't support this
+    Stop = 1
+    Yield = 2
+    NoTurnLeft = 3
+    NoTurnRight = 4
+    NoUTurnLeft = 5
+    NoUTurnRight = 6
+    DoNotEnter = 7
+    Motorway = 8
+    Oneway = 9
+    SpeedLimit = 10
+    Parking = 11
+    Street = 12
+    BusOnly = 13
+    TaxiOnly = 14
+    RoundaboutCounterclockwise = 15
+    RoundaboutClockwise = 16
+    Count = 17
+
+
+class Voltage(Enum):
+    Low = 0
+    High = 1
+
+
 #################
 # Asset classes #
 #################
@@ -257,10 +381,6 @@ class Building(NamedAsset):
     def size(self):
         return f'{self.lotWidth}×{self.lotDepth}'
 
-    @cached_property
-    def description(self):
-        return cs2game.localizer.localize('Assets', 'DESCRIPTION',
-                                          self.name)
 
     def get_effect_descriptions(self) -> List[str]:
         """List of formatted effect descriptions"""
@@ -275,12 +395,6 @@ class Building(NamedAsset):
 
         return effects
 
-    @cached_property
-    def dlc(self) -> DLC:
-        if hasattr(self, 'ContentPrerequisite'):
-            return DLC(self.ContentPrerequisite.contentPrerequisite.DLC_Requirement.dlc['id'])
-        else:
-            return DLC(-1)
 
 
 class BuildingExtension(NamedAsset):
@@ -318,7 +432,130 @@ class Road(NamedAsset):
     # zoneBlock: ZoneBlockPrefab
     trafficLights: bool
     highwayRules: bool
+    sections: List[Dict]
 
+    def format_speedLimit(self):
+        eu_limit = cs2game.parser.get_theme_speedlimit('EU', int(self.speedLimit))
+        na_limit = cs2game.parser.get_theme_speedlimit('NA', int(self.speedLimit))
+        if eu_limit is not None:
+            return (
+                f'{eu_limit} km/h<ref name=speedlimit{self.speedLimit}>The internal speedlimit is {self.speedLimit}.'
+                f' This is displayed as {eu_limit} in the european theme and as {na_limit} in the north american theme</ref>')
+        else:
+            return (
+                f'{int(self.speedLimit / 2)} km/h<ref name=speedlimit{self.speedLimit}>The internal speedlimit is {self.speedLimit}.'
+                f' There are no speed limit signs for this limit in the themes, but the estimated speedlimit for'
+                f' the european theme would be {int(self.speedLimit / 2)} km/h and {int(self.speedLimit / 2 / 1609344)} mph'
+                f'for the north american theme</ref>')
+
+    def _format_icon(self, icon_name: str, icon_description: str, icon_size: str = '48px',
+                     annotation_name: str = '', annotation: str = ''):
+        if annotation:
+            if annotation_name:
+                annotation_name_code = f' name={annotation_name}'
+            else:
+                annotation_name_code = ''
+            annotation_code = f'<ref{annotation_name_code}>{annotation}</ref>'
+        else:
+            annotation_code = ''
+        return f'[[File:{icon_name}.png|{icon_description}|link=|{icon_size}]]{annotation_code}'
+
+    def get_services_icons(self, icon_size: str = '48px') -> str:
+        icons = []
+        if hasattr(self, 'WaterPipeConnection'):
+            if self.WaterPipeConnection.has_combined_pipe():
+                icons.append(self._format_icon('Combined Pipe', 'Water & Sewage pipes', icon_size))
+            elif self.WaterPipeConnection.has_water_pipe():
+                icons.append(self._format_icon('Water Pipe', 'Water pipe', icon_size))
+            elif self.WaterPipeConnection.has_sewage_pipe():
+                icons.append(self._format_icon('Sewage Pipe', 'Sewage pipe', icon_size))
+        if hasattr(self, 'ElectricityConnection'):
+            formatter = CS2WikiTextFormatter()
+            if self.ElectricityConnection.capacity > 0:
+                electricity_icon = self._format_icon('Electricity',
+                                                     f'{self.ElectricityConnection.voltage.name} voltage power line with {self.ElectricityConnection.format_capacity()}',
+                                                     icon_size)
+                if len(self.ElectricityConnection.requireAll) > 0:
+                    reqs = [req.name for req in self.ElectricityConnection.requireAll]
+                    electricity_icon = f'({electricity_icon})<ref name=electricity_reqs_{"_".join(reqs)}>Electricity connection requires the road properties {" and ".join(reqs)}</ref>'
+                if len(self.ElectricityConnection.requireAny) > 0:
+                    raise NotImplementedError('ElectricityConnection.requireAny is not implemented')
+                if len(self.ElectricityConnection.requireNone) > 0:
+                    raise NotImplementedError('ElectricityConnection.requireNone is not implemented')
+                icons.append(electricity_icon)
+        return '&nbsp;'.join(icons)
+
+    @cached_property
+    def costs(self):
+        result = {
+            'base': {'construction': 0, 'upkeep': 0, 'elevation_cost': 0},
+            'tunnel': {'construction': 0, 'upkeep': 0, 'elevation_cost': 0},
+            'elevated': {'construction': 0, 'upkeep': 0, 'elevation_cost': 0},
+        }
+        # print(f'{self.display_name} ======')
+        for section in self.sections + self.UndergroundNetSections.sections:
+            self._add_costs_from_section(section, result)
+            for subsection in section['m_Section'].subSections:
+                self._add_costs_from_section(subsection, result, section)
+
+        cost_multiplier = 125
+
+        return {category: {cost: value * cost_multiplier
+                           for cost, value in costs.items()}
+                for category, costs in result.items()}
+
+    def _fulfills_req_type(self, req_type: NetPieceRequirements|None, req_list) -> bool:
+        for reqs in req_list:
+            if req_type is None:
+                if reqs['m_RequireAll'] or reqs['m_RequireAny']:
+                    return False
+            else:
+                if len(reqs['m_RequireAll']) > 1:
+                    return False  # checking against multiple requirements is not implemented
+                if len(reqs['m_RequireAll']) == 1 and reqs['m_RequireAll'] != [req_type.value]:
+                    return False
+                if reqs['m_RequireAny'] and req_type.value not in reqs['m_RequireAny']:
+                    return False
+                if reqs['m_RequireNone'] and req_type.value in reqs['m_RequireNone']:
+                    return False
+        return True
+
+    def _add_costs_from_section(self, section, result, parent_section: Dict = None):
+        if parent_section is None:
+            parent_section = {'m_RequireAll': [], 'm_RequireAny': [], 'm_RequireNone': []}
+        supported_types = {'base': None, 'elevated': NetPieceRequirements.Elevated, 'tunnel': NetPieceRequirements.Tunnel}
+        for piece in section['m_Section'].pieces:
+            if not hasattr(piece['m_Piece'], 'PlaceableNetPiece'):
+                continue
+            # print(f"{piece['m_Piece'].name};all;{piece['m_RequireAll']};any;{piece['m_RequireAny']};layer;{piece['m_Piece'].layer};cost;{piece['m_Piece'].PlaceableNetPiece.constructionCost};upkeep;{piece['m_Piece'].PlaceableNetPiece.upkeepCost}")
+            print(
+                f"{piece['m_Piece'].name};{parent_section['m_RequireAll']};{parent_section['m_RequireAny']};{parent_section['m_RequireNone']};{section['m_RequireAll']};{section['m_RequireAny']};{section['m_RequireNone']};{piece['m_RequireAll']};{piece['m_RequireAny']};{piece['m_RequireNone']};{piece['m_Piece'].layer};{piece['m_Piece'].PlaceableNetPiece.constructionCost};{piece['m_Piece'].PlaceableNetPiece.upkeepCost};{piece['m_Piece'].PlaceableNetPiece.elevationCost}")
+
+            for section_type, req_type in supported_types.items():
+                if self._fulfills_req_type(req_type, [parent_section, section, piece]):
+                    result[section_type]['construction'] += piece['m_Piece'].PlaceableNetPiece.constructionCost
+                    result[section_type]['upkeep'] += piece['m_Piece'].PlaceableNetPiece.upkeepCost
+                    if section_type == 'elevated':
+                        result[section_type]['elevation_cost'] += piece['m_Piece'].PlaceableNetPiece.elevationCost
+
+    def _get_car_lanes_from_section(self, section) -> int:
+        lanes = 0
+        for piece in section['m_Section'].pieces:
+            if hasattr(piece['m_Piece'], 'NetPieceLanes') and self._fulfills_req_type(None, [section, piece]):
+                for lane in piece['m_Piece'].NetPieceLanes.lanes:
+                    if hasattr(lane['m_Lane'], 'CarLane') and not lane['m_Lane'].CarLane.startingLane and not lane['m_Lane'].CarLane.endingLane:
+                        lanes += 1
+        return lanes
+
+    @cached_property
+    def car_lanes(self) -> int:
+        lanes = 0
+        for section in self.sections:
+            if self._fulfills_req_type(None, [section]):
+                lanes += self._get_car_lanes_from_section(section)
+                for subsection in section['m_Section'].subSections:
+                    lanes += self._get_car_lanes_from_section(subsection)
+        return lanes
 
 class SignatureBuilding(CS2Asset):
     zoneType: 'Zone'
@@ -623,3 +860,36 @@ class ProcessingRequirement(Requirement):
     def format(self) -> List[str]:
         return [f'{self.minimumProducedAmount:,} {self.resourceType.display_name} goods produced']
 
+
+class ElectricityConnection(CS2Asset):
+    voltage: Voltage
+    direction: int  # actually FlowDirection, but it seems to always be 3 == Both
+    capacity: int
+    requireAll: List[NetPieceRequirements]
+    requireAny: List[NetPieceRequirements]
+    requireNone: List[NetPieceRequirements]
+
+    transform_value_functions = {'voltage': lambda voltage: Voltage(voltage),
+                                 'requireAll': lambda reqs: [NetPieceRequirements(req) for req in reqs],
+                                 'requireAny': lambda reqs: [NetPieceRequirements(req) for req in reqs],
+                                 'requireNone': lambda reqs: [NetPieceRequirements(req) for req in reqs],
+                                 }
+
+    def format_capacity(self):
+        formatter = CS2WikiTextFormatter()
+        return formatter.format_big_number(self.capacity * 100, ["KW", "MW", "GW"])
+
+
+class WaterPipeConnection(CS2Asset):
+    freshCapacity: int
+    sewageCapacity: int
+    stormCapacity: int
+
+    def has_water_pipe(self) -> bool:
+        return self.freshCapacity > 0
+
+    def has_sewage_pipe(self) -> bool:
+        return self.sewageCapacity > 0
+
+    def has_combined_pipe(self) -> bool:
+        return self.has_water_pipe() and self.has_sewage_pipe()
