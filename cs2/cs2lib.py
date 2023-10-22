@@ -492,7 +492,6 @@ class Road(NamedAsset):
             'tunnel': {'construction': 0, 'upkeep': 0, 'elevation_cost': 0},
             'elevated': {'construction': 0, 'upkeep': 0, 'elevation_cost': 0},
         }
-        # print(f'{self.display_name} ======')
         for section in self.sections + self.UndergroundNetSections.sections:
             self._add_costs_from_section(section, result)
             for subsection in section['m_Section'].subSections:
@@ -527,9 +526,6 @@ class Road(NamedAsset):
         for piece in section['m_Section'].pieces:
             if not hasattr(piece['m_Piece'], 'PlaceableNetPiece'):
                 continue
-            # print(f"{piece['m_Piece'].name};all;{piece['m_RequireAll']};any;{piece['m_RequireAny']};layer;{piece['m_Piece'].layer};cost;{piece['m_Piece'].PlaceableNetPiece.constructionCost};upkeep;{piece['m_Piece'].PlaceableNetPiece.upkeepCost}")
-            print(
-                f"{piece['m_Piece'].name};{parent_section['m_RequireAll']};{parent_section['m_RequireAny']};{parent_section['m_RequireNone']};{section['m_RequireAll']};{section['m_RequireAny']};{section['m_RequireNone']};{piece['m_RequireAll']};{piece['m_RequireAny']};{piece['m_RequireNone']};{piece['m_Piece'].layer};{piece['m_Piece'].PlaceableNetPiece.constructionCost};{piece['m_Piece'].PlaceableNetPiece.upkeepCost};{piece['m_Piece'].PlaceableNetPiece.elevationCost}")
 
             for section_type, req_type in supported_types.items():
                 if self._fulfills_req_type(req_type, [parent_section, section, piece]):
