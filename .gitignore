@@ -4,6 +4,9 @@ PyHelpersForPDXWikis/localsettings.py
 # default output folder
 output
 
+# default cache folder
+cache
+
 # environment
 .venv
 
