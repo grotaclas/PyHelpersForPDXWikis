@@ -228,8 +228,8 @@ class Road(NamedAsset):
             return (
                 f'{int(self.speedLimit / 2)} km/h<ref name=speedlimit{self.speedLimit}>The internal speedlimit is {self.speedLimit}.'
                 f' There are no speed limit signs for this limit in the themes, but the estimated speedlimit for'
-                f' the european theme would be {int(self.speedLimit / 2)} km/h and {int(self.speedLimit / 2 / 1609344)} mph'
-                f'for the north american theme</ref>')
+                f' the european theme would be {int(self.speedLimit / 2)} km/h and {int(self.speedLimit / 2 / 1.609344)} mph'
+                f' for the north american theme</ref>')
 
     def _format_icon(self, icon_name: str, icon_description: str, icon_size: str = '48px',
                      annotation_name: str = '', annotation: str = ''):
