@@ -1,3 +1,5 @@
+import pprint
+from cs2_enum import Enum
 from io import BufferedReader
 from leb128 import u
 from PyHelpersForPDXWikis.localsettings import CS2DIR
@@ -8,6 +10,16 @@ class CS2Localization:
 
     # allows the overriding of localization strings
     localizationOverrides = {}
+
+    # group and loc_id for the localization for the specific enum classes
+    enum_localizations = {
+        'CitizenEducationLevel': ('SelectedInfoPanel', 'CITIZEN_EDUCATION'),
+        'CityModifierType': ('Properties', 'CITY_MODIFIER'),
+        'LocalModifierType': ('Properties', 'LOCAL_MODIFIER'),
+        'LeisureType': ('Properties', 'LEISURE_TYPE'),
+        'ResourceInEditor': ('Resources', 'TITLE'),
+        'SchoolLevel': ('SelectedInfoPanel', 'EDUCATION_LEVELS'),
+    }
 
     def __init__(self, locale='en-US'):
         self.locale = locale
@@ -30,6 +42,7 @@ class CS2Localization:
             for i in range(localization_count):
                 key = self._read_string(file)
                 value = self._read_string(file)
+                value = value.strip()
                 if key in localization_dict:
                     raise Exception(f'duplicate localization key "{key}". Previous localization was "{localization_dict[key]}", new localization is "{value}"')
                 localization_dict[key] = value
@@ -99,3 +112,16 @@ class CS2Localization:
         if key not in self.get_index_count_dict():
             raise Exception(f'The key "{key}" is not an indexed localization')
         return [self.localize(f'{key}:{i}', default) for i in range(self.get_index_count_dict()[key])]
+
+    def localize_enum(self, enum: Enum):
+        enum_cls = type(enum).__name__
+        if enum_cls in self.enum_localizations:
+            group, loc_ic = self.enum_localizations[enum_cls]
+            return self.localize(group, loc_ic, enum.name)
+        else:
+            return enum.name
+
+
+if __name__ == '__main__':
+    # dump localizations for a quick overview
+    pprint.pp(CS2Localization().get_localization_dict())

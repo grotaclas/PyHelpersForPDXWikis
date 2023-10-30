@@ -1,13 +1,14 @@
-import inspect
 import subprocess
 from collections import ChainMap
-from enum import Enum
+from enum import Enum, Flag
+
 from functools import cached_property
-from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, get_args, get_origin, get_type_hints, Any
 
 from common.paradox_lib import IconEntity
+from cs2.cs2_enum import DLC
+from cs2.cs2_enum_auto_generated import *
 from cs2.game import cs2game
 from cs2.text_formatter import CS2WikiTextFormatter
 
@@ -16,6 +17,12 @@ def convert_cs_member_name_to_python_attribute(s: str):
     """ remove the prefix m_ and lowercase the first letter"""
     s = s.removeprefix('m_')
     return s[0].lower() + s[1:]
+
+
+def convert_svg_to_png(svg_file: Path, destination_file: Path | str, width: int = 256):
+    subprocess.run(
+        ['inkscape', svg_file,
+         '--export-type=png', f'--export-filename={destination_file}', f'--export-width={width}'])
 
 
 ################
@@ -54,6 +61,9 @@ class CS2Asset:
         else:
             return False
 
+    def __contains__(self, item):
+        return hasattr(self, item)
+
     @staticmethod
     def calculate_id(file_name: str, path_id: int) -> str:
         """Unique id based on the filename of the asset file and the path id"""
@@ -65,9 +75,24 @@ class CS2Asset:
         return self.calculate_id(self.file_name, self.path_id)
 
     def add_attributes(self, attributes: Dict[str, any]):
+        annotations = self.all_annotations()
         for key, value in attributes.items():
             if key in self.transform_value_functions:
                 value = self.transform_value_functions[key](value)
+            elif key in annotations:  # special handling based on the type. So far only for enums
+                attribute_type = annotations[key]
+                origin = get_origin(attribute_type)
+                if origin == list:  # List[<sub_type>]
+                    sub_type = get_args(attribute_type)[0]
+                    # checking for None is needed, because issubclass throws an exception when it is used on GenericAliases
+                    if get_origin(sub_type) is None:
+                        if issubclass(sub_type, Flag):
+                            value = sub_type(value)
+                        elif issubclass(sub_type, Enum):
+                            value = [sub_type(element) for element in value]
+                # checking for None is needed, because issubclass throws an exception when it is used on GenericAliases
+                elif origin is None and issubclass(attribute_type, Enum):
+                    value = attribute_type(value)
             setattr(self, key, value)
         for key, f in self.extra_data_functions.items():
             setattr(self, key, f(attributes))
@@ -76,7 +101,7 @@ class CS2Asset:
     def all_annotations(cls) -> ChainMap:
         """Returns a dictionary-like ChainMap that includes annotations for all
            attributes defined in cls or inherited from superclasses."""
-        return ChainMap(*(inspect.get_annotations(c) for c in cls.mro()))
+        return ChainMap(*(get_type_hints(c) for c in cls.mro()))
 
 
 class GenericAsset(CS2Asset):
@@ -88,276 +113,36 @@ class NamedAsset(CS2Asset):
     name: str
     display_name: str
 
+    localization_category = 'Assets'
+    localization_sub_category_display_name = 'NAME'
+    localization_sub_category_description = 'DESCRIPTION'
+
     def __init__(self, cs2_class: str, file_name: str, path_id: int, parent: CS2Asset = None):
         super().__init__(cs2_class, file_name, path_id, parent)
         if 'display_name' not in self.extra_data_functions:
             self.extra_data_functions = self.extra_data_functions.copy()  # copy to not modify the class attribute of the parent
-            self.extra_data_functions['display_name'] = lambda data: cs2game.parser.localizer.localize('Assets', 'NAME', data['name'])
+            self.extra_data_functions['display_name'] = lambda data: cs2game.parser.localizer.localize(
+                self.localization_category, self.localization_sub_category_display_name, data['name']
+            )
 
     def __str__(self):
         return self.display_name
 
     @cached_property
     def description(self):
-        return cs2game.localizer.localize('Assets', 'DESCRIPTION',
-                                          self.name)
+        return cs2game.localizer.localize(self.localization_category, self.localization_sub_category_description, self.name).replace('\n', '').replace('\r', '')
 
     @cached_property
     def dlc(self) -> 'DLC':
         if hasattr(self, 'ContentPrerequisite'):
-            return DLC(self.ContentPrerequisite.contentPrerequisite.DLC_Requirement.dlc['id'])
+            if 'DLC_Requirement' in self.ContentPrerequisite.contentPrerequisite:
+                return DLC(self.ContentPrerequisite.contentPrerequisite.DLC_Requirement.dlc['id'])
+            elif 'PdxLoginRequirement' in self.ContentPrerequisite.contentPrerequisite:
+                return DLC.PdxLoginRequirement
+            else:
+                raise NotImplementedError(f'Unknown content requiremnet in {self.name}/{self.display_name}')
         else:
-            return DLC(-1)
-
-################
-# Enum classes #
-################
-
-class AreaType(Enum):
-    _None = 0       # it is None in C#, but python doesn't support this
-    Residential = 1
-    Commercial = 2
-    Industrial = 3
-
-
-class DLC(Enum):
-    BaseGame = -1  # to simplify code
-    LandmarkBuildings = 0
-    SanFranciscoSet = 1
-    CS1TreasureHunt = 2
-
-    def __str__(self):
-        return self.name
-
-    @cached_property
-    def display_name(self):
-        """Hardcoded names, because I didnt find them anywhere in the files"""
-        return {'BaseGame': '',
-                'LandmarkBuildings': 'Landmark Buildings',
-                'SanFranciscoSet': 'San Francisco Set',
-                'CS1TreasureHunt': 'Treasure Hunt'
-                }[self.name]
-
-
-class ModifierValueMode(Enum):
-    Relative = 0
-    Absolute = 1
-    InverseRelative = 2
-
-
-class CityModifierType(Enum):
-    Attractiveness = 0
-    CrimeAccumulation = 1
-    DisasterWarningTime = 3
-    DisasterDamageRate = 4
-    DiseaseProbability = 5
-    ParkEntertainment = 6
-    CriminalMonitorProbability = 7
-    IndustrialAirPollution = 8
-    IndustrialGroundPollution = 9
-    IndustrialGarbage = 10
-    RecoveryFailChange = 11
-    OreResourceAmount = 12
-    OilResourceAmount = 13
-    UniversityInterest = 14
-    OfficeSoftwareDemand = 15
-    IndustrialElectronicsDemand = 16
-    OfficeSoftwareEfficiency = 17
-    IndustrialElectronicsEfficiency = 18
-    TelecomCapacity = 19
-    Entertainment = 20
-    HighwayTrafficSafety = 21
-    PrisonTime = 22
-    CrimeProbability = 23
-    CollegeGraduation = 24
-    UniversityGraduation = 25
-    ImportCost = 26
-    LoanInterest = 27
-    BuildingLevelingCost = 28
-    ExportCost = 29
-    TaxiStartingFee = 30
-    IndustrialEfficiency = 31
-    OfficeEfficiency = 32
-    PollutionHealthAffect = 33
-    HospitalEfficiency = 34
-
-    @cached_property
-    def display_name(self) -> str:
-        return cs2game.localizer.localize('Properties', 'CITY_MODIFIER', self.name)
-
-
-class LocalModifierType(Enum):
-    CrimeAccumulation = 0
-    ForestFireResponseTime = 1
-    ForestFireHazard = 2
-    Wellbeing = 3
-    Health = 4
-
-    @cached_property
-    def display_name(self) -> str:
-        return cs2game.localizer.localize('Properties', 'LOCAL_MODIFIER', self.name)
-
-
-class NetPieceLayer(Enum):
-    Surface = 0
-    Bottom = 1
-    Top = 2
-    Side = 3
-
-
-class NetPieceRequirements(Enum):
-    Node = 0
-    Intersection = 1
-    DeadEnd = 2
-    Crosswalk = 3
-    BusStop = 4
-    Median = 5
-    TrainStop = 6
-    OppositeTrainStop = 7
-    Inverted = 8
-    TaxiStand = 9
-    LevelCrossing = 10
-    Elevated = 11
-    Tunnel = 12
-    Raised = 13
-    Lowered = 14
-    LowTransition = 15
-    HighTransition = 16
-    WideMedian = 17
-    TramTrack = 18
-    TramStop = 19
-    OppositeTramTrack = 20
-    OppositeTramStop = 21
-    MedianBreak = 22
-    ShipStop = 23
-    Sidewalk = 24
-    Edge = 25
-    SubwayStop = 26
-    OppositeSubwayStop = 27
-    MiddlePlatform = 28
-    Underground = 29
-    Roundabout = 30
-    OppositeSidewalk = 31
-    SoundBarrier = 32
-    Overhead = 33
-    TrafficLights = 34
-    PublicTransportLane = 35
-    OppositePublicTransportLane = 36
-    Spillway = 37
-    MiddleGrass = 38
-    MiddleTrees = 39
-    WideSidewalk = 40
-    SideGrass = 41
-    SideTrees = 42
-    OppositeGrass = 43
-    OppositeTrees = 44
-    Opening = 45
-    Front = 46
-    Back = 47
-    Flipped = 48
-    RemoveTrafficLights = 49
-    AllWayStop = 50
-    Pavement = 51
-    Gravel = 52
-    Tiles = 53
-    ForbidLeftTurn = 54
-    ForbidRightTurn = 55
-    OppositeWideSidewalk = 56
-    OppositeForbidLeftTurn = 57
-    OppositeForbidRightTurn = 58
-    OppositeSoundBarrier = 59
-    SidePlatform = 60
-    AddCrosswalk = 61
-    RemoveCrosswalk = 62
-    Lighting = 63
-    OppositeBusStop = 64
-    OppositeTaxiStand = 65
-    OppositeRaised = 66
-    OppositeLowered = 67
-    OppositeLowTransition = 68
-    OppositeHighTransition = 69
-    OppositeShipStop = 70
-    OppositePlatform = 71
-    OppositeAddCrosswalk = 72
-    OppositeRemoveCrosswalk = 73
-    Inside = 74
-    ForbidStraight = 75
-    OppositeForbidStraight = 76
-
-
-class ResourceInEditor(Enum):
-    NoResource = 0
-    Money = 1
-    Grain = 2
-    ConvenienceFood = 3
-    Food = 4
-    Vegetables = 5
-    Meals = 6
-    Wood = 7
-    Timber = 8
-    Paper = 9
-    Furniture = 10
-    Vehicles = 11
-    Lodging = 12
-    UnsortedMail = 13
-    LocalMail = 14
-    OutgoingMail = 15
-    Oil = 16
-    Petrochemicals = 17
-    Ore = 18
-    Plastics = 19
-    Metals = 20
-    Electronics = 21
-    Software = 22
-    Coal = 23
-    Stone = 24
-    Livestock = 25
-    Cotton = 26
-    Steel = 27
-    Minerals = 28
-    Concrete = 29
-    Machinery = 30
-    Chemicals = 31
-    Pharmaceuticals = 32
-    Beverages = 33
-    Textiles = 34
-    Telecom = 35
-    Financial = 36
-    Media = 37
-    Entertainment = 38
-    Recreation = 39
-    Garbage = 40
-    Count = 41
-
-    @cached_property
-    def display_name(self) -> str:
-        return cs2game.localizer.localize('Resources', 'TITLE', self.name)
-
-
-class TrafficSignType(Enum):
-    _None = 0       # it is None in C#, but python doesn't support this
-    Stop = 1
-    Yield = 2
-    NoTurnLeft = 3
-    NoTurnRight = 4
-    NoUTurnLeft = 5
-    NoUTurnRight = 6
-    DoNotEnter = 7
-    Motorway = 8
-    Oneway = 9
-    SpeedLimit = 10
-    Parking = 11
-    Street = 12
-    BusOnly = 13
-    TaxiOnly = 14
-    RoundaboutCounterclockwise = 15
-    RoundaboutClockwise = 16
-    Count = 17
-
-
-class Voltage(Enum):
-    Low = 0
-    High = 1
+            return DLC.BaseGame
 
 
 #################
@@ -381,7 +166,6 @@ class Building(NamedAsset):
     def size(self):
         return f'{self.lotWidth}×{self.lotDepth}'
 
-
     def get_effect_descriptions(self) -> List[str]:
         """List of formatted effect descriptions"""
 
@@ -396,12 +180,11 @@ class Building(NamedAsset):
         return effects
 
 
-
 class BuildingExtension(NamedAsset):
     circular: bool
     externalLot: bool
-    position: [float]
-    overrideLotSize: [int]
+    position: List[float]
+    overrideLotSize: List[int]
     overrideHeight: float
 
 
@@ -553,6 +336,7 @@ class Road(NamedAsset):
                     lanes += self._get_car_lanes_from_section(subsection)
         return lanes
 
+
 class SignatureBuilding(CS2Asset):
     zoneType: 'Zone'
     xPReward: int
@@ -608,7 +392,12 @@ class Unlockable(CS2Asset):
         for heading, requirements in {'All of:': self.requireAll, 'One of:': self.requireAny}.items():
             formatted_requirements[heading] = []
             for req in requirements:
-                formatted_requirements[heading].extend(req.format())
+                if isinstance(req, Requirement):
+                    formatted_requirements[heading].extend(req.format())
+                elif isinstance(req, NamedAsset):
+                    formatted_requirements[heading].append(req.display_name)
+                else:
+                    raise NotImplementedError(f'formatting of requirement type {type(req)} is not supported')
 
         if sum([len(reqs) for reqs in formatted_requirements.values()]) > 1:
             for heading, requirements in formatted_requirements.items():
@@ -679,9 +468,7 @@ class UIObject(CS2Asset):
                     if file.name.lower() == svg_file.name.lower():
                         svg_file = file
                         break
-            subprocess.run(
-                ['inkscape', svg_file,
-                 '--export-type=png', f'--export-filename={filename}', f'--export-width={width}'])
+            convert_svg_to_png(svg_file, filename, width)
             with open(filename, 'rb') as tmp_file:
                 return tmp_file.read()
         else:
@@ -689,13 +476,12 @@ class UIObject(CS2Asset):
 
 
 class Zone(NamedAsset, IconEntity):
-    areaType: AreaType
+    areaType: GameZonesAreaType
     office: bool
     # not implemented
     #color: Color
     #edge: Color
 
-    transform_value_functions = {'areaType': lambda area_type: AreaType(area_type)}
     extra_data_functions = {'icon': lambda data: f'Zone{data["name"].replace(" ", "").removeprefix("EU")}.png'}
 
     def get_wiki_filename_prefix(self) -> str:
@@ -708,10 +494,10 @@ class Zone(NamedAsset, IconEntity):
         return 'Zoning'
 
 
-class ZoneBuiltRequirement(CS2Asset):
+class ZoneBuiltRequirement(Requirement):
     requiredTheme: Theme
     requiredZone: Zone
-    requiredType: AreaType
+    requiredType: GameZonesAreaType
     minimumSquares: int
     minimumCount: int
     minimumLevel: int
@@ -787,7 +573,7 @@ class LocalEffect(Effect):
         desc = cs2game.localizer.localize('Properties', 'LOCAL_MODIFIER_EFFECT')
         return desc.format(DELTA=self.get_formatted_delta(),
                            TYPE=self.type.display_name,
-                           RADIUS=formatter.format_distance(self.radius))
+                           RADIUS=formatter.distance(self.radius))
 
 
 class CityEffects(CS2Asset):
@@ -827,6 +613,71 @@ class CitizenRequirement(Requirement):
         return results
 
 
+class CargoTransportStation(CS2Asset):
+    tradedResources: List[ResourceInEditor]
+    # fuels. seem to always be 1
+    # carRefuelTypes: EnergyTypes
+    # trainRefuelTypes: EnergyTypes
+    # watercraftRefuelTypes: EnergyTypes
+    # aircraftRefuelTypes: EnergyTypes
+    loadingFactor: float
+    # min/mx ticks between transports?
+    # transportInterval: int2
+    transports: int
+
+
+class CityServiceBuilding(CS2Asset):
+    upkeeps: List['ResourceUpkeep']
+
+    transform_value_functions = {'upkeeps': lambda upkeeps: [ResourceUpkeep(
+        ResourceInEditor(upkeep['m_Resources']['m_Resource']),
+        upkeep['m_Resources']['m_Amount'],
+        upkeep['m_ScaleWithUsage'])
+        for upkeep in upkeeps]}
+
+    def format_upkeeps(self) -> List[str]:
+        return [upkeep.format() for upkeep in self.upkeeps]
+
+
+class DefaultPolicies(CS2Asset):
+    policies: List[Dict[str, Any]]
+
+    def format(self):
+        return [f"{cs2game.localizer.localize('Policy', 'TITLE', p['m_Policy'].name)}: {p['m_Policy'].sliderDefault}" for p in self.policies]
+
+
+class ResourceStackInEditor:
+    def __init__(self, resource: ResourceInEditor, amount: int):
+        self.resource = resource
+        self.amount = amount
+
+    def format(self) -> str:
+        return f'{self.resource.display_name}: {self.amount}'
+
+
+class InitialResources(CS2Asset):
+    initialResources: List[ResourceStackInEditor]
+
+    transform_value_functions = {'initialResources': lambda initialResources: [
+        ResourceStackInEditor(ResourceInEditor(res['m_Value']['m_Resource']), res['m_Value']['m_Amount']) for res in
+        initialResources]}
+
+    def format(self) -> List[str]:
+        return [resource.format() for resource in self.initialResources]
+
+
+class LeisureProvider(CS2Asset):
+    efficiency: int
+    resources: ResourceInEditor
+    leisureType: LeisureType
+
+
+class MaintenanceDepot(CS2Asset):
+    maintenanceType: List[MaintenanceType]
+    vehicleCapacity: int
+    vehicleEfficiency: float
+
+
 class Feature(Requirement):
     """ can explicitly be unlocked by milestones
     not really relevant for signature buildings, because they are unlocked by early milestones which are never
@@ -851,10 +702,65 @@ class ProcessingRequirement(Requirement):
     resourceType: ResourceInEditor
     minimumProducedAmount: int
 
-    transform_value_functions = {'resourceType': lambda resourceType: ResourceInEditor(resourceType)}
-
     def format(self) -> List[str]:
         return [f'{self.minimumProducedAmount:,} {self.resourceType.display_name} goods produced']
+
+
+class PoliceStation(CS2Asset):
+    patrolCarCapacity: int
+    policeHelicopterCapacity: int
+    jailCapacity: int
+    bla: List[Dict[str, Any]]
+    purposes: List[PolicePurpose]
+
+
+class ResourceProductionInfo:
+    def __init__(self, resource: ResourceInEditor, productionRate: int, storageCapacity: int):
+        self.resource = resource
+        self.productionRate = productionRate
+        self.storageCapacity = storageCapacity
+
+    def format(self):
+        return f'{self.resource.display_name} (Rate: {self.productionRate}, Storage: {self.storageCapacity}'
+
+
+class ResourceProducer(CS2Asset):
+    resources: List[ResourceProductionInfo]
+
+    transform_value_functions = {'resources': lambda resources: [
+        ResourceProductionInfo(ResourceInEditor(resource['m_Resource']), resource['m_ProductionRate'], resource['m_StorageCapacity']) for
+        resource in resources]}
+
+    def format(self):
+        return [resource.format() for resource in self.resources]
+
+
+class ResourceUpkeep:
+
+    def __init__(self, resource: ResourceInEditor, amount: int, scaleWithUsage: bool):
+        self.resource = resource
+        self.amount = amount
+        self.scaleWithUsage = scaleWithUsage
+
+    def format(self) -> str:
+        if self.scaleWithUsage:
+            refs = '<ref name=scaleswithusage>Scales with usage</ref>'
+        else:
+            refs = ''
+        return f'{{{{icon|{self.resource.display_name}}}}} {self.amount} {self.resource.display_name}{refs}'
+
+
+class School(CS2Asset):
+    studentCapacity: int
+    level: SchoolLevel
+    graduationModifier: float
+
+
+class Service(NamedAsset):
+    cityResources: List[PlayerResource]
+    service: CityService
+
+    localization_category = 'Services'
 
 
 class ElectricityConnection(CS2Asset):
@@ -865,11 +771,6 @@ class ElectricityConnection(CS2Asset):
     requireAny: List[NetPieceRequirements]
     requireNone: List[NetPieceRequirements]
 
-    transform_value_functions = {'voltage': lambda voltage: Voltage(voltage),
-                                 'requireAll': lambda reqs: [NetPieceRequirements(req) for req in reqs],
-                                 'requireAny': lambda reqs: [NetPieceRequirements(req) for req in reqs],
-                                 'requireNone': lambda reqs: [NetPieceRequirements(req) for req in reqs],
-                                 }
 
     def format_capacity(self):
         formatter = CS2WikiTextFormatter()
@@ -889,3 +790,57 @@ class WaterPipeConnection(CS2Asset):
 
     def has_combined_pipe(self) -> bool:
         return self.has_water_pipe() and self.has_sewage_pipe()
+
+
+class Workplace(CS2Asset):
+    workplaces: int
+    complexity: WorkplaceComplexity
+    eveningShiftProbability: float
+    nightShiftProbability: float
+
+
+    def get_highest_needed_education(self) -> CitizenEducationLevel:
+        return CitizenEducationLevel(self.complexity.value + 1)
+
+
+#####################
+# Non-Asset classes #
+#####################
+
+class Map(NamedAsset):
+    localization_category = 'Maps'
+    localization_sub_category_display_name = 'MAP_TITLE'
+    localization_sub_category_description = 'MAP_DESCRIPTION'
+
+    displayName: str
+    thumbnail: str  # seems to be a hash which identifies the file
+    preview: str  # seems to be a hash which identifies the file
+    theme: str
+    temperatureRange: Dict[str, float]
+    cloudiness: float
+    precipitation: float
+    latitude: float
+    longitude: float
+    buildableLand: int
+    area: int
+    waterAvailability: int  # seems to always be 0
+    resources: Dict[str, int]
+    connections: Dict[str, bool]
+    contentPrerequisite: List[DLC]
+    nameAsCityName: bool  # always False
+    startingYear: int   # always -1
+    mapData: str  # hash which points to .cdm file
+    sessionGuid: str  # seems to always be a bunch of 0's
+
+    transform_value_functions = {'contentPrerequisite': lambda reqs: [DLC[req] for req in reqs if req] if reqs else [DLC.BaseGame]}
+
+    def format_connection_icons(self) -> List[str]:
+        icon_map = {
+            "road": 'highway connections',
+            "train": 'rail connections',
+            "air": 'airplane connections',
+            "ship": 'ship connections',
+            "electricity": 'electricity connections',
+            "water": 'water connections',
+        }
+        return [f'{{{{icon|{icon_map[connection]}}}}}' for connection, active in self.connections.items() if active]

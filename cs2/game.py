@@ -14,7 +14,7 @@ class CitiesSkylines2(Game):
     short_game_name = 'cs2'
     game_path = CS2DIR
     launcher_settings = game_path / 'Launcher/launcher-settings.json'
-    wiki_domain = 'beverlyhills.paradoxwikis.com'
+    wiki_domain = 'cs2.paradoxwikis.com'
 
     @cached_property
     def parser(self):

@@ -90,6 +90,209 @@ class TableGenerator(CS2FileGenerator):
     # Table generators and their helpers #
     ######################################
 
+    def get_all_service_buildings_tables_by_category(self) -> Dict[str, List[str]]:
+        buildings_by_category = {}
+        for building in self.parser.service_buildings.values():
+            category = self._format_service_category(building.ServiceObject.service.name)
+            if category not in buildings_by_category:
+                buildings_by_category[category] = []
+            buildings_by_category[category].append(building)
+
+        result = {}
+        for category, buildings in buildings_by_category.items():
+            result[category] = self.generate_service_buildings_table(sorted(buildings, key=lambda b: (
+                b.UIObject.group.UIObject.priority, b.UIObject.priority) if hasattr(b, 'UIObject') else (0, 0)))
+
+        return result
+
+    def generate_all_service_buildings_tables(self):
+        result = ''
+        for category, tables in self.get_all_service_buildings_tables_by_category().items():
+            result += f'== {category} ==\n'
+            result += '\n'.join(tables)
+            result += '\n'
+        return result
+
+    def _format_service_category(self, category: str):
+        return category.replace(' ', '_').replace('&', 'and').lower()
+
+    def _format_electricity_production(self, building: CS2Asset):
+        if not 'PowerPlant' in building:
+            return ''
+        if 'WaterPowered' in building:
+            return 'varies'
+
+        production = building.PowerPlant.electricityProduction
+        if 'WindPowered' in building:
+            production = building.WindPowered.production
+        elif 'GroundWaterPowered' in building:
+            production = building.GroundWaterPowered.production
+        elif 'SolarPowered' in building:
+            production = building.SolarPowered.production
+        elif 'GarbagePowered' in building:
+            production = building.GarbagePowered.capacity
+
+        if production == 0:
+            return ''
+        else:
+            return self.formatter.power(production)
+
+    def generate_service_buildings_table(self, buildings) -> List[str]:
+        """list of main table and extra table"""
+        format = self.formatter
+        data = [{
+            'Name': f'{{{{iconbox|{building.display_name}|{building.description}|image=Service building {building.display_name}.png}}}}',
+            'Size (cells)': building.size,
+            'DLC': building.dlc.icon,
+            'Requirements': building.Unlockable.format(),
+            'Cost': format.cost(building.PlaceableObject.constructionCost),
+            'Upkeep per month': format.cost(building.ServiceConsumption.upkeep),
+            'XP': building.PlaceableObject.xPReward,
+            'Attractiveness': f'{{{{icon|attractiveness}}}} {building.Attraction.attractiveness}' if hasattr(building,
+                                                                                                             'Attraction') and building.Attraction.attractiveness > 0 else '',
+            'Effects': format.create_wiki_list(building.get_effect_descriptions(),
+                                                       no_list_with_one_element=True),
+            # better to show this as a requirement in the other buildings. This formatting doesnt work anyway
+            # 'unlocks': ', '.join([', '.join(unlock.format()) for unlock in building.UnlockOnBuild.unlocks]) if 'UnlockOnBuild' in building else '',
+            'Goods consumption': ', '.join(building.CityServiceBuilding.format_upkeeps()),
+
+            'Electricity production': self._format_electricity_production(building),
+            'productionPerUnit': building.GarbagePowered.productionPerUnit if 'GarbagePowered' in building else '',
+            # 'productionFactor': building.WaterPowered.productionFactor if 'WaterPowered' in building else '',
+            # 'capacityFactor': building.WaterPowered.capacityFactor if 'WaterPowered' in building else '',
+            'maxWind': f'{building.WindPowered.maximumWind:.1f}' if 'WindPowered' in building else '',
+            'maxGroundWater': building.GroundWaterPowered.maximumGroundWater if 'GroundWaterPowered' in building else '',
+            'Battery capacity': format.energy(building.Battery.capacity) if 'Battery' in building else '',  # energy
+            'Battery output': format.power(building.Battery.powerOutput) if 'Battery' in building else '',  # power
+
+            'Garbage storage capacity': format.weight(building.GarbageFacility.garbageCapacity) if 'GarbageFacility' in building else '',  # weight
+            'Garbage trucks': building.GarbageFacility.vehicleCapacity if 'GarbageFacility' in building else '',  # integer
+            # seems to always be 1
+            # 'transportCapacity': building.GarbageFacility.transportCapacity if 'GarbageFacility' in building else '',
+            'Garbage processing capacity': (format.weight_per_month(building.GarbageFacility.processingSpeed) + (
+                ' (only industrial waste)' if building.GarbageFacility.industrialWasteOnly else ''))
+            if 'GarbageFacility' in building else '',  # weightPerMonth
+            'resources': format.create_wiki_list(building.ResourceProducer.format(), no_list_with_one_element=True) if 'ResourceProducer' in building else '',
+
+
+            'transportType': building.TransportDepot.transportType if 'TransportDepot' in building else '',
+            # 'energyTypes': building.TransportDepot.energyTypes if 'TransportDepot' in building else '',
+            'Vehicles': building.TransportDepot.vehicleCapacity if 'TransportDepot' in building else '',  # integer
+            'productionDuration': building.TransportDepot.productionDuration if 'TransportDepot' in building else '',
+            'maintenanceDuration': building.TransportDepot.maintenanceDuration if 'TransportDepot' in building else '',
+            'dispatchCenter': building.TransportDepot.dispatchCenter if 'TransportDepot' in building else '',
+            'Maintenance types': ', '.join(typ.name for typ in building.MaintenanceDepot.maintenanceType) if 'MaintenanceDepot' in building else '',
+            'Maintenance vehicles': building.MaintenanceDepot.vehicleCapacity if 'MaintenanceDepot' in building else '',  # integer
+            # not sure what this is
+            # 'vehicleEfficiency': building.MaintenanceDepot.vehicleEfficiency if 'MaintenanceDepot' in building else '',
+
+            'Comfort': building.TransportStation.comfortFactor if 'TransportStation' in building else (building.ParkingFacility.comfortFactor if 'ParkingFacility' in building else ''),  # integer / (int)math.round(100f * data.m_ComfortFactor))
+
+            'Has companies': building.CompanyObject.selectCompany if 'CompanyObject' in building else '',
+            # TODO: find out how companies are stored and create a list somehow
+            # 'companies': building.CompanyObject.companies if 'CompanyObject' in building else '',
+            'Water output': building.WaterPumpingStation.capacity if 'WaterPumpingStation' in building else '',  # volumePerMonth
+            'Decontamination rate': building.WaterPumpingStation.purification if 'WaterPumpingStation' in building else '',  # percentage / Mathf.RoundToInt(100f * data.m_Purification)),
+            'allowedWaterTypes': building.WaterPumpingStation.allowedWaterTypes if 'WaterPumpingStation' in building else '',
+            'Sewage treatment': building.SewageOutlet.capacity if 'SewageOutlet' in building else '',  # volumePerMonth
+            'Purification rate': building.SewageOutlet.purification if 'SewageOutlet' in building else '',  # percentage / Mathf.RoundToInt(100f * data.m_Purification)),
+            'Student capacity': building.School.studentCapacity if 'School' in building else '',  # integer
+            'Level': building.School.level.display_name if 'School' in building else '',
+            'graduationModifier': building.School.graduationModifier if 'School' in building else '',
+            'Post vans': building.PostFacility.postVanCapacity if 'PostFacility' in building else '',  # integer
+            'Post trucks': building.PostFacility.postTruckCapacity if 'PostFacility' in building else '',  # integer
+            'Mail storage capacity': building.PostFacility.mailStorageCapacity if 'PostFacility' in building else '',
+            'Mailbox capacity': building.PostFacility.mailBoxCapacity if 'PostFacility' in building else '',
+            'Sorting speed': f'{building.PostFacility.sortingRate} / month' if 'PostFacility' in building and building.PostFacility.sortingRate else '',  # integerPerMonth
+
+            'Fire engines': building.FireStation.fireEngineCapacity if 'FireStation' in building else '',  # integer
+            'Fire helicopters': building.FireStation.fireHelicopterCapacity if 'FireStation' in building else '',  # integer
+            'disasterResponseCapacity': building.FireStation.disasterResponseCapacity if 'FireStation' in building else '',
+            # not sure what this is
+            # 'vehicleEfficiency': building.FireStation.vehicleEfficiency if 'FireStation' in building else '',
+
+            'Ambulances': building.Hospital.ambulanceCapacity if 'Hospital' in building else '',  # integer
+            'Medical helicopters': building.Hospital.medicalHelicopterCapacity if 'Hospital' in building else '',  # integer
+            'Patient capacity': building.Hospital.patientCapacity if 'Hospital' in building else '',  # integer
+            'treatmentBonus': building.Hospital.treatmentBonus if 'Hospital' in building else '',
+            'Min health': building.Hospital.healthRange['x'] if 'Hospital' in building else '',
+            'Max health': building.Hospital.healthRange['y'] if 'Hospital' in building else '',
+            'treatDiseases': building.Hospital.treatDiseases if 'Hospital' in building else '',
+            'treatInjuries': building.Hospital.treatInjuries if 'Hospital' in building else '',
+            'Patrol Cars': building.PoliceStation.patrolCarCapacity if 'PoliceStation' in building else '',  # integer
+            'Police Helicopters': building.PoliceStation.policeHelicopterCapacity if 'PoliceStation' in building else '',  # integer
+            'Jail Capacity': building.PoliceStation.jailCapacity if 'PoliceStation' in building else '',
+            'Purposes':  ', '.join(purpose.name for purpose in building.PoliceStation.purposes) if 'PoliceStation' in building else '',
+            'maintenancePool': building.Park.maintenancePool if 'Park' in building else '',
+            # seems to always be true
+            # 'allowHomeless': building.Park.allowHomeless if 'Park' in building else '',
+            'leisureEfficiency': building.LeisureProvider.efficiency if 'LeisureProvider' in building else '',
+            # seems to always be 0
+            # 'resources': building.LeisureProvider.resources if 'LeisureProvider' in building else '',
+            'leisureType': building.LeisureProvider.leisureType.display_name if 'LeisureProvider' in building else '',
+
+            'Prison Vans': building.Prison.prisonVanCapacity if 'Prison' in building else '',  # integer
+            'Jail capacity': building.Prison.prisonerCapacity if 'Prison' in building else '',
+            'Hearses': building.DeathcareFacility.hearseCapacity if 'DeathcareFacility' in building else '',  # integer
+            'Storage Capacity': building.DeathcareFacility.storageCapacity if 'DeathcareFacility' in building else '',  # integer
+            'Processing Capacity': building.DeathcareFacility.processingRate if 'DeathcareFacility' in building else '',  # integerPerMonth / Mathf.CeilToInt(data.m_ProcessingRate)),
+            'Traded resources': ','.join(f'{{{{icon|{r.display_name}}}}}' for r in building.CargoTransportStation.tradedResources) if 'CargoTransportStation' in building else '',
+            'transports': building.CargoTransportStation.transports if 'CargoTransportStation' in building else '',
+            'loadingFactor': building.CargoTransportStation.loadingFactor if 'CargoTransportStation' in building else '',
+            # min/mx ticks between transports?
+            # 'transportInterval': building.CargoTransportStation.transportInterval if 'CargoTransportStation' in building else '',
+            'Range': format.distance(building.TelecomFacility.range) if 'TelecomFacility' in building else '',  # length / Mathf.CeilToInt(data.m_Range)),
+            'Network Capacity': format.data_rate(building.TelecomFacility.networkCapacity) if 'TelecomFacility' in building else '',  # dataRate / Mathf.CeilToInt(data.m_NetworkCapacity)),
+            'Penetrate Terrain': building.TelecomFacility.penetrateTerrain if 'TelecomFacility' in building else '',
+            'Shelter Capacity': building.EmergencyShelter.shelterCapacity if 'EmergencyShelter' in building else '',  # integer
+            'Evacuation Buses': building.EmergencyShelter.vehicleCapacity if 'EmergencyShelter' in building else '',  # integer
+
+            'garageMarkerCapacity': building.ParkingFacility.garageMarkerCapacity if 'ParkingFacility' in building else '',
+            'Default policies': format.create_wiki_list(building.DefaultPolicies.format(), no_list_with_one_element=True) if 'DefaultPolicies' in building else '',
+            'defaultProbability': building.SubObjectDefaultProbability.defaultProbability if 'SubObjectDefaultProbability' in building else '',
+
+
+        } for building in buildings]
+        extra_data = [{
+            'Name': f'{building.display_name}',
+            # 'Category': building.ServiceObject.service.display_name,
+            'Service range': building.ServiceCoverage.range if 'ServiceCoverage' in building else '',
+            'Service capacity': building.ServiceCoverage.capacity if 'ServiceCoverage' in building else '',
+            'Service magnitude': building.ServiceCoverage.magnitude if 'ServiceCoverage' in building else '',
+            'Ground pollution': f'{{{{icon|ground pollution}}}} {building.Pollution.groundPollution}' if hasattr(
+                building, 'Pollution') and building.Pollution.groundPollution > 0 else '',
+            'Air pollution': f'{{{{icon|air pollution}}}} {building.Pollution.airPollution}' if hasattr(building,
+                                                                                                        'Pollution') and building.Pollution.airPollution > 0 else '',
+            'Noise pollution': f'{{{{icon|noise pollution}}}} {building.Pollution.noisePollution}' if hasattr(building,
+                                                                                                              'Pollution') and building.Pollution.noisePollution > 0 else '',
+
+            # 'scaleWithRenters': building.Pollution.scaleWithRenters,
+            'Electricity consumption': building.ServiceConsumption.electricityConsumption,
+            'Water consumption': building.ServiceConsumption.waterConsumption,
+            'Telecommunication consumption': building.ServiceConsumption.telecomNeed,
+            'Garbage accumulation': building.ServiceConsumption.garbageAccumulation,
+
+
+            'Workplaces': building.Workplace.workplaces if 'Workplace' in building else '',
+            'Max. needed education': building.Workplace.get_highest_needed_education().display_name if 'Workplace' in building else '',
+            'Evening shifts': f'{building.Workplace.eveningShiftProbability * 100:g}%' if 'Workplace' in building else '',
+            'Night shifts': f'{building.Workplace.nightShiftProbability * 100:g}%' if 'Workplace' in building else '',
+
+            'Initial resources': format.create_wiki_list(building.InitialResources.format(),
+                                                            no_list_with_one_element=True) if 'InitialResources' in building else '',
+            'Storage limit': building.StorageLimit.storageLimit if 'StorageLimit' in building else '',
+
+        } for building in buildings]
+        result = []
+        result.append(self.get_SVersion_header(scope='table') + '\n'
+                      + self.make_wiki_table(data, table_classes=['mildtable'],
+                                             one_line_per_cell=True, remove_empty_columns=True))
+        result.append(self.get_SVersion_header(scope='table') + '\n'
+                      + self.make_wiki_table(extra_data, table_classes=['mildtable'],
+                                             one_line_per_cell=True, remove_empty_columns=True))
+
+        return result
+
     def get_all_signature_buildings_tables_by_category(self) -> Dict[str, str]:
         buildings_by_category = {}
         for building in self.parser.signature_buildings.values():
@@ -119,7 +322,7 @@ class TableGenerator(CS2FileGenerator):
             'width="300px" | Name': f"style=\"text-align:center;\" |\n===={building.display_name}====\n\n{building.SignatureBuilding.get_wiki_file_tag()}\n\n''{building.description}''",
             'Size (cells)': building.size,
             'Theme': building.ThemeObject.theme.get_wiki_icon() if hasattr(building, 'ThemeObject') else '',
-            'DLC': building.dlc.display_name,
+            'DLC': building.dlc.icon,
             'Requirements': building.Unlockable.format(),
             'XP': building.SignatureBuilding.xPReward,
             'Attractiveness': f'{{{{icon|attractiveness}}}} {building.Attraction.attractiveness}' if hasattr(building, 'Attraction') and building.Attraction.attractiveness > 0 else '',
@@ -144,7 +347,7 @@ class TableGenerator(CS2FileGenerator):
         data = [{
             'Name': f'{{{{iconbox|{road.display_name}|{road.description}|image=Road {road.display_name}.png}}}}',
             'Category': road.UIObject.group,
-            'DLC': road.dlc.display_name,
+            'DLC': road.dlc.icon,
             'XP<ref>This amount of XP is awarded for each 112m / 14 cells</ref>': road.PlaceableNet.xPReward,
             'Speed limit': road.format_speedLimit(),
             'Elevation': f'{formatter.add_minus(road.PlaceableNet.elevationRange["min"])}–{formatter.add_minus(road.PlaceableNet.elevationRange["max"])}',
@@ -181,6 +384,33 @@ class TableGenerator(CS2FileGenerator):
         return (self.get_SVersion_header(scope='table') + '\n'
                 + self.make_wiki_table(data, table_classes=['mildtable'],
                                        one_line_per_cell=True, remove_empty_columns=True))
+
+    def generate_maps_table(self):
+        data = [{
+            'id': m.display_name,
+            'Name': f'{{{{iconbox|{m.display_name}|{m.description}|image={m.display_name} Preview.png}}}}',
+            # 'Name': m.display_name,
+            # 'Preview': f'[[File:{m.display_name} Preview.png|38px]]',
+            'DLC': ', '.join([dlc.icon for dlc in m.contentPrerequisite]),
+            'Theme': f'{{{{icon|{m.theme}}}}}',
+            'Weather': f'{{{{weather|{m.cloudiness}|{m.precipitation}}}}}',
+            'Temperature': f'{m.temperatureRange["min"]:0.1f}–{m.temperatureRange["max"]:0.1f}°C',
+            'Cloudiness': f'{m.cloudiness:.0%}',
+            'Precipitation': f'{m.precipitation:.0%}',
+            'N/S': f'{{{{latitude|{"s" if m.latitude < 0 else "n"}}}}}',
+            'Latitude': f'{m.latitude:.2f}',
+            'Longitude': f'{m.longitude:.2f}',
+            'Buildable Area': f'{m.buildableLand/m.area:.0%}',
+            'Outside Connections': ' '.join(m.format_connection_icons()),
+            '{{icon|fertile land}}': f'data-sort-value="{m.resources["fertile"]}" | {self.formatter.area(m.resources["fertile"])}' ,
+            '{{icon|forest}}':  self.formatter.weight(m.resources['forest']),
+            '{{icon|ore}}': self.formatter.weight(m.resources['ore']),
+            '{{icon|oil}}': self.formatter.weight(m.resources['oil']),
+        } for m in sorted(self.parser.maps, key=lambda m: (m.contentPrerequisite[0].value, m.display_name))]
+
+        return (self.get_SVersion_header(scope='table') + '\n'
+            + self.make_wiki_table(data, table_classes=['mildtable'],
+                                   one_line_per_cell=True, remove_empty_columns=True, row_id_key='id'))
 
 if __name__ == '__main__':
     generator = TableGenerator()

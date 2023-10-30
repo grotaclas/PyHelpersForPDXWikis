@@ -1,9 +1,7 @@
+import json
 import re
 import shutil
-from collections.abc import Mapping
-from functools import cached_property
-from pathlib import Path
-from typing import Callable, TypeVar, Type, Dict
+from typing import TypeVar, Type
 
 from UnityPy.classes.Object import NodeHelper
 
@@ -96,7 +94,10 @@ class CS2Parser:
                 result[key] = [self.parse_asset(element) if isinstance(element, NodeHelper)
                                else element
                                for element in value]
-            elif isinstance(value, int) or isinstance(value, str) or isinstance(value, float) or value is None:
+            elif isinstance(value, float):
+                # round numbers to avoid floating point issues like 0.6000000238418579
+                result[key] = round(value, 6)
+            elif isinstance(value, int) or isinstance(value, str) or value is None:
                 result[key] = value
             else:
                 raise Exception(
@@ -104,7 +105,7 @@ class CS2Parser:
 
         return result
 
-    def parse_asset(self, nodes: NodeHelper, parent: CS2_ASSET = None) -> CS2_ASSET:
+    def parse_asset(self, nodes: NodeHelper, parent: CS2_ASSET = None) -> CS2_ASSET | Dict:
         if not hasattr(nodes, 'file_name'):
             return self.parse_dict(nodes)
         asset_id = CS2Asset.calculate_id(nodes.file_name, nodes.path_id)
@@ -136,7 +137,10 @@ class CS2Parser:
                              else self.parse_dict(element) if isinstance(element, dict)
                              else element
                              for element in value]
-                elif not isinstance(value, int) and not isinstance(value, str) and not isinstance(value, float) and value is not None:
+                elif isinstance(value, float):
+                    # round numbers to avoid floating point issues like 0.6000000238418579
+                    value = round(value, 6)
+                elif not isinstance(value, int) and not isinstance(value, str) and value is not None:
                     raise Exception(f'attribute of type {type(value)} not implemented. Key is {key} in object of type {cls}')
 
                 if cls == GenericAsset:
@@ -170,6 +174,93 @@ class CS2Parser:
                 print(f'    {name}: {typ}')
             print()
             print()
+
+    def generate_code_for_enums(self, code_folder: Path) -> List[str]:
+        enum_classes = {cls.__name__: cls for cls in self._get_all_subclasses(Enum)}
+        enum_re = re.compile(r'public enum (?P<name>[a-zA-Z_0-9]*).*?\{\s*\n(?P<members>[^}]*)}', flags=re.DOTALL)
+        namespace_re = re.compile(r'^namespace (?P<name>[a-zA-Z_0-9.]*)', flags=re.MULTILINE)
+        member_re = re.compile(r'^\s*(?P<name>[a-zA-Z_0-9]*)\s*=\s*(?P<value>-?((0x[0-9a-fA-F]+)|([0-9]+)|[a-z]+\.MaxValue))(?P<suffix>[a-zA-Z]*)\s*,?\s*')
+        generated_classes = {}
+        for code_file_path in (code_folder / 'Game' / 'Game').rglob('*.cs'):
+            with open(code_file_path) as code_file:
+                code = code_file.read()
+                enum_match = enum_re.search(code)
+                if enum_match:
+                    name = enum_match.group('name')
+                    namespace = namespace_re.search(code).group('name')
+                    cs2_class = f'{namespace}.{name}'
+
+                    if '[Flags]' in code:
+                        parent_class = 'CS2BaseFlag'
+                    else:
+                        parent_class = 'CS2BaseEnum'
+                    member_lines = []
+                    for line in enum_match.group('members').split('\n'):
+                        member_match = member_re.fullmatch(line)
+                        if member_match:
+                            value = member_match.group('value')
+                            key = member_match.group('name')
+                            comment = ''
+                            if key == 'None':
+                                key = '_None'
+                                comment = " the name is None in C#, but python doesn't support this."
+                            suffix = member_match.group('suffix')
+                            if value == 'byte.MaxValue':
+                                value = '255'
+                                comment += ' the value is byte.MaxValue in C#'
+                            elif value == 'uint.MaxValue':
+                                value = '4294967295'
+                                comment += ' the value is uint.MaxValue in C#'
+                            elif value == 'ulong.MaxValue':
+                                value = '18446744073709551615'
+                                comment += ' the value is ulong.MaxValue in C#'
+                            else:
+                                pass
+                            if comment:
+                                comment = f'  #{comment}'
+                            member_lines.append(f'    {key} = {value}{comment}')
+
+                    if name not in generated_classes:
+                        generated_classes[name] = []
+                    generated_classes[name].append((cs2_class, parent_class, member_lines))
+        result = ["""
+###########################################################
+# autogenerated with generate_code_for_enums()
+# run this file with the C# code folder to regenerate it
+###########################################################
+
+import sys
+from pathlib import Path
+
+from cs2.cs2_enum import CS2BaseEnum, CS2BaseFlag
+
+if __name__ == '__main__':
+    from cs2.game import cs2game
+    code = cs2game.parser.generate_code_for_enums(Path(sys.argv[1]))
+    if code and len(code) > 100:
+        with open(__file__, 'w') as file:
+            file.write('\\n'.join(code))
+    else:
+        print('Error: enum generation failed. File is left unchanged')
+
+
+"""]
+        for name, classes in sorted(generated_classes.items()):
+            use_full_name = len(classes) > 1
+            for cs2_class, parent_class, member_lines in classes:
+                if use_full_name:
+                    class_name = cs2_class.replace('.', '')
+                else:
+                    class_name = name
+                result.append(f'# {cs2_class}')
+                result.append(f'class {class_name}({parent_class}):')
+                # result.append(f'    _cs2_class = \'{cs2_class}\'')
+                result.append('')
+                result.append('\n'.join(member_lines))
+                result.append('')
+                result.append('')
+
+        return result
 
     @cached_property
     def _theme_speedlimit_map(self) -> Dict[str,Dict[int, int]]:
@@ -278,6 +369,21 @@ class CS2Parser:
                         on_build_unlocks[unlock.name] = []
                     on_build_unlocks[unlock.name].append(asset)
         return on_build_unlocks
+
+    @cached_property
+    def maps(self) -> List[Map]:
+        maps = []
+        for path in (cs2game.game_path / 'Cities2_Data' / 'StreamingAssets' / 'Maps~').glob('*.MapMetadata'):
+            with open(path, 'r', encoding='utf-8-sig') as data_file:
+                data = json.load(data_file)
+                # display name is actually the name
+                # the real display name will be determined by add_attributes
+                data['name'] = data['displayName']
+                del data['displayName']
+                map = Map('', path.name, 0)
+                map.add_attributes(data)
+                maps.append(map)
+        return maps
 
     def write_icons(self, assets: List[CS2Asset], prefix: str, destination_folder: Path, fallback_folder: Path, move_fallbacks=False):
         """Helper to write icons from the streamingassests and a fallback folder to a destination folder

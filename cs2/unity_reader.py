@@ -102,7 +102,7 @@ class MonoBehaviourReader:
             ignored_classes = self.IGNORED_CLASSES
         cls = self.get_cls(obj)
         if cls in ignored_classes or not cls.startswith('Game.'):
-            return f'Ignored object of class "{cls}"'
+            return f'Ignored object of class "{cls}" (path id "{obj.path_id}", file "{obj.assets_file}")'
         try:
             type_template = self.type_trees[cls]
             tree = obj.read_typetree(type_template, wrap=True)
@@ -110,16 +110,16 @@ class MonoBehaviourReader:
             tree.file_name = obj.assets_file.name   # as unique keys
             tree.path_id = obj.path_id              # as unique keys
             self.object_cache[obj.assets_file.name][obj.path_id] = tree
-            self.read_node_helper(tree, depth)
+            self.read_node_helper(tree, depth, ignored_classes)
         except Exception as e:
             print(f'Cant read object "{obj}" with class {cls}')
             return f'Error reading object of class "{cls}"'
         return tree
 
-    def read_node_helper(self, tree: NodeHelper, depth):
+    def read_node_helper(self, tree: NodeHelper, depth, ignored_classes):
         for key, val in tree.__dict__.items():
             if isinstance(val, PPtr) and val.path_id != 0 and val.type.name == 'MonoBehaviour':
-                setattr(tree, key, self.parse_monobehaviour(val, depth + 1))
+                setattr(tree, key, self.parse_monobehaviour(val, depth + 1, ignored_classes=ignored_classes))
             elif isinstance(val, PPtr) and val.path_id == 0:
                 setattr(tree, key, None)
             elif isinstance(val, PPtr):
@@ -127,14 +127,14 @@ class MonoBehaviourReader:
             elif isinstance(val, list):
                 for i, item in enumerate(val):
                     if isinstance(item, PPtr) and item.path_id != 0 and item.type.name == 'MonoBehaviour':
-                        val[i] = self.parse_monobehaviour(item, depth + 1)
+                        val[i] = self.parse_monobehaviour(item, depth + 1, ignored_classes=ignored_classes)
                     elif isinstance(item, NodeHelper):
-                        val[i] = self.read_node_helper(item, depth + 1)
+                        val[i] = self.read_node_helper(item, depth + 1, ignored_classes)
                     elif not isinstance(item, PPtr) and type(item) not in [int, str, bool, float]:
                         print(f'Cant read type {type(item)}')
                         pass
             elif isinstance(val, NodeHelper):
-                setattr(tree, key, self.read_node_helper(val, depth + 1))
+                setattr(tree, key, self.read_node_helper(val, depth + 1, ignored_classes))
             elif not isinstance(val, PPtr) and type(val) not in [int, str, bool, float]:
                 print(f'Cant read type {type(val)}')
                 pass
