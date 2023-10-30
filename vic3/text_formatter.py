@@ -113,6 +113,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                         'luxury_furniture': 'luxury furniture',
                         'manowars': 'man-o-wars',
                         'meat': 'meat',
+                        'money': 'money',
                         'oil': 'oil',
                         'opium': 'opium',
                         'paper': 'paper',

@@ -21,25 +21,25 @@ class Vic3Parser:
     parse_advanced_entities() and parse_advanced_entities() can be used to easily add parsing for new entities.
     """
 
-    # allows the overriding of localisation strings
+    # allows the overriding of localization strings
     localizationOverrides = {'recognized': 'Recognized'}  # there doesn't seem to be a localization for this
 
     def __init__(self):
         self.parser = ParadoxParser(VIC3DIR / 'game')
 
     @cached_property
-    def _localisation_dict(self):
-        localisation_dict = {}
+    def _localization_dict(self):
+        localization_dict = {}
         for path in (VIC3DIR / 'game' / 'localization' / 'english').glob('**/*_l_english.yml'):
             with path.open(encoding='utf-8-sig') as f:
                 for line in f:
                     match = re.fullmatch(r'\s*([^#\s:]+):\d?\s*"(.*)"[^"]*', line)
                     if match:
-                        localisation_dict[match.group(1)] = match.group(2)
-        return localisation_dict
+                        localization_dict[match.group(1)] = match.group(2)
+        return localization_dict
 
     def localize(self, key: str, default: str = None) -> str:
-        """localize the key from the english vic3 localisation files
+        """localize the key from the english vic3 localization files
 
         if the key is not found, the default is returned
         unless it is None in which case the key is returned
@@ -50,11 +50,13 @@ class Vic3Parser:
         if key in self.localizationOverrides:
             return self.localizationOverrides[key]
         else:
-            return self._localisation_dict.get(key, default)
+            return self._localization_dict.get(key, default)
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE],
                                 extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None) -> dict[str, NE]:
+                                transform_value_functions: dict[str, Callable[[any], any]] = None,
+                                entity_level: int = 0,
+                                level_headings_keys: dict[str, 0] = None) -> dict[str, NE]:
         """parse a folder into objects which are subclasses of NameableEntity
 
         Args:
@@ -64,33 +66,131 @@ class Vic3Parser:
                           will turn these arguments into properties of the object
             extra_data_functions: create extra entries in the data. For each key in this dict, the corresponding function
                                   will be called with the name of the entity and the data dict as parameter. The return
-                                  value will be added to the data dict under the same key
+                                  value will be added to the data dict under the same key. 'name' and 'display_name'
+                                   can also be used as keys to change the name dnd display name of the entity
             transform_value_functions: the functions in this dict are called with the value of the data which matches
                                        the key of this dict. If the key is not present in the data, the function won't
                                        be called. The function must return the new value for the data
+            entity_level: the level where the entities can be found. The default is 0 which means that the entities
+                          are on the toplevel.
+            level_headings_keys: if entity_level is bigger than 0, this map is used to add the headings of each level
+                                 as additional keys into the data dictionary. Each entry in level_headings_keys has the
+                                 key which will be used as the key in the data dictionary and the value which is the
+                                 level of the heading which should be used. 'name' can also be a key to specify where
+                                 the name comes from
 
         Returns:
-            a dict between the top level keys in the folder and the entity_class objects which were created from them
+            a dict between the name of the entity(if not specified, the top level keys in the folder is used as the
+            name) and the entity_class objects which were created from them
         """
         if extra_data_functions is None:
             extra_data_functions = {}
         if transform_value_functions is None:
             transform_value_functions = {}
+        if level_headings_keys is None:
+            level_headings_keys = {}
         if 'display_name' not in extra_data_functions:
             extra_data_functions['display_name'] = lambda entity_name, entity_data: self.localize(entity_name)
-        entities = {}
         class_attributes = inspect.get_annotations(entity_class)
-        for name, data in self.parser.parse_folder_as_one_file(folder):
-            entity_values = {}
-            for key, func in extra_data_functions.items():
-                entity_values[key] = func(name, data)
-            for k, v in data:
-                if k in transform_value_functions:
-                    entity_values[k] = transform_value_functions[k](v)
-                elif k in class_attributes and k not in entity_values:
-                    entity_values[k] = v
-            entities[name] = entity_class(name, **entity_values)
+        if entity_level == 0:
+            overwrite_duplicate_toplevel_keys = True
+        else:
+            overwrite_duplicate_toplevel_keys = False
+        entities = self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
+                                                 previous_headings=[],
+                                                 transform_value_functions=transform_value_functions,
+                                                 tree=self.parser.parse_folder_as_one_file(folder, overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys),
+                                                 entity_level=entity_level, current_level=0,
+                                                 level_headings_keys=level_headings_keys)
+
         return entities
+
+    def _get_entities_from_level(self, class_attributes, entity_class, extra_data_functions, previous_headings,
+                                 transform_value_functions, tree, entity_level, current_level, level_headings_keys,
+                                 conditions=None):
+        entities = {}
+        for heading, data in tree:
+            if heading == 'if':
+                conditions = data['limit']
+                entities.update(self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
+                                                              headings, transform_value_functions,
+                                                              data.filter_elements(lambda k, v: k != 'limit'),
+                                                              entity_level, current_level, level_headings_keys,
+                                                              conditions))
+            else:
+                headings = previous_headings.copy()
+                headings.append(heading)
+                if current_level < entity_level:
+                    entities.update(self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
+                                                                  headings, transform_value_functions, data, entity_level,
+                                                                  current_level + 1, level_headings_keys, conditions))
+                else:
+                    if isinstance(data, Tree):
+                        name, entity = self._parse_entity(class_attributes, data, entity_class,
+                                                          extra_data_functions, headings, level_headings_keys,
+                                                          transform_value_functions, conditions)
+                        entities[name] = entity
+                    else:  # assume list
+                        for entry in data:
+                            name, entity = self._parse_entity(class_attributes, entry, entity_class,
+                                                              extra_data_functions, headings, level_headings_keys,
+                                                              transform_value_functions, conditions)
+                            entities[name] = entity
+        return entities
+
+    def _parse_entity(self, class_attributes, data, entity_class, extra_data_functions, headings,
+                      level_headings_keys, transform_value_functions, conditions=None):
+        entity_values = {}
+        if 'name' in extra_data_functions:
+            name = extra_data_functions['name']('', data)
+        elif 'name' in level_headings_keys:
+            name = headings[level_headings_keys['name']]
+        else:
+            name = headings[-1]
+        for key, level in level_headings_keys.items():
+            if key != 'name':
+                entity_values[key] = headings[level_headings_keys[key]]
+                if key in transform_value_functions:
+                    entity_values[key] = transform_value_functions[key](entity_values[key])
+        for key, func in extra_data_functions.items():
+            if key != 'name':
+                entity_values[key] = func(name, data)
+        for k, v in data:
+            if k in transform_value_functions:
+                entity_values[k] = transform_value_functions[k](v)
+            elif k in class_attributes and k not in entity_values:
+                entity_values[k] = v
+        if conditions is not None:
+            if 'conditions' in class_attributes:
+                entity_values['conditions'] = conditions
+            elif 'dlc' in class_attributes:
+                entity_values['dlc'] = self.parse_dlc_from_conditions(conditions)
+        return name, entity_class(name, **entity_values)
+
+    def parse_dlc_from_conditions(self, conditions: Tree):
+        feature_dlc_map = {
+            'agitators': 'Voice of the People',
+            'exiles': 'Voice of the People',
+            'voice_of_the_people_content': 'Voice of the People',
+            'voice_of_the_people_preorder': 'Voice of the People preorder',
+        }
+        dlcs = []
+        for key, value in conditions:
+            if key == 'has_dlc_feature':
+                dlcs.append(feature_dlc_map[value])
+            elif key == 'has_v2_soundtrack_dlc_trigger' and value == 'yes':
+                dlcs.append('Victoria 2 Remastered Soundtrack')
+            elif key == 'has_american_buildings_dlc_trigger' and value == 'yes':
+                dlcs.append('American Buildings Pack')
+            elif key == 'has_mp1_soundtrack_dlc_trigger' and value == 'yes':
+                dlcs.append('Melodies for the Masse')
+            elif key == 'has_agitators_cosmetics_dlc_trigger' and value == 'yes':
+                dlcs.append('Voice of the People')
+            else:
+                raise Exception(f'unknown condition {key}: {value}')
+        if len(dlcs) > 1:
+            raise Exception(f'more than one DLC is not supported: {dlcs}')
+        return dlcs[0]
 
     def parse_advanced_entities(self, folder: str, entity_class: Type[AE],
                                 extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
@@ -132,7 +232,7 @@ class Vic3Parser:
         return self.parser.parse_folder_as_one_file('common/script_values').merge_duplicate_keys()
 
     @cached_property
-    def countries(self):
+    def countries(self) -> dict[str, Country]:
         """returns a dictionary. keys are tags and values are Country objects."""
         countries = {}
         for file, data in self.parser.parse_files('common/country_definitions/*.txt'):
@@ -486,3 +586,60 @@ class Vic3Parser:
             'display_name': lambda name, data: self.localize(f'ACHIEVEMENT_{name}'),
             'description': lambda name, data: self.localize(f'ACHIEVEMENT_DESC_{name}')
         })
+
+    def _character_availability(self, name, data):
+        start = '0'
+        end = '0'
+        for usage in ['agitator_usage', 'commander_usage', 'interest_group_leader_usage']:
+            if usage in data:
+                if 'earliest_usage_date' in data[usage] and (start == '0' or data[usage]['earliest_usage_date'] < start):
+                    start = data[usage]['earliest_usage_date']
+                if 'latest_usage_date' in data[usage] and data[usage]['latest_usage_date'] > end:
+                    end = data[usage]['latest_usage_date']
+        result = ''
+        if start != '0':
+            result = start
+        if end != '0':
+            result = f'{result} - {end}'
+        return result
+
+    @cached_property
+    def characters(self) -> dict[str, Character]:
+        transform_value_functions = {
+            'first_name': self.localize,
+            'last_name': self.localize,
+            'country': lambda tag: self.countries[tag.removeprefix('c:')],
+            'interest_group': lambda ig: self.interest_groups.get(ig),
+            'ideology': self.localize,
+            'culture': lambda c: self.localize(c.removeprefix('cu:')),
+            'religion': lambda c: self.localize(c.removeprefix('rel:')),
+            'traits': lambda traits: [self.localize(trait) for trait in traits],
+        }
+        template_chars = self.parse_nameable_entities(f'common/character_templates/', Character,
+                                                      transform_value_functions=transform_value_functions,
+                                                      extra_data_functions={'is_template': lambda name, data: True,
+                                                                            'availability': self._character_availability,
+                                                                            })
+
+        transform_value_functions['template'] = lambda template: template_chars[template]
+        chars = self.parse_nameable_entities(f'common/history/characters/', Character,
+                                             entity_level=2, level_headings_keys={'country': 1},
+                                             transform_value_functions=transform_value_functions,
+                                             extra_data_functions={
+                        # 'display_name': lambda name, data:
+                        #     self.localize(data["first_name"]) + ' ' + self.localize(data["last_name"]) if 'first_name' in data else data['template'],
+                        'name': lambda name, data:
+                            data['first_name'] + '_' + data['last_name'] if 'first_name' in data else template_chars[data['template']].first_name + '_' + template_chars[data['template']].last_name,
+                        'availability': lambda name, data: '1836'
+
+                    },
+                                             )
+
+        # remove used templates
+        templates_to_remove = [char.template.name for char in chars.values() if char.template]
+        # and special templates
+        templates_to_remove.append('default')
+        #return template_chars | chars
+        # filter out templated characters
+        return {name: char for name, char in (template_chars | chars).items() if name not in templates_to_remove}
+

@@ -1,6 +1,7 @@
 import re
 import os
 import sys
+from collections.abc import Iterable, Sequence
 from operator import attrgetter
 # add the parent folder to the path so that imports work even if this file gets executed directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -184,6 +185,49 @@ class TableGenerator(Vic3FileGenerator):
                                      )
 
         return self.get_version_header() + '\n{{clear}}\n' + table
+
+    def iconify(self, what: any, iconify_param: str = None) -> str:
+        if isinstance(what, list):
+            return ', '.join([self.iconify(item, iconify_param) for item in what])
+        if str(what).lower() == 'random':
+            return '{{icon|Undecided}} ' + str(what)
+        if str(what) == '':
+            return ''
+        if iconify_param is not None:
+            return '{{iconify|' + str(what) + '|' + iconify_param + '}}'
+        try:
+            return what.get_wiki_link_with_icon()
+        except AttributeError:
+            return '{{icon|' + str(what) + '}} ' + str(what)
+
+    def generate_character_table(self):
+        characters = [{
+            'Name': character.display_name,
+            'Country': character.country.get_wiki_link_with_icon() if character.country else '',
+            'Role': self.iconify(character.get_roles(), 'Role'),
+            'Interest group': character.interest_group.get_wiki_link_with_icon() if character.interest_group is not None else '',
+            'Ideology': self.iconify(character.ideology, 'Ideology leader'),
+            'Traits': self.iconify(character.traits, 'Trait'),
+            # 'Culture': character.culture,
+            'Culture': f"''{character.culture.replace('_', ' ').title()}''" if character.culture in ['random', 'primary_culture'] else character.culture,
+            'Religion': character.religion,
+            'Unique Portrait': '[[File:No.png|20px|No portrait]]' if character.dna == '' else '[[File:Yes.png|20px|Unique portrait]]',
+            'Female': '[[File:Yes.png|20px|Female]]' if character.female else '[[File:No.png|20px|Male]]',
+            'Availability': character.availability,
+            'DLC': character.dlc,
+            # ignore noble, because it seems useless
+            # icon for female
+
+        } for character in self.parser.characters.values()]
+        table = self.make_wiki_table(characters, table_classes=['mildtable', 'plainlist'],
+                                     one_line_per_cell=True,
+                                     )
+
+        return self.get_SVersion_header() + '\n' + table
+
+    def get_character_cargo_templates(self):
+        result = [f'{{{{Character|Name={character.display_name}|Countries={character.country.tag if character.country else ""}|Roles={",".join(character.get_roles())}|Ideology={character.ideology}|Traits={",".join(character.traits)}}}}}' for character in self.parser.characters.values()]
+        return '\n'.join(result)
 
 
 if __name__ == '__main__':

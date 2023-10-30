@@ -206,6 +206,8 @@ class Country(NameableEntity):
     def is_event_releasable(self):
         return self.tag in vic3game.parser.event_releasable_tags
 
+    def get_wiki_link_with_icon(self):
+        return '{{flag|' + self.display_name + '}}'
 
 class LawGroup(NameableEntity):
     laws: list['Law']
@@ -398,7 +400,8 @@ class Party(AdvancedEntity):
 
 
 class InterestGroup(AdvancedEntity):
-    pass
+    def get_wiki_link_with_icon(self) -> str:
+        return self.get_wiki_icon() + ' ' + self.display_name
 
 
 class PopType(AdvancedEntity):
@@ -408,3 +411,56 @@ class PopType(AdvancedEntity):
 class Achievement(AdvancedEntity):
     possible: Tree
     happened: Tree
+
+
+class Character(NameableEntity):
+    first_name: str
+    last_name: str
+    country: Country = None
+    female: bool = False
+    culture: str = ''
+    age: int
+    birth_date: str
+    dna: str = ''
+    religion: str = ''
+    interest_group: InterestGroup = None
+    ideology: str = ''
+    traits: list[str] = []
+    commander_rank: str
+    hq: str
+    ruler: bool = False
+    heir: bool = False
+    ig_leader: bool = False
+    is_admiral: bool = False
+    is_general: bool = False
+    is_agitator: bool = False
+    noble: bool = False
+    dlc: str = ''
+    template: 'Character' = None
+    is_template: bool = False
+    historical: bool = False
+
+    agitator_usage: Tree = None
+    commander_usage: Tree = None
+    interest_group_leader_usage: Tree = None
+
+    availability: str = '1836'
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if 'template' in kwargs:
+            kwargs = vars(kwargs['template']) | kwargs
+            del kwargs['name']
+            del kwargs['display_name']
+        if 'first_name' in kwargs:
+            display_name = kwargs['first_name'] + ' ' + kwargs['last_name']
+        super().__init__(name, display_name, **kwargs)
+
+    def get_roles(self) -> list[str]:
+        return [role for role, has_role in {
+            'Ruler': self.ruler,
+            'Heir': self.heir,
+            'Politician': self.ig_leader or self.interest_group_leader_usage,
+            'General': self.is_general or (self.commander_usage and self.commander_usage['role'] == 'general'),
+            'Admiral': self.is_admiral or (self.commander_usage and self.commander_usage['role'] == 'admiral'),
+            'Agitator': self.is_agitator or self.agitator_usage,
+        }.items() if has_role]

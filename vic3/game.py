@@ -22,5 +22,12 @@ class Victoria3(Game):
         from vic3.parser import Vic3Parser
         return Vic3Parser()
 
+    @cached_property
+    def full_version(self):
+        """the build revision from caligula_rev.txt"""
+        config_path = self.game_path / 'caligula_rev.txt'
+        with open(config_path, 'r') as config_file:
+            return self.version + '-' + config_file.read()
+
 
 vic3game = Victoria3()
