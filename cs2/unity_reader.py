@@ -128,6 +128,8 @@ class MonoBehaviourReader:
                 for i, item in enumerate(val):
                     if isinstance(item, PPtr) and item.path_id != 0 and item.type.name == 'MonoBehaviour':
                         val[i] = self.parse_monobehaviour(item, depth + 1, ignored_classes=ignored_classes)
+                    elif isinstance(item, PPtr) and item.path_id == 0:
+                        val[i] = None
                     elif isinstance(item, NodeHelper):
                         val[i] = self.read_node_helper(item, depth + 1, ignored_classes)
                     elif not isinstance(item, PPtr) and type(item) not in [int, str, bool, float]:

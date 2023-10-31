@@ -1,10 +1,11 @@
 import json
 import re
 import shutil
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Set
 
 from UnityPy.classes.Object import NodeHelper
 
+from common.cache import disk_cache
 from cs2.localization import CS2Localization
 from cs2.cs2lib import *
 from cs2.unity_reader import MonoBehaviourReader
@@ -19,10 +20,6 @@ class CS2Parser:
     class_map = {
     }
 
-    def __init__(self):
-        self.parsed_assets = {}
-        self.unparsed_classes = set()
-
     @cached_property
     def localizer(self) -> CS2Localization:
         return cs2game.localizer
@@ -30,6 +27,21 @@ class CS2Parser:
     @cached_property
     def mono_behaviour_reader(self) -> MonoBehaviourReader:
         return MonoBehaviourReader(cs2game.game_path / 'Cities2_Data')
+
+    @cached_property
+    def parsed_assets(self) -> Dict[str, CS2Asset]:
+        """a cached version of Assets which you get when calling read_gameplay_assets with default arguments
+        the key of the dict is the asset id as calculated by CS2Asset.calculate_id()"""
+        return self._cached_assets_and_unparsed_classes[0]
+
+    @cached_property
+    def unparsed_classes(self) -> Set[str]:
+        return self._cached_assets_and_unparsed_classes[1]
+
+    @cached_property
+    @disk_cache(game=cs2game)
+    def _cached_assets_and_unparsed_classes(self):
+        return self.read_gameplay_assets()
 
     def read_gameplay_assets(self, toplevel_classes: List[str] = [
         'Game.Prefabs.AssetCollection',         # can be used to look stuff up
@@ -49,8 +61,8 @@ class CS2Parser:
         Args:
             toplevel_classes:  read only assets which use one of the C# classes in this list
          """
-        all_objects = []
-        parsed_objs = []
+        parsed_assets = {}
+        unparsed_classes = set()
 
         for obj in self.mono_behaviour_reader.env.objects:
             if obj.type.name == 'MonoBehaviour':
@@ -62,8 +74,8 @@ class CS2Parser:
                         continue
                     self.mono_behaviour_reader.remove_unimportant(nodes)
                     self.mono_behaviour_reader.inline_components_recursive(nodes)
-                    all_objects.append(nodes)
-                    parsed_objs.append(self.parse_asset(nodes))
+                    self.parse_asset(nodes, parsed_assets, unparsed_classes)
+        return parsed_assets, unparsed_classes
 
     def _get_all_subclasses(self, cls):
         return set(cls.__subclasses__()).union(
@@ -76,22 +88,22 @@ class CS2Parser:
     def determine_cs2lib_class(self, nodes: NodeHelper) -> Type[CS2Asset] | None:
         if nodes.cs2_class in self.class_map:
             return self.class_map[nodes.cs2_class]
-        elif nodes.m_Name in self.asset_classes:
-            return self.asset_classes[nodes.m_Name]
         elif nodes.cs2_class.removeprefix('Game.Prefabs.') in self.asset_classes:
             return self.asset_classes[nodes.cs2_class.removeprefix('Game.Prefabs.')]
         elif nodes.cs2_class.removeprefix('Game.Prefabs.').removesuffix('Prefab') in self.asset_classes:
             return self.asset_classes[nodes.cs2_class.removeprefix('Game.Prefabs.').removesuffix('Prefab')]
+        elif nodes.m_Name in self.asset_classes:
+            return self.asset_classes[nodes.m_Name]
         else:
             return None
 
-    def parse_dict(self, nodes: NodeHelper) -> Dict:
+    def parse_dict(self, nodes: NodeHelper, parsed_assets: Dict[str, CS2_ASSET], unparsed_classes: Set[str]) -> Dict:
         result = {}
         for key, value in nodes.items():
             if isinstance(value, NodeHelper):
-                result[key] = self.parse_asset(nodes[key])
+                result[key] = self.parse_asset(nodes[key], parsed_assets, unparsed_classes)
             elif isinstance(value, list):
-                result[key] = [self.parse_asset(element) if isinstance(element, NodeHelper)
+                result[key] = [self.parse_asset(element, parsed_assets, unparsed_classes) if isinstance(element, NodeHelper)
                                else element
                                for element in value]
             elif isinstance(value, float):
@@ -105,20 +117,20 @@ class CS2Parser:
 
         return result
 
-    def parse_asset(self, nodes: NodeHelper, parent: CS2_ASSET = None) -> CS2_ASSET | Dict:
+    def parse_asset(self, nodes: NodeHelper, parsed_assets: Dict[str, CS2_ASSET], unparsed_classes: Set[str], parent: CS2_ASSET = None) -> CS2_ASSET | Dict:
         if not hasattr(nodes, 'file_name'):
-            return self.parse_dict(nodes)
+            return self.parse_dict(nodes, parsed_assets, unparsed_classes)
         asset_id = CS2Asset.calculate_id(nodes.file_name, nodes.path_id)
-        if asset_id in self.parsed_assets:
-            return self.parsed_assets[asset_id]
+        if asset_id in parsed_assets:
+            return parsed_assets[asset_id]
 
         # first create a basic object so that it can be referenced in case of circular dependencies
         cls = self.determine_cs2lib_class(nodes)
         if cls is None:
-            self.unparsed_classes.add(nodes.cs2_class)
+            unparsed_classes.add(nodes.cs2_class)
             cls = GenericAsset
         asset = cls(nodes.cs2_class, nodes.file_name, nodes.path_id, parent)
-        self.parsed_assets[asset_id] = asset
+        parsed_assets[asset_id] = asset
 
         if hasattr(nodes, 'm_Name'):
             asset.name = nodes.m_Name
@@ -130,11 +142,11 @@ class CS2Parser:
             if isinstance(value, NodeHelper):
                 if key.startswith('m_'):
                     key = convert_cs_member_name_to_python_attribute(key)
-                asset_attributes[key] = self.parse_asset(value, parent=asset)
+                asset_attributes[key] = self.parse_asset(value, parsed_assets, unparsed_classes, parent=asset)
             else:  # these are only added if there is a class attribute for them
                 if isinstance(value, list):
-                    value = [self.parse_asset(element, parent=asset) if isinstance(element, NodeHelper)
-                             else self.parse_dict(element) if isinstance(element, dict)
+                    value = [self.parse_asset(element, parsed_assets, unparsed_classes, parent=asset) if isinstance(element, NodeHelper)
+                             else self.parse_dict(element, parsed_assets, unparsed_classes) if isinstance(element, dict)
                              else element
                              for element in value]
                 elif isinstance(value, float):
@@ -266,8 +278,6 @@ if __name__ == '__main__':
     def _theme_speedlimit_map(self) -> Dict[str,Dict[int, int]]:
         """taking the theme speedlimits from the localized names of the assets which have the speed limit signs
         this is very fragile"""
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
         speedlimit_map = {}
         for road_asset_collection in [assets for assets in self.parsed_assets.values() if assets.cs2_class == 'Game.Prefabs.AssetCollection' and assets.name.endswith('DecorationsRoad')]:
             theme_prefix = road_asset_collection.name.split('_')[0]
@@ -285,9 +295,6 @@ if __name__ == '__main__':
 
     @cached_property
     def landmarks(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
-
         return {asset.name: asset for asset in self.parsed_assets.values() if
                 hasattr(asset, 'UIObject') and
                 asset.UIObject.group and
@@ -295,9 +302,6 @@ if __name__ == '__main__':
 
     @cached_property
     def landscaping(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
-
         return {asset.name: asset for asset in self.parsed_assets.values() if
                 hasattr(asset, 'UIObject') and
                 asset.UIObject.group and
@@ -306,9 +310,6 @@ if __name__ == '__main__':
 
     @cached_property
     def roads(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
-
         return {asset.name: asset for asset in self.parsed_assets.values() if
                 hasattr(asset, 'UIObject') and
                 asset.UIObject.group and
@@ -317,8 +318,6 @@ if __name__ == '__main__':
 
     @cached_property
     def service_buildings(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
         return {asset.name: asset for asset in self.parsed_assets.values()
                 if isinstance(asset, Building)
                 and hasattr(asset, 'CityServiceBuilding')
@@ -330,23 +329,16 @@ if __name__ == '__main__':
 
     @cached_property
     def service_building_upgrades(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
         return {asset.name: asset for asset in self.parsed_assets.values()
                 if hasattr(asset, 'ServiceUpgrade')
                 }
 
     @cached_property
     def signature_buildings(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
         return {asset.name: asset for asset in self.parsed_assets.values() if hasattr(asset, 'SignatureBuilding')}
 
     @cached_property
     def transportation(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
-
         return {asset.name: asset for asset in self.parsed_assets.values() if
                 hasattr(asset, 'UIObject') and
                 asset.UIObject.group and
@@ -355,8 +347,6 @@ if __name__ == '__main__':
 
     @cached_property
     def vegetations(self) -> Dict[str, CS2_ASSET]:
-        if len(self.parsed_assets) == 0:
-            self.read_gameplay_assets()
         return {asset.name: asset for asset in self.parsed_assets.values() if hasattr(asset, 'UIObject') and asset.UIObject.group and asset.UIObject.group.name == 'Vegetation'}
 
     @cached_property

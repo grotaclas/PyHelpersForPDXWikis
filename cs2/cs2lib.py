@@ -2,7 +2,7 @@ import subprocess
 from collections import ChainMap
 from enum import Enum, Flag
 
-from functools import cached_property
+from functools import cached_property, lru_cache
 from tempfile import NamedTemporaryFile
 from typing import List, Dict, Callable, get_args, get_origin, get_type_hints, Any
 
@@ -98,6 +98,7 @@ class CS2Asset:
             setattr(self, key, f(attributes))
 
     @classmethod
+    @lru_cache(maxsize=1)
     def all_annotations(cls) -> ChainMap:
         """Returns a dictionary-like ChainMap that includes annotations for all
            attributes defined in cls or inherited from superclasses."""
@@ -121,12 +122,16 @@ class NamedAsset(CS2Asset):
         super().__init__(cs2_class, file_name, path_id, parent)
         if 'display_name' not in self.extra_data_functions:
             self.extra_data_functions = self.extra_data_functions.copy()  # copy to not modify the class attribute of the parent
-            self.extra_data_functions['display_name'] = lambda data: cs2game.parser.localizer.localize(
-                self.localization_category, self.localization_sub_category_display_name, data['name']
-            )
+            self.extra_data_functions['display_name'] = self._get_display_name
 
     def __str__(self):
         return self.display_name
+
+    def _get_display_name(self, data):
+        return cs2game.parser.localizer.localize(
+            self.localization_category, self.localization_sub_category_display_name, data['name']
+        )
+
 
     @cached_property
     def description(self):
@@ -482,7 +487,9 @@ class Zone(NamedAsset, IconEntity):
     #color: Color
     #edge: Color
 
-    extra_data_functions = {'icon': lambda data: f'Zone{data["name"].replace(" ", "").removeprefix("EU")}.png'}
+    @cached_property
+    def icon(self):
+        return f'Zone{self.name.replace(" ", "").removeprefix("EU")}.png'
 
     def get_wiki_filename_prefix(self) -> str:
         return 'Zone'
