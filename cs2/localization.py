@@ -1,5 +1,5 @@
 import pprint
-from cs2_enum import Enum
+from enum import Enum
 from io import BufferedReader
 from leb128 import u
 from PyHelpersForPDXWikis.localsettings import CS2DIR
@@ -19,6 +19,8 @@ class CS2Localization:
         'LeisureType': ('Properties', 'LEISURE_TYPE'),
         'ResourceInEditor': ('Resources', 'TITLE'),
         'SchoolLevel': ('SelectedInfoPanel', 'EDUCATION_LEVELS'),
+        'AdjustHappinessTarget': ('Properties', 'ADJUST_HAPPINESS_MODIFIER_TARGET'),
+        'AllowedWaterTypes': ('Properties', 'MAP_RESOURCE'),
     }
 
     def __init__(self, locale='en-US'):
@@ -45,7 +47,7 @@ class CS2Localization:
                 value = value.strip()
                 if key in localization_dict:
                     raise Exception(f'duplicate localization key "{key}". Previous localization was "{localization_dict[key]}", new localization is "{value}"')
-                localization_dict[key] = value
+                localization_dict[key.lower()] = value
 
             index_counts = self._read_int(file, 32)
             index_count_dict = {}
@@ -84,7 +86,7 @@ class CS2Localization:
             key += f'[{loc_sub_id}]'
         if index is not None:
             key += f':{index}'
-        return key
+        return key.lower()
 
     def localize(self, group: str, loc_id: str, loc_sub_id: str = None, default: str = None, index: int = None) -> str:
         """localize the key from the cities skylines II localization files
@@ -114,6 +116,8 @@ class CS2Localization:
         return [self.localize(f'{key}:{i}', default) for i in range(self.get_index_count_dict()[key])]
 
     def localize_enum(self, enum: Enum):
+        if enum.name == '_None':
+            return ''
         enum_cls = type(enum).__name__
         if enum_cls in self.enum_localizations:
             group, loc_ic = self.enum_localizations[enum_cls]
