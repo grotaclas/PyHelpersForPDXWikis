@@ -349,6 +349,16 @@ class TableGenerator(CS2FileGenerator):
             'fire vehicleEfficiency': building.FireStation.vehicleEfficiency if 'FireStation' in building and building.FireStation.vehicleEfficiency != 0 else '',
 
         } for building in buildings]
+        result = []
+        result.append(self.get_SVersion_header(scope='table') + '\n'
+                      + self.make_wiki_table(data, table_classes=['mildtable'],
+                                             one_line_per_cell=True, remove_empty_columns=True))
+        result.append(self.get_extra_building_data_table(buildings))
+
+        return result
+
+    def get_extra_building_data_table(self, buildings):
+        format = self.formatter
         extra_data = [{
             'Name': f'{building.display_name}',
             # 'Category': building.ServiceObject.service.display_name,
@@ -375,15 +385,12 @@ class TableGenerator(CS2FileGenerator):
             'Storage limit': building.StorageLimit.storageLimit if 'StorageLimit' in building else '',
 
         } for building in buildings]
-        result = []
-        result.append(self.get_SVersion_header(scope='table') + '\n'
-                      + self.make_wiki_table(data, table_classes=['mildtable'],
-                                             one_line_per_cell=True, remove_empty_columns=True))
-        result.append(self.get_SVersion_header(scope='table') + '\n'
-                      + self.make_wiki_table(extra_data, table_classes=['mildtable'],
-                                             one_line_per_cell=True, remove_empty_columns=True))
-
-        return result
+        extra_data_table = self.get_SVersion_header(scope='table') + '\n' + self.make_wiki_table(extra_data,
+                                                                                                 table_classes=[
+                                                                                                     'mildtable'],
+                                                                                                 one_line_per_cell=True,
+                                                                                                 remove_empty_columns=True)
+        return extra_data_table
 
     def get_all_signature_buildings_tables_by_category(self) -> Dict[str, str]:
         buildings_by_category = {}
@@ -503,6 +510,34 @@ class TableGenerator(CS2FileGenerator):
         return (self.get_SVersion_header(scope='table') + '\n'
             + self.make_wiki_table(data, table_classes=['mildtable'],
                                    one_line_per_cell=True, remove_empty_columns=True, row_id_key='id'))
+
+    def generate_landmark_tables(self):
+        format = self.formatter
+        landmarks = sorted(self.parser.landmarks.values(), key=attrgetter('display_name'))
+        data = [{
+            'Name': f'{{{{iconbox|{landmark.display_name}|{landmark.description}|image={landmark.get_wiki_filename()}}}}}',
+            'Size (cells)': landmark.size,
+            'DLC': landmark.dlc.icon,
+            'Requirements': landmark.Unlockable.format() if 'Unlockable' in landmark and hasattr(landmark.Unlockable,
+                                                                                                 'format') else '',
+            'Cost': format.cost(landmark.PlaceableObject.constructionCost),
+            'Upkeep per month': format.cost(landmark.ServiceConsumption.upkeep),
+            'XP': landmark.ServiceUpgrade.xPReward if 'ServiceUpgrade' in landmark else landmark.PlaceableObject.xPReward,
+            'Attractiveness': f'{{{{icon|attractiveness}}}} {landmark.Attraction.attractiveness}' if hasattr(landmark,
+                                                                                                             'Attraction') and landmark.Attraction.attractiveness > 0 else '',
+            'Effects': format.create_wiki_list(landmark.get_effect_descriptions(),
+                                               no_list_with_one_element=True),
+            'Leisure': landmark.LeisureProvider.format() if 'LeisureProvider' in landmark else '',
+            'Has companies': landmark.CompanyObject.selectCompany if 'CompanyObject' in landmark else '',
+            'maintenancePool': landmark.Park.maintenancePool if 'Park' in landmark else '',
+
+        } for landmark in landmarks]
+
+        return [self.get_SVersion_header(scope='table') + '\n'
+                + self.make_wiki_table(data, table_classes=['mildtable'],
+                                       one_line_per_cell=True, remove_empty_columns=True),
+                self.get_extra_building_data_table(landmarks)]
+
 
 if __name__ == '__main__':
     generator = TableGenerator()

@@ -196,6 +196,9 @@ class BaseBuilding(NamedAsset):
             self.localization_sub_category_description = 'UPGRADE_DESCRIPTION'
 
     def get_wiki_filename(self) -> str:
+        # landmarks are also service buildings, so this check has to be first
+        if 'UIObject' in self and self.UIObject.group and self.UIObject.group.name == 'SignaturesLandmarks':
+            return f'Landmark {self.display_name}.png'
         if 'ServiceUpgrade' in self:
             return f'Service building upgrade {self.display_name}.png'
         if 'CityServiceBuilding' in self:
