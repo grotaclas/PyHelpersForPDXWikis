@@ -154,6 +154,30 @@ class NamedAsset(CS2Asset):
 # Asset classes #
 #################
 
+class AdjustHappiness(CS2Asset):
+    wellbeingEffect: int
+    healthEffect: int
+    targets: List[AdjustHappinessTarget]
+
+    def _format_effect(self, value, effect_name):
+        formatter = CS2WikiTextFormatter()
+        targets = ', '.join(target.display_name for target in self.targets)
+        return f'{{{{icon|{effect_name}}}}} {{{{green|{formatter.add_plus_minus(value)}%}}}} {effect_name} for {targets}'
+
+    def format_wellbeing_effect(self):
+        if self.wellbeingEffect > 0:
+            return self._format_effect(self.wellbeingEffect, 'Well-Being')
+        else:
+            return ''
+
+    def format_health_effect(self):
+        if self.healthEffect > 0:
+            return self._format_effect(self.healthEffect, 'Health')
+        else:
+            return ''
+
+
+
 class AssetStamp(NamedAsset):
     """used by intersections"""
     width: int
@@ -162,14 +186,21 @@ class AssetStamp(NamedAsset):
     upKeepCost: int
 
 
-class Building(NamedAsset):
-    circular: bool
-    lotWidth: int
-    lotDepth: int
+class BaseBuilding(NamedAsset):
+    """For Buildings and Building upgrades which sometimes use the BuildingExtension class
+     and sometimes use the Building class"""
 
-    @cached_property
-    def size(self):
-        return f'{self.lotWidth}×{self.lotDepth}'
+    def add_attributes(self, attributes: Dict[str, any]):
+        super().add_attributes(attributes)
+        if 'ServiceUpgrade' in attributes:
+            self.localization_sub_category_description = 'UPGRADE_DESCRIPTION'
+
+    def get_wiki_filename(self) -> str:
+        if 'ServiceUpgrade' in self:
+            return f'Service building upgrade {self.display_name}.png'
+        if 'CityServiceBuilding' in self:
+            return f'Service building {self.display_name}.png'
+
 
     def get_effect_descriptions(self) -> List[str]:
         """List of formatted effect descriptions"""
@@ -182,15 +213,58 @@ class Building(NamedAsset):
             for effect in self.LocalEffects.effects:
                 effects.append(effect.description)
 
+        if hasattr(self, 'AdjustHappiness'):
+            wellbeing_effect = self.AdjustHappiness.format_wellbeing_effect()
+            if wellbeing_effect:
+                effects.append(wellbeing_effect)
+            health_effect = self.AdjustHappiness.format_health_effect()
+            if health_effect:
+                effects.append(health_effect)
         return effects
 
+    def format_pollution(self, pollution_type: str):
+        # should only be one type, but as a failsafe, we support multiple lines and merge them at the end
+        pollution_lines = []
+        formatter = CS2WikiTextFormatter()
+        if 'Pollution' in self:
+            pollution = getattr(self.Pollution, f'{pollution_type}Pollution')
+            if pollution != 0:
+                pollution_lines.append(f'{{{{icon|{pollution_type} pollution}}}} {pollution}')
+        if 'PollutionModifier' in self:
+            pollution = getattr(self.PollutionModifier, f'{pollution_type}PollutionMultiplier')
+            if pollution != 0:
+                pollution_lines.append(f'{{{{icon|{pollution_type} pollution}}}} {formatter.format_percent(pollution)}')
+        return formatter.create_wiki_list(pollution_lines, no_list_with_one_element=True)
 
-class BuildingExtension(NamedAsset):
+
+class Building(BaseBuilding):
+    circular: bool
+    lotWidth: int
+    lotDepth: int
+
+    @cached_property
+    def size(self):
+        return f'{self.lotWidth}×{self.lotDepth}'
+
+
+class BuildingExtension(BaseBuilding):
     circular: bool
     externalLot: bool
-    position: List[float]
-    overrideLotSize: List[int]
+    position: Dict[str, float]
+    overrideLotSize: Dict[str, int]
     overrideHeight: float
+
+    # localization_sub_category_display_name = 'UPGRADE_NAME'
+
+
+    @cached_property
+    def size(self):
+        result = ''
+        if sum(self.overrideLotSize.values()) > 0:
+            result = f'{self.overrideLotSize["x"]}×{self.overrideLotSize["y"]}'
+        if sum(self.position.values()) > 0:  # seems to be currently unused
+            result += f'(Position: {self.position["x"]}, {self.position["y"]}, {self.position["z"]}'
+        return result
 
 
 class Fence(NamedAsset):
@@ -659,7 +733,10 @@ class ResourceStackInEditor:
         self.amount = amount
 
     def format(self) -> str:
-        return f'{self.resource.display_name}: {self.amount}'
+        if self.resource == ResourceInEditor.NoResource:
+            return ''
+        else:
+            return f'{self.resource.display_name}: {self.amount}'
 
 
 class InitialResources(CS2Asset):
@@ -678,6 +755,9 @@ class LeisureProvider(CS2Asset):
     resources: ResourceInEditor
     leisureType: LeisureType
 
+    def format(self):
+        formatter = CS2WikiTextFormatter()
+        return f'{formatter.add_red_green(self.efficiency, add_plus=True)} {self.leisureType.display_name}'
 
 class MaintenanceDepot(CS2Asset):
     maintenanceType: List[MaintenanceType]
@@ -770,6 +850,47 @@ class Service(NamedAsset):
     localization_category = 'Services'
 
 
+class TransportDepot(CS2Asset):
+    transportType: TransportType
+    energyTypes: EnergyTypes
+    vehicleCapacity: int
+    productionDuration: float
+    maintenanceDuration: float
+    dispatchCenter: bool
+
+
+class TransportStation(CS2Asset):
+    carRefuelTypes: EnergyTypes
+    trainRefuelTypes: EnergyTypes
+    watercraftRefuelTypes: EnergyTypes
+    aircraftRefuelTypes: EnergyTypes
+    comfortFactor: float
+
+
+class UpkeepModifierInfo:
+    def __init__(self, resource: ResourceInEditor, multiplier: float):
+        self.resource = resource
+        self.multiplier = multiplier
+
+    def format(self) -> str:
+        if self.resource == ResourceInEditor.NoResource:
+            return ''
+        else:
+            formatter = CS2WikiTextFormatter()
+            return f'{{{{icon|{self.resource.display_name}}}}} {self.resource.display_name}: ×{formatter.format_percent(self.multiplier)}'
+
+
+class UpkeepModifier(CS2Asset):
+    modifiers: List[UpkeepModifierInfo]
+
+    transform_value_functions = {'modifiers': lambda modifiers: [
+        UpkeepModifierInfo(ResourceInEditor(modifier['m_Resource']), modifier['m_Multiplier']) for modifier in
+        modifiers]}
+
+    def format(self) -> List[str]:
+        return [modifier.format() for modifier in self.modifiers]
+
+
 class ElectricityConnection(CS2Asset):
     voltage: Voltage
     direction: int  # actually FlowDirection, but it seems to always be 3 == Both
@@ -797,6 +918,12 @@ class WaterPipeConnection(CS2Asset):
 
     def has_combined_pipe(self) -> bool:
         return self.has_water_pipe() and self.has_sewage_pipe()
+
+
+class WaterPumpingStation(CS2Asset):
+    capacity: int
+    purification: float
+    allowedWaterTypes: List[AllowedWaterTypes]
 
 
 class Workplace(CS2Asset):

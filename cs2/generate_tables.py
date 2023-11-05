@@ -4,6 +4,7 @@ import sys
 from collections.abc import Mapping
 from functools import cached_property
 from operator import attrgetter
+from pathlib import Path
 from typing import List, Dict
 
 
@@ -11,7 +12,8 @@ from typing import List, Dict
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from cs2.game import cs2game
-from cs2.cs2lib import CS2Asset, SignatureBuilding, Building, Road
+from cs2.cs2lib import CS2Asset, SignatureBuilding, Building, Road, convert_cs_member_name_to_python_attribute, \
+    BaseBuilding
 from cs2.localization import CS2Localization
 from cs2.cs2_file_generator import CS2FileGenerator
 from cs2.text_formatter import CS2WikiTextFormatter
@@ -35,6 +37,34 @@ class TableGenerator(CS2FileGenerator):
         """Convert name from CamelCase to snake_case"""
         name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
+    def _get_loc_and_variable_types_from_code(self, code_folder: Path = None):
+        """code_folder contains the c# code. It can be extracted by assetrippers"""
+        if not code_folder:
+            return {}
+        property_binder_file = code_folder / 'Game/Game/UI/InGame/PrefabUISystem.cs'
+        if not property_binder_file.is_file():
+            return {}
+        result = {}
+        with open(property_binder_file) as f:
+            mod_re = re.compile(r'^[^"]*"(?P<loc_key1>[^"]*)\.(?P<loc_key2>[^"]*)", "(?P<var_type>[^"]*)", \((?P<cls>[a-zA-Z]*)Data data\) => (?P<code>.*data\.(?P<var_name>(m_)?[a-zA-Z]*).*)')
+            for line in f:
+                match = mod_re.match(line)
+                if match:
+                    cls = match.group("cls")
+                    if cls not in result:
+                        result[cls] = {}
+                    attribute = convert_cs_member_name_to_python_attribute(match.group("var_name"))
+                    var_type = match.group('var_type')
+                    code = match.group('code')
+                    if not code.startswith('data.'):
+                        var_type += ' / ' + code
+                    result[cls][attribute] = {
+                        'loc': self.localizer.localize(match.group('loc_key1'), match.group('loc_key2')),
+                        'var_type': var_type
+                    }
+        return result
+
 
     def get_possible_table_columns(self, assets: List[CS2Asset]):
         columns = {}
@@ -74,17 +104,26 @@ class TableGenerator(CS2FileGenerator):
                         columns[name] = loc
         return columns
 
-    def print_possible_table_columns(self, assets: List[CS2Asset], var_name: str):
+    def print_possible_table_columns(self, assets: List[CS2Asset], var_name: str, code_folder: Path = None):
+        """code_folder contains the c# code. It can be extracted by assetrippers"""
+        extra_data = self._get_loc_and_variable_types_from_code(code_folder)
         sub_attributes = {}
+        main_class = assets[0].__class__.__name__
         for attribute, loc_or_dict in self.get_possible_table_columns(assets).items():
             if isinstance(loc_or_dict, Mapping):
                 # save for later to print the main attributes first
                 sub_attributes[attribute] = loc_or_dict
             else:
-                print(f"'{loc_or_dict}': {var_name}.{attribute},")
+                if main_class in extra_data and attribute in extra_data[main_class]:
+                    print(f"'{extra_data[main_class][attribute]['loc']}': {var_name}.{attribute},  # {extra_data[main_class][attribute]['var_type']}")
+                else:
+                    print(f"'{loc_or_dict}': {var_name}.{attribute},")
         for attribute, dic in sub_attributes.items():
             for sub_attribute, loc in dic.items():
-                print(f"'{loc}': {var_name}.{attribute}.{sub_attribute},")
+                if attribute in extra_data and sub_attribute in extra_data[attribute]:
+                    print(f"'{extra_data[attribute][sub_attribute]['loc']}': {var_name}.{attribute}.{sub_attribute} if '{attribute}' in {var_name} else '',  # {extra_data[attribute][sub_attribute]['var_type']}")
+                else:
+                    print(f"'{loc}': {var_name}.{attribute}.{sub_attribute} if '{attribute}' in {var_name} else '',")
 
     ######################################
     # Table generators and their helpers #
@@ -92,16 +131,26 @@ class TableGenerator(CS2FileGenerator):
 
     def get_all_service_buildings_tables_by_category(self) -> Dict[str, List[str]]:
         buildings_by_category = {}
+        category_sorts = {}
+        cats = {}
         for building in self.parser.service_buildings.values():
-            category = self._format_service_category(building.ServiceObject.service.name)
+            category = self._format_service_category(building, building.ServiceObject.service.name, building.UIObject.group.name if 'UIObject' in building else building.ServiceObject.service.name)
             if category not in buildings_by_category:
                 buildings_by_category[category] = []
+            if category not in category_sorts and 'UIObject' in building:
+                category_sorts[category] = (building.UIObject.group.menu.UIObject.priority, building.UIObject.group.UIObject.priority)
+                cats[category] = f'== {building.UIObject.group.menu.display_name} ==\n=== {building.UIObject.group.display_name} ==='
             buildings_by_category[category].append(building)
+        for upgrade in filter(lambda b: b.name != 'HydroelectricPowerPlant01_End', self.parser.service_building_upgrades.values()):
+            category = self._format_service_category(upgrade, upgrade.ServiceUpgrade.buildings[0].ServiceObject.service.name, upgrade.ServiceUpgrade.buildings[0].UIObject.group.name)
+            buildings_by_category[category].append(upgrade)
 
         result = {}
-        for category, buildings in buildings_by_category.items():
-            result[category] = self.generate_service_buildings_table(sorted(buildings, key=lambda b: (
-                b.UIObject.group.UIObject.priority, b.UIObject.priority) if hasattr(b, 'UIObject') else (0, 0)))
+        for category, buildings in sorted(buildings_by_category.items(), key=lambda item: category_sorts[item[0]]):
+            result[category] = self.generate_service_buildings_table(sorted(buildings, key=lambda b:
+                (b.ServiceUpgrade.buildings[0].UIObject.group.UIObject.priority, b.ServiceUpgrade.buildings[0].UIObject.priority, b.UIObject.priority if 'UIObject' in b else 0) if 'ServiceUpgrade' in b
+                else (b.UIObject.group.UIObject.priority, b.UIObject.priority, 0) if hasattr(b, 'UIObject')
+                else (0, 0, 0)))
 
         return result
 
@@ -113,16 +162,42 @@ class TableGenerator(CS2FileGenerator):
             result += '\n'
         return result
 
-    def _format_service_category(self, category: str):
-        return category.replace(' ', '_').replace('&', 'and').lower()
+    def _format_service_category(self, building: BaseBuilding, category: str, subcategory: str = None):
+        split_up = {
+            'communications': True,
+            'education_and_research': True,
+            'electricity': False,
+            'fire_and_rescue': True,
+            'garbage_management': False,
+            'health_and_deathcare': True,
+            'parks_and_recreation': lambda building: 'maintenance' if 'MaintenanceDepot' in building else 'park',
+            'police_and_administration': True,
+            'roads': True,
+            'transportation': True,
+            'water_and_sewage': False,
+        }
+        category = category.replace(' ', '_').replace('&', 'and').lower()
+        if not split_up[category]:
+            return category
+        if callable(split_up[category]):
+            subcategory = split_up[category](building)
+        if subcategory is None:
+            return category
+        else:
+            subcategory = subcategory.replace(' ', '_').replace('&', 'and').lower()
+            return f'{category}_{subcategory}'
 
     def _format_electricity_production(self, building: CS2Asset):
-        if not 'PowerPlant' in building:
+        if 'PowerPlant' not in building and 'Battery' not in building:
             return ''
         if 'WaterPowered' in building:
             return 'varies'
 
-        production = building.PowerPlant.electricityProduction
+        extra_text = ''
+        if 'PowerPlant' in building:
+            production = building.PowerPlant.electricityProduction
+        else:
+            production = 0
         if 'WindPowered' in building:
             production = building.WindPowered.production
         elif 'GroundWaterPowered' in building:
@@ -131,30 +206,40 @@ class TableGenerator(CS2FileGenerator):
             production = building.SolarPowered.production
         elif 'GarbagePowered' in building:
             production = building.GarbagePowered.capacity
+        elif 'EmergencyGenerator' in building:
+            production = building.EmergencyGenerator.electricityProduction
+
+        if 'Battery' in building:
+            if production == 0:
+                production = building.Battery.powerOutput
+            else:
+                extra_text = f' ({self.formatter.power(building.Battery.powerOutput)} from batteries)'
 
         if production == 0:
             return ''
         else:
-            return self.formatter.power(production)
+            return self.formatter.power(production) + extra_text
 
     def generate_service_buildings_table(self, buildings) -> List[str]:
         """list of main table and extra table"""
         format = self.formatter
         data = [{
-            'Name': f'{{{{iconbox|{building.display_name}|{building.description}|image=Service building {building.display_name}.png}}}}',
+            'Name': f'{{{{iconbox|{building.display_name}|{building.description}|image={building.get_wiki_filename()}}}}}',
             'Size (cells)': building.size,
             'DLC': building.dlc.icon,
-            'Requirements': building.Unlockable.format(),
-            'Cost': format.cost(building.PlaceableObject.constructionCost),
+            'Requirements': building.Unlockable.format() if 'Unlockable' in building and hasattr(building.Unlockable, 'format') else '',
+            'Cost': format.cost(building.ServiceUpgrade.upgradeCost if 'ServiceUpgrade' in building else building.PlaceableObject.constructionCost),
             'Upkeep per month': format.cost(building.ServiceConsumption.upkeep),
-            'XP': building.PlaceableObject.xPReward,
+            'XP': building.ServiceUpgrade.xPReward if 'ServiceUpgrade' in building else building.PlaceableObject.xPReward,
             'Attractiveness': f'{{{{icon|attractiveness}}}} {building.Attraction.attractiveness}' if hasattr(building,
                                                                                                              'Attraction') and building.Attraction.attractiveness > 0 else '',
             'Effects': format.create_wiki_list(building.get_effect_descriptions(),
                                                        no_list_with_one_element=True),
+            # unused
+            # 'overrideHeight': building.overrideHeight if 'overrideHeight' in building else '',
             # better to show this as a requirement in the other buildings. This formatting doesnt work anyway
             # 'unlocks': ', '.join([', '.join(unlock.format()) for unlock in building.UnlockOnBuild.unlocks]) if 'UnlockOnBuild' in building else '',
-            'Goods consumption': ', '.join(building.CityServiceBuilding.format_upkeeps()),
+            'Goods consumption': ', '.join((building.CityServiceBuilding.format_upkeeps() if 'CityServiceBuilding' in building else []) + (building.UpkeepModifier.format() if 'UpkeepModifier' in building else [])),
 
             'Electricity production': self._format_electricity_production(building),
             'productionPerUnit': building.GarbagePowered.productionPerUnit if 'GarbagePowered' in building else '',
@@ -163,7 +248,8 @@ class TableGenerator(CS2FileGenerator):
             'maxWind': f'{building.WindPowered.maximumWind:.1f}' if 'WindPowered' in building else '',
             'maxGroundWater': building.GroundWaterPowered.maximumGroundWater if 'GroundWaterPowered' in building else '',
             'Battery capacity': format.energy(building.Battery.capacity) if 'Battery' in building else '',  # energy
-            'Battery output': format.power(building.Battery.powerOutput) if 'Battery' in building else '',  # power
+            # added to electricity production
+            # 'Battery output': format.power(building.Battery.powerOutput) if 'Battery' in building else '',  # power
 
             'Garbage storage capacity': format.weight(building.GarbageFacility.garbageCapacity) if 'GarbageFacility' in building else '',  # weight
             'Garbage trucks': building.GarbageFacility.vehicleCapacity if 'GarbageFacility' in building else '',  # integer
@@ -174,8 +260,8 @@ class TableGenerator(CS2FileGenerator):
             if 'GarbageFacility' in building else '',  # weightPerMonth
             'resources': format.create_wiki_list(building.ResourceProducer.format(), no_list_with_one_element=True) if 'ResourceProducer' in building else '',
 
-
-            'transportType': building.TransportDepot.transportType if 'TransportDepot' in building else '',
+            # subway/tram/etc. should be obvious from the building name and category
+            # 'transportType': building.TransportDepot.transportType if 'TransportDepot' in building else '',
             # 'energyTypes': building.TransportDepot.energyTypes if 'TransportDepot' in building else '',
             'Vehicles': building.TransportDepot.vehicleCapacity if 'TransportDepot' in building else '',  # integer
             'productionDuration': building.TransportDepot.productionDuration if 'TransportDepot' in building else '',
@@ -186,15 +272,16 @@ class TableGenerator(CS2FileGenerator):
             # not sure what this is
             # 'vehicleEfficiency': building.MaintenanceDepot.vehicleEfficiency if 'MaintenanceDepot' in building else '',
 
-            'Comfort': building.TransportStation.comfortFactor if 'TransportStation' in building else (building.ParkingFacility.comfortFactor if 'ParkingFacility' in building else ''),  # integer / (int)math.round(100f * data.m_ComfortFactor))
+            'Comfort': building.TransportStation.comfortFactor * 100 if 'TransportStation' in building else (building.ParkingFacility.comfortFactor * 100 if 'ParkingFacility' in building else ''),  # integer / (int)math.round(100f * data.m_ComfortFactor))
 
             'Has companies': building.CompanyObject.selectCompany if 'CompanyObject' in building else '',
             # TODO: find out how companies are stored and create a list somehow
             # 'companies': building.CompanyObject.companies if 'CompanyObject' in building else '',
             'Water output': building.WaterPumpingStation.capacity if 'WaterPumpingStation' in building else '',  # volumePerMonth
             'Decontamination rate': building.WaterPumpingStation.purification if 'WaterPumpingStation' in building else '',  # percentage / Mathf.RoundToInt(100f * data.m_Purification)),
-            'allowedWaterTypes': building.WaterPumpingStation.allowedWaterTypes if 'WaterPumpingStation' in building else '',
+            'Water source': ', '.join(water_type.display_name for water_type in building.WaterPumpingStation.allowedWaterTypes) if 'WaterPumpingStation' in building else '',
             'Sewage treatment': building.SewageOutlet.capacity if 'SewageOutlet' in building else '',  # volumePerMonth
+            # TODO: more formatting based on how the game does it
             'Purification rate': building.SewageOutlet.purification if 'SewageOutlet' in building else '',  # percentage / Mathf.RoundToInt(100f * data.m_Purification)),
             'Student capacity': building.School.studentCapacity if 'School' in building else '',  # integer
             'Level': building.School.level.display_name if 'School' in building else '',
@@ -208,8 +295,6 @@ class TableGenerator(CS2FileGenerator):
             'Fire engines': building.FireStation.fireEngineCapacity if 'FireStation' in building else '',  # integer
             'Fire helicopters': building.FireStation.fireHelicopterCapacity if 'FireStation' in building else '',  # integer
             'disasterResponseCapacity': building.FireStation.disasterResponseCapacity if 'FireStation' in building else '',
-            # not sure what this is
-            # 'vehicleEfficiency': building.FireStation.vehicleEfficiency if 'FireStation' in building else '',
 
             'Ambulances': building.Hospital.ambulanceCapacity if 'Hospital' in building else '',  # integer
             'Medical helicopters': building.Hospital.medicalHelicopterCapacity if 'Hospital' in building else '',  # integer
@@ -226,10 +311,8 @@ class TableGenerator(CS2FileGenerator):
             'maintenancePool': building.Park.maintenancePool if 'Park' in building else '',
             # seems to always be true
             # 'allowHomeless': building.Park.allowHomeless if 'Park' in building else '',
-            'leisureEfficiency': building.LeisureProvider.efficiency if 'LeisureProvider' in building else '',
-            # seems to always be 0
-            # 'resources': building.LeisureProvider.resources if 'LeisureProvider' in building else '',
-            'leisureType': building.LeisureProvider.leisureType.display_name if 'LeisureProvider' in building else '',
+
+            'Leisure': building.LeisureProvider.format() if 'LeisureProvider' in building else '',
 
             'Prison Vans': building.Prison.prisonVanCapacity if 'Prison' in building else '',  # integer
             'Jail capacity': building.Prison.prisonerCapacity if 'Prison' in building else '',
@@ -247,10 +330,23 @@ class TableGenerator(CS2FileGenerator):
             'Shelter Capacity': building.EmergencyShelter.shelterCapacity if 'EmergencyShelter' in building else '',  # integer
             'Evacuation Buses': building.EmergencyShelter.vehicleCapacity if 'EmergencyShelter' in building else '',  # integer
 
+            # TODO: seems to be the capacity, but other parking spaces determine capacity in another way
             'garageMarkerCapacity': building.ParkingFacility.garageMarkerCapacity if 'ParkingFacility' in building else '',
             'Default policies': format.create_wiki_list(building.DefaultPolicies.format(), no_list_with_one_element=True) if 'DefaultPolicies' in building else '',
+            # TODO: no idea what that probability is
             'defaultProbability': building.SubObjectDefaultProbability.defaultProbability if 'SubObjectDefaultProbability' in building else '',
 
+            # mainly used in upgrades:
+            'carRefuelTypes': building.TransportStation.carRefuelTypes.display_name if 'TransportStation' in building else '',
+            'trainRefuelTypes': building.TransportStation.trainRefuelTypes.display_name if 'TransportStation' in building else '',
+            'watercraftRefuelTypes': building.TransportStation.watercraftRefuelTypes.display_name if 'TransportStation' in building else '',
+            'aircraftRefuelTypes': building.TransportStation.aircraftRefuelTypes.display_name if 'TransportStation' in building else '',
+            'Vehicle fuel': building.TransportDepot.energyTypes.display_name if 'TransportDepot' in building else '',
+            # TODO: better formatting and maybe integration into another column
+            'activationThreshold': building.EmergencyGenerator.activationThreshold if 'EmergencyGenerator' in building else '',
+            # TODO: not sure what these are
+            'maintenance vehicleEfficiency': building.MaintenanceDepot.vehicleEfficiency if 'MaintenanceDepot' in building and building.MaintenanceDepot.vehicleEfficiency != 0 else '',
+            'fire vehicleEfficiency': building.FireStation.vehicleEfficiency if 'FireStation' in building and building.FireStation.vehicleEfficiency != 0 else '',
 
         } for building in buildings]
         extra_data = [{
@@ -259,19 +355,15 @@ class TableGenerator(CS2FileGenerator):
             'Service range': building.ServiceCoverage.range if 'ServiceCoverage' in building else '',
             'Service capacity': building.ServiceCoverage.capacity if 'ServiceCoverage' in building else '',
             'Service magnitude': building.ServiceCoverage.magnitude if 'ServiceCoverage' in building else '',
-            'Ground pollution': f'{{{{icon|ground pollution}}}} {building.Pollution.groundPollution}' if hasattr(
-                building, 'Pollution') and building.Pollution.groundPollution > 0 else '',
-            'Air pollution': f'{{{{icon|air pollution}}}} {building.Pollution.airPollution}' if hasattr(building,
-                                                                                                        'Pollution') and building.Pollution.airPollution > 0 else '',
-            'Noise pollution': f'{{{{icon|noise pollution}}}} {building.Pollution.noisePollution}' if hasattr(building,
-                                                                                                              'Pollution') and building.Pollution.noisePollution > 0 else '',
+            'Ground pollution': building.format_pollution('ground'),
+            'Air pollution': building.format_pollution('air'),
+            'Noise pollution': building.format_pollution('noise'),
 
             # 'scaleWithRenters': building.Pollution.scaleWithRenters,
-            'Electricity consumption': building.ServiceConsumption.electricityConsumption,
-            'Water consumption': building.ServiceConsumption.waterConsumption,
-            'Telecommunication consumption': building.ServiceConsumption.telecomNeed,
-            'Garbage accumulation': building.ServiceConsumption.garbageAccumulation,
-
+            'Electricity consumption': building.ServiceConsumption.electricityConsumption if 'ServiceConsumption' in building else '',
+            'Water consumption': building.ServiceConsumption.waterConsumption if 'ServiceConsumption' in building else '',
+            'Telecommunication consumption': building.ServiceConsumption.telecomNeed if 'ServiceConsumption' in building else '',
+            'Garbage accumulation': building.ServiceConsumption.garbageAccumulation if 'ServiceConsumption' in building else '',
 
             'Workplaces': building.Workplace.workplaces if 'Workplace' in building else '',
             'Max. needed education': building.Workplace.get_highest_needed_education().display_name if 'Workplace' in building else '',
@@ -279,7 +371,7 @@ class TableGenerator(CS2FileGenerator):
             'Night shifts': f'{building.Workplace.nightShiftProbability * 100:g}%' if 'Workplace' in building else '',
 
             'Initial resources': format.create_wiki_list(building.InitialResources.format(),
-                                                            no_list_with_one_element=True) if 'InitialResources' in building else '',
+                                                         no_list_with_one_element=True) if 'InitialResources' in building else '',
             'Storage limit': building.StorageLimit.storageLimit if 'StorageLimit' in building else '',
 
         } for building in buildings]

@@ -1,5 +1,6 @@
 from enum import Enum, Flag
 from functools import cached_property
+from operator import attrgetter
 
 
 class CS2BaseEnum(Enum):
@@ -14,7 +15,11 @@ class CS2BaseEnum(Enum):
 
 
 class CS2BaseFlag(Flag, CS2BaseEnum):
-    pass
+    def __iter__(self):
+        """for backwards compatibility with python versions below 3.11"""
+        for flag in sorted(self.__class__, key=attrgetter('display_name')):
+            if flag and flag in self:
+                yield flag
 
 
 class DLC(Enum):
