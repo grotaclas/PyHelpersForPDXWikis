@@ -1,4 +1,5 @@
 import inspect
+import sys
 from typing import Callable, TypeVar, Type
 
 from PyHelpersForPDXWikis.localsettings import VIC3DIR
@@ -132,10 +133,13 @@ class Vic3Parser:
                         entities[name] = entity
                     else:  # assume list
                         for entry in data:
-                            name, entity = self._parse_entity(class_attributes, entry, entity_class,
-                                                              extra_data_functions, headings, level_headings_keys,
-                                                              transform_value_functions, conditions)
-                            entities[name] = entity
+                            if len(entry) > 0:
+                                name, entity = self._parse_entity(class_attributes, entry, entity_class,
+                                                                  extra_data_functions, headings, level_headings_keys,
+                                                                  transform_value_functions, conditions)
+                                entities[name] = entity
+                            else:
+                                print(f'Warning: ignoring empty element in "{"|".join(headings)}"', file=sys.stderr)
         return entities
 
     def _parse_entity(self, class_attributes, data, entity_class, extra_data_functions, headings,
@@ -237,6 +241,8 @@ class Vic3Parser:
         countries = {}
         for file, data in self.parser.parse_files('common/country_definitions/*.txt'):
             for tag, country_data in data:
+                if 'dynamic_country_definition' in country_data and country_data['dynamic_country_definition']:  # ignore dynamic countries
+                    continue
                 if 'capital' in country_data:
                     capital_state = self.states[country_data['capital']]
                 else:
@@ -318,6 +324,16 @@ class Vic3Parser:
                                                             'undiscovered_amount', 0))
         return resources
 
+    def _get_state_trait_list(self, trait_list) -> list[StateTrait]:
+        """trait_list can be a list of the trait keys or a list of lists with trait keys"""
+        result = []
+        for trait_or_list in trait_list:
+            if not isinstance(trait_or_list, list):
+                trait_or_list = [trait_or_list]
+            for trait_str in trait_or_list:
+                result.append(self.state_traits[trait_str])
+        return result
+
     @cached_property
     def states(self) -> dict[str, State]:
         """returns a dictionary. keys are STATE_ strings and values are State objects."""
@@ -335,7 +351,7 @@ class Vic3Parser:
             'owners': lambda name, data: owners[name] if name in owners else [],
             'homelands': lambda name, data: homelands[name] if name in homelands else [],
         }, transform_value_functions={
-            'traits': lambda trait_list: [self.state_traits[trait] for trait in trait_list]
+            'traits': self._get_state_trait_list
         })
 
     @cached_property
@@ -430,8 +446,14 @@ class Vic3Parser:
 
     def _get_monument_location(self, name, data):
         try:
-            state_name = data['possible']['error_check']['this']['state_region'].replace('s:', '')
-            if state_name in self.states:
+            conditions = data['possible']['error_check']['this']
+            if isinstance(conditions, list):
+                for condition in conditions:
+                    if 'state_region' in condition:
+                        state_name = condition['state_region'].replace('s:', '')
+            else:
+                state_name = conditions['state_region'].replace('s:', '')
+            if state_name is not None and state_name in self.states:
                 return self.states[state_name]
         except KeyError:  # no state_region region check in the trigger, so it isn't a monument and we can ignore it
             return None
@@ -455,7 +477,8 @@ class Vic3Parser:
 
     @cached_property
     def building_groups(self) -> dict[str, BuildingGroup]:
-        BuildingGroup.hiring_rate = self.defines['NEconomy']['HIRING_RATE']
+        BuildingGroup.min_hiring_rate = self.defines['NEconomy']['DEFAULT_MIN_HIRING_RATE']
+        BuildingGroup.max_hiring_rate = self.defines['NEconomy']['DEFAULT_MAX_HIRING_RATE']
         BuildingGroup.proportionality_limit = self.defines['NEconomy']['EMPLOYMENT_PROPORTIONALITY_LIMIT']
         building_groups = {}
         for name, data in self.parser.parse_folder_as_one_file('common/building_groups'):
@@ -465,10 +488,10 @@ class Vic3Parser:
                          'auto_place_buildings', 'capped_by_resources',
                          'discoverable_resource', 'depletable_resource', 'can_use_slaves', 'land_usage',
                          'cash_reserves_max', 'stateregion_max_level',
-                         'urbanization', 'hiring_rate', 'proportionality_limit',
+                         'urbanization', 'min_hiring_rate', 'max_hiring_rate', 'proportionality_limit',
                          'hires_unemployed_only', 'infrastructure_usage_per_level', 'fired_pops_become_radical',
                          'pays_taxes', 'is_government_funded', 'created_by_trade_routes', 'subsidized', 'is_military',
-                         'default_building']:
+                         'default_building', 'ignores_productivity_when_hiring']:
                     entity_values[k] = v
                 elif k == 'parent_group':
                     entity_values['parent_group'] = building_groups[v]
@@ -592,10 +615,10 @@ class Vic3Parser:
         end = '0'
         for usage in ['agitator_usage', 'commander_usage', 'interest_group_leader_usage']:
             if usage in data:
-                if 'earliest_usage_date' in data[usage] and (start == '0' or data[usage]['earliest_usage_date'] < start):
-                    start = data[usage]['earliest_usage_date']
-                if 'latest_usage_date' in data[usage] and data[usage]['latest_usage_date'] > end:
-                    end = data[usage]['latest_usage_date']
+                if 'earliest_usage_date' in data[usage] and (start == '0' or str(data[usage]['earliest_usage_date']) < start):
+                    start = str(data[usage]['earliest_usage_date'])
+                if 'latest_usage_date' in data[usage] and str(data[usage]['latest_usage_date']) > end:
+                    end = str(data[usage]['latest_usage_date'])
         result = ''
         if start != '0':
             result = start
@@ -611,7 +634,7 @@ class Vic3Parser:
             'country': lambda tag: self.countries[tag.removeprefix('c:')],
             'interest_group': lambda ig: self.interest_groups.get(ig),
             'ideology': self.localize,
-            'culture': lambda c: self.localize(c.removeprefix('cu:')),
+            'culture': lambda c: self.localize((c if not isinstance(c, list) else c[-1]).removeprefix('cu:')),
             'religion': lambda c: self.localize(c.removeprefix('rel:')),
             'traits': lambda traits: [self.localize(trait) for trait in traits],
         }

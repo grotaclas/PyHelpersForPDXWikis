@@ -46,9 +46,12 @@ class ModifierType(NameableEntity):
             postfix += '%'
 
         if self.num_decimals is not None:
-            self.assert_number(value)
-            format_string = f'{{:.{self.num_decimals}f}}'
-            formatted_value = format_string.format(formatted_value)
+            try:
+                self.assert_number(value)
+                format_string = f'{{:.{self.num_decimals}f}}'
+                formatted_value = format_string.format(formatted_value)
+            except:
+                return f'{prefix}{formatted_value}{postfix}'
 
         if self.good is None or value == 0:
             prefix = "'''" + prefix
@@ -273,7 +276,8 @@ class BuildingGroup(NameableEntity):
     cash_reserves_max: int = 0
     stateregion_max_level: bool = False
     urbanization: int = 0
-    hiring_rate: float = None  # filled from NDefines::NEconomy::HIRING_RATE by the parser
+    min_hiring_rate: float = None  # filled from NDefines::NEconomy::DEFAULT_MIN_HIRING_RATE by the parser
+    max_hiring_rate: float = None  # filled from NDefines::NEconomy::DEFAULT_MAX_HIRING_RATE by the parser
     proportionality_limit: float = None  # filled from NDefines::NEconomy::EMPLOYMENT_PROPORTIONALITY_LIMIT
     hires_unemployed_only: bool = False
     infrastructure_usage_per_level: int = 0
@@ -284,6 +288,7 @@ class BuildingGroup(NameableEntity):
     subsidized: bool = False
     is_military: bool = False
     default_building: str = None
+    ignores_productivity_when_hiring: bool = False
 
     def __init__(self, name: str, display_name: str, parent_group: 'BuildingGroup' = None, **kwargs):
         super().__init__(name, display_name)

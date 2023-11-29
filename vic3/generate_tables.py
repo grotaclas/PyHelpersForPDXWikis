@@ -167,7 +167,7 @@ class TableGenerator(Vic3FileGenerator):
                 'State region tag': f'{state.name}',
                 'Arable land': state.arable_land,
                 'Pops': f'data-sort-value="{pops}"|{self.parser.formatter.format_big_number(pops)}',
-                'Homelands': ', '.join([self.parser.localize(culture) for culture in state.homelands]),
+                'Homelands': ', '.join([self.parser.localize(culture.removeprefix('cu:')) for culture in state.homelands]),
                 'Owners': ', '.join(
                     [f'{{{{flag|{self.parser.countries[tag].display_name}}}}}' for tag in state.owners])}
             # for bg_name, building_icon in (arable_resource | capped_resources | dicoverable_resources).items():
