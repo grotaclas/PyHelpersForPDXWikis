@@ -82,4 +82,8 @@ currently the only script for Age of Wonders 4. Generates several tables
     from vic3.game import vic3game
 
     for tag, country in vic3game.parser.countries.items():
-        print(tag, country.display_name, country.capital_state.display_name)
+        if country.capital_state:
+            capital_name = country.capital_state.display_name
+        else:
+            capital_name = 'No capital'
+        print(tag, country.display_name, capital_name)
