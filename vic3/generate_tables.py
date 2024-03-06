@@ -140,7 +140,7 @@ class TableGenerator(Vic3FileGenerator):
                                      one_line_per_cell=True,
                                      )
 
-        return self.get_SVersion_header() + '\n' + table
+        return self.get_SVersion_header('table') + '\n' + table
 
 
     def generate_state_table(self) -> str:

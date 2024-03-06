@@ -388,7 +388,7 @@ class Vic3Parser:
     def modifier_types(self) -> dict[str, ModifierType]:
         return self.parse_nameable_entities('common/modifier_types', ModifierType)
 
-    def get_modifier_type_or_default(self, modifier_name) -> ModifierType:
+    def get_modifier_type_or_default(self, modifier_name: str) -> ModifierType:
         if modifier_name in self.modifier_types:
             return self.modifier_types[modifier_name]
         else:
@@ -396,6 +396,9 @@ class Vic3Parser:
             modifier_type = ModifierType(modifier_name, self.localize(modifier_name))
             if 'mortality' in modifier_name:
                 modifier_type.good = False
+                modifier_type.percent = True
+            if modifier_name.endswith('throughput_add'):
+                modifier_type.good = True
                 modifier_type.percent = True
             self.modifier_types[modifier_name] = modifier_type
             return modifier_type
@@ -495,7 +498,7 @@ class Vic3Parser:
                     entity_values[k] = v
                 elif k == 'parent_group':
                     entity_values['parent_group'] = building_groups[v]
-                elif k in ['lens', 'inheritable_construction', 'should_auto_expand', 'economy_of_scale_ai_factor']:
+                elif k in ['lens', 'inheritable_construction', 'should_auto_expand', 'economy_of_scale_ai_factor', 'is_shown_in_outliner']:
                     pass
                 else:
                     raise Exception('Unsupported key {} when parsing BuildingGroup "{}"'.format(k, name))
