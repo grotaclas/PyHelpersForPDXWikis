@@ -1,7 +1,12 @@
-**PyHelpersForPDXWikis** is a tool to parse the game files of Victoria 3 and generate tables and other information from
+**PyHelpersForPDXWikis** is a tool to parse the game files of some paradox games and generate tables and other information from
 them and add it to the wiki. The current version generates the output as txt files, but future versions will allow
-automatically uploading to the wiki. It can also parse json files with Age of Wonders 4 data.
-Support for Europa Universalis IV is also planned.
+automatically uploading to the wiki. The following games are supported:
+
+* Age of Wonders 4(only rudimentary support for json data files)
+* Cities: Skylines II
+* Millennia
+* Victoria 3
+
 
 The main components are:
 
@@ -31,6 +36,10 @@ Age of Wonders 4 has the same files as vic3 in its aow4 folder. Instead of rakal
 
 Cities Skylines II files are parsed with the help of UnityPy
 
+#### millennia
+
+Millennia follows the same structure as vic3
+
 # Installation
 
 Clone this repository or download it as a zip from https://github.com/grotaclas/PyHelpersForPDXWikis. Then fulfill
@@ -39,8 +48,8 @@ the [dependencies](#Dependencies) and [configure](#Configuration) it.
 # Dependencies
 
 This project needs python version 3.10 or above (older versions might work as well). requirements.txt contains the
-needed python modules. Currently, it is only colormath and UnityPy and leb128 for CS2, but more will follow when
-automatic upload and wiki editing are added. They can be installed with pip (preferably in a [venv](https://docs.python.org/3/tutorial/venv.html)):
+needed python modules. The code for each game only uses some of the requirements.
+They can be installed with pip (preferably in a [venv](https://docs.python.org/3/tutorial/venv.html)):
 
     python3 -m pip install -r requirements.txt
 
@@ -49,6 +58,8 @@ in the PATH or the location has to be configured in the settings.
 
 For aow4, an export of the game data in json format is needed. The Age of Wonders 4 Database hosts a modified
 version of the files on [their github](https://github.com/MinionsArt/aow4db/tree/main/Data) 
+
+For cs2 and millennia, the data is read from the unity assets with the help of UnityPy
 
 The pyradox folder contains a modified version of the wiki table generator
 from [pyradox](https://github.com/ajul/pyradox). This is a temporary solution and will be replaced by code which is
@@ -77,6 +88,12 @@ generates tables of buildings and production methods
 
 #### aow4/generate_tables.py
 currently the only script for Age of Wonders 4. Generates several tables
+
+#### millennia/generate_tables.py
+generates most of the tables on the wiki
+
+#### millennia/generate_templates.py
+experimental code to generate tooltip templates
 
 # Sample code
     from vic3.game import vic3game
