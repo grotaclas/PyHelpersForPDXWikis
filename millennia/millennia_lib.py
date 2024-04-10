@@ -1392,7 +1392,7 @@ class CardBaseClass(NamedAttributeEntity):
                     _, val_type, radius, tag, valuekey = value.split(':')
                     if val_type in ['ENTITYTAGRADIUS', 'TERRAINTAGRADIUS', 'TILETAGRADIUS']:
                         effects_with_value = []
-                        for entity_value, entities in unsorted_groupby([entity for entity in parser.get_entities_by_tag(tag)], key=lambda entity: entity.startingData.get(valuekey)):
+                        for entity_value, entities in unsorted_groupby([entity for entity in parser.get_entities_by_tag(tag) if entity.startingData.get(valuekey)], key=lambda entity: entity.startingData.get(valuekey)):
                             effects_with_value.append(f'{entity_value} for each {"/".join([entity.get_wiki_link_with_icon() for entity in entities])} within {radius} tiles')
                         value = ', '.join(effects_with_value)
                 match operation:
@@ -2273,9 +2273,11 @@ class Terrain(NamedAttributeEntity):
     def startingData(self):
         return self.dataValues
 
+
 class UnitAction(CardBaseClass):
     cardSpriteName: str = None
 
+    extra_data_functions = {'description': lambda data: millenniagame.parser.localize(data['name'], localization_suffix='Tooltip', default='')}
     def get_icon_image(self) -> Image.Image | None:
         """get the icon from the game assets"""
         if self.cardSpriteName:
