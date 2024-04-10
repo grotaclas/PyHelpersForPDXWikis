@@ -1,6 +1,7 @@
 import json
 import re
 import shutil
+from enum import Enum
 from typing import TypeVar, Type, Set
 
 from UnityPy.classes.Object import NodeHelper
@@ -354,7 +355,7 @@ if __name__ == '__main__':
         on_build_unlocks = {}
         for asset in self.parsed_assets.values():
             if hasattr(asset, 'UnlockOnBuild'):
-                for unlock in asset.UnlockOnBuild.unlocks:
+                for unlock in asset.UnlockOnBuild.unlock_names:
                     if unlock.name not in on_build_unlocks:
                         on_build_unlocks[unlock.name] = []
                     on_build_unlocks[unlock.name].append(asset)
@@ -385,6 +386,8 @@ if __name__ == '__main__':
             'Prison01 Extra Wing': 'Prison01 Extra Workshops',
             'Prison01 Prison Library': 'Prison01 Maximum Security Wing',
         }
+        if not destination_folder.exists():
+            destination_folder.mkdir()
         if prefix and not prefix.endswith(' '):
             prefix += ' '
         for asset in assets:

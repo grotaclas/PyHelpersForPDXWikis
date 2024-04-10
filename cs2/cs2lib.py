@@ -1,12 +1,10 @@
 import subprocess
-from collections import ChainMap
-from enum import Enum, Flag
 
-from functools import cached_property, lru_cache
+from functools import cached_property
 from tempfile import NamedTemporaryFile
-from typing import List, Dict, Callable, get_args, get_origin, get_type_hints, Any
+from typing import List, Dict, Any
 
-from common.paradox_lib import IconEntity
+from common.paradox_lib import IconEntity, AttributeEntity
 from cs2.cs2_enum import DLC
 from cs2.cs2_enum_auto_generated import *
 from cs2.game import cs2game
@@ -29,22 +27,14 @@ def convert_svg_to_png(svg_file: Path, destination_file: Path | str, width: int 
 # Base classes #
 ################
 
-class CS2Asset:
+
+class CS2Asset(AttributeEntity):
     cs2_class: str
     parent_asset: 'CS2Asset'
 
     # filename and path id together should be unique
     file_name: str
     path_id: int
-
-    transform_value_functions: dict[str, Callable[[any], any]] = {}
-    """ the functions in this dict are called with the value of the data which matches
-           the key of this dict. If the key is not present in the data, the function won't
-           be called. The function must return the new value for the data"""
-    extra_data_functions: dict[str, Callable[[Dict[str, any]], any]] = {}
-    """ extra_data_functions: create extra entries in the data. For each key in this dict, the corresponding function
-          will be called with the name of the entity and the data dict as parameter. The return
-          value will be added to the data dict under the same key"""
 
     def __init__(self, cs2_class: str, file_name: str, path_id: int, parent: 'CS2Asset' = None):
         self.cs2_class = cs2_class
@@ -61,9 +51,6 @@ class CS2Asset:
         else:
             return False
 
-    def __contains__(self, item):
-        return hasattr(self, item)
-
     @staticmethod
     def calculate_id(file_name: str, path_id: int) -> str:
         """Unique id based on the filename of the asset file and the path id"""
@@ -73,36 +60,6 @@ class CS2Asset:
     def id(self) -> str:
         """Unique id based on the filename of the asset file and the path id"""
         return self.calculate_id(self.file_name, self.path_id)
-
-    def add_attributes(self, attributes: Dict[str, any]):
-        annotations = self.all_annotations()
-        for key, value in attributes.items():
-            if key in self.transform_value_functions:
-                value = self.transform_value_functions[key](value)
-            elif key in annotations:  # special handling based on the type. So far only for enums
-                attribute_type = annotations[key]
-                origin = get_origin(attribute_type)
-                if origin == list:  # List[<sub_type>]
-                    sub_type = get_args(attribute_type)[0]
-                    # checking for None is needed, because issubclass throws an exception when it is used on GenericAliases
-                    if get_origin(sub_type) is None:
-                        if issubclass(sub_type, Flag):
-                            value = sub_type(value)
-                        elif issubclass(sub_type, Enum):
-                            value = [sub_type(element) for element in value]
-                # checking for None is needed, because issubclass throws an exception when it is used on GenericAliases
-                elif origin is None and issubclass(attribute_type, Enum):
-                    value = attribute_type(value)
-            setattr(self, key, value)
-        for key, f in self.extra_data_functions.items():
-            setattr(self, key, f(attributes))
-
-    @classmethod
-    @lru_cache(maxsize=1)
-    def all_annotations(cls) -> ChainMap:
-        """Returns a dictionary-like ChainMap that includes annotations for all
-           attributes defined in cls or inherited from superclasses."""
-        return ChainMap(*(get_type_hints(c) for c in cls.mro()))
 
 
 class GenericAsset(CS2Asset):
@@ -157,7 +114,7 @@ class NamedAsset(CS2Asset):
 class AdjustHappiness(CS2Asset):
     wellbeingEffect: int
     healthEffect: int
-    targets: List[AdjustHappinessTarget]
+    # targets: List[AdjustHappinessTarget]
 
     def _format_effect(self, value, effect_name):
         formatter = CS2WikiTextFormatter()
@@ -289,6 +246,22 @@ class Pollution(CS2Asset):
 class Requirement(CS2Asset):
     def format(self) -> List[str]:
         return [f'requirements formatting of {self.cs2_class}not implemented']
+
+
+class DevTreeNode(Requirement, NamedAsset):
+    service: 'Service'
+    requirements: list  # list['DevTreeNodePrefab']
+    cost: int
+    horizontalPosition: int
+    verticalPosition: float
+    iconPath: str
+
+    localization_category = 'progression'
+    localization_sub_category_display_name = 'node_name'
+    localization_sub_category_description = 'node_description'
+
+    def format(self) -> List[str]:
+        return [f'{{{{icon|development points}}}} [[Development Tree#{self.display_name}|{self.display_name}]]']
 
 
 class Road(NamedAsset):
@@ -425,8 +398,11 @@ class SignatureBuilding(CS2Asset):
     unlockEventImage: str
 
     def get_wiki_file_tag(self, size: str = '300px') -> str:
-        filename = 'Signature building unlock ' + self.get_display_name() + '.png'
+        filename = self.get_wiki_filename()
         return f'[[File:{filename}|{size}|{self.get_display_name()}]]'
+
+    def get_wiki_filename(self):
+        return 'Signature building unlock ' + self.get_display_name() + '.png'
 
     def get_name(self):
         return self.unlockEventImage.split('/')[-1].removesuffix('.png')
@@ -435,6 +411,8 @@ class SignatureBuilding(CS2Asset):
         return cs2game.localizer.localize('Assets', 'NAME',
                                           self.get_name(), default=self.parent_asset.display_name)
 
+    def get_unlock_image(self) -> Path:
+        return cs2game.game_path / 'Cities2_Data/StreamingAssets/~UI~/GameUI'
 
 class StaticObjectPrefab(NamedAsset):
     circular: bool
@@ -478,8 +456,13 @@ class Unlockable(CS2Asset):
                     formatted_requirements[heading].extend(req.format())
                 elif isinstance(req, NamedAsset):
                     formatted_requirements[heading].append(req.display_name)
+                elif req.cs2_class.startswith('Game.Prefabs.Tutorial'):
+                    pass  # ignore tutorial requirements
                 else:
-                    raise NotImplementedError(f'formatting of requirement type {type(req)} is not supported')
+                    error_msg = f'formatting of requirement type {type(req)} is not supported'
+                    print(error_msg)
+                    formatted_requirements[heading].append(req.name)
+                    # raise NotImplementedError(error_msg)
 
         if sum([len(reqs) for reqs in formatted_requirements.values()]) > 1:
             for heading, requirements in formatted_requirements.items():

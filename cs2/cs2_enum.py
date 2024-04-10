@@ -30,6 +30,8 @@ class DLC(Enum):
     LandmarkBuildings = 0
     SanFranciscoSet = 1
     CS1TreasureHunt = 2
+    BeachProperties = 3
+    DeluxeRelaxRadio = 4
 
     def __str__(self):
         return self.name
@@ -41,7 +43,9 @@ class DLC(Enum):
                 'BaseGame': '',
                 'LandmarkBuildings': 'Landmark Buildings',
                 'SanFranciscoSet': 'San Francisco Set',
-                'CS1TreasureHunt': 'Treasure Hunt'
+                'CS1TreasureHunt': 'Treasure Hunt',
+                'BeachProperties': 'Beach Properties',
+                'DeluxeRelaxRadio': 'Deluxe Relax Station',
                 }[self.name]
 
     @cached_property
@@ -51,6 +55,7 @@ class DLC(Enum):
         return '{{icon|' + {'PdxLoginRequirement': 'pdxlogin',
                             'LandmarkBuildings': 'preorder',
                             'SanFranciscoSet': 'sfc',
-                            'CS1TreasureHunt': 'Treasure Hunt'
+                            'CS1TreasureHunt': 'Treasure Hunt',
+                            'BeachProperties': 'bp'
                             }[self.name] + '}}'
 

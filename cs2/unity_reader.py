@@ -1,20 +1,16 @@
-import json
-import subprocess
 from functools import cached_property
 from pathlib import Path
+from types import NoneType
 
-import UnityPy
-from UnityPy import Environment
 from UnityPy.classes import PPtr
 from UnityPy.classes.Object import NodeHelper
 from UnityPy.files import ObjectReader
 
-from PyHelpersForPDXWikis.localsettings import TYPE_TREE_GENERATOR
-from common.cache import disk_cache
+from common.unity_reader import UnityReader
 from cs2.game import cs2game
 
 
-class MonoBehaviourReader:
+class MonoBehaviourReader(UnityReader):
 
     # 30 is a failsafe which has not been reached
     # A value of 10 or lower can speed up parsing, especially if inefficient algorithms are used on the results
@@ -40,30 +36,11 @@ class MonoBehaviourReader:
                                          # is not implemented. The classes have to be ignored in other ways
                        ]
 
-    def __init__(self, data_folder: Path, unity_version='2022.3.7'):
-        self.unity_version = unity_version
-        self.data_folder = data_folder
-        self.object_cache = {}
-        self.nodes_with_flattened_components = set()  # to avoid duplicated work and infinite recursion
+    def __init__(self, data_folder: Path):
+        super().__init__(data_folder, cs2game, 'Game.dll')
 
     @cached_property
-    def env(self) -> Environment:
-        # all asset bundles files seem to be directly in the data folder. But some of the subfolders have many files
-        # which breaks unitypy, so we have to supply it with the files which it should read
-        possible_ressource_files = [str(f) for f in self.data_folder.glob('*') if f.is_file()]
-        return UnityPy.load(*possible_ressource_files)
-
-    @cached_property
-    def type_trees(self):
-        type_tree_file = cs2game.cachepath / 'Game.dll.json'
-        if not type_tree_file.exists():
-            subprocess.run(
-                ['dotnet', TYPE_TREE_GENERATOR, '-p', self.data_folder / 'Managed', '-a', 'Game.dll', '-v', self.unity_version,
-                 '-d', 'json', '-o', type_tree_file])
-        return json.load(open(type_tree_file, "rt", encoding="utf8"))
-
-    @cached_property
-    @disk_cache(game=cs2game)
+    # @disk_cache(game=cs2game)
     def _path_id_cls_maps(self) -> (dict[str, dict[int, str]], dict[str, dict[int, str]]):
         obj_path_id_cls_map = {}
         script_path_id_cls_map = {}
@@ -77,6 +54,8 @@ class MonoBehaviourReader:
 
             if obj.type.name == 'MonoBehaviour':
                 data = obj.read()
+                if data.m_Script.path_id == 0:
+                    continue  # skip objects without classes
                 if data.m_Script.assets_file.name not in script_path_id_cls_map:
                     script_path_id_cls_map[data.m_Script.assets_file.name] = {}
                 if data.m_Script.path_id not in script_path_id_cls_map[data.m_Script.assets_file.name]:
@@ -88,7 +67,10 @@ class MonoBehaviourReader:
         return script_path_id_cls_map, obj_path_id_cls_map
 
     def get_cls(self, obj: ObjectReader):
-        return self._path_id_cls_maps[1][obj.assets_file.name][obj.path_id]
+        try:
+            return self._path_id_cls_maps[1][obj.assets_file.name][obj.path_id]
+        except KeyError:
+            return None
 
     def parse_monobehaviour(self, obj: ObjectReader, depth=0, ignored_classes=None):
         if depth > self.MAX_RECURSION_DEPTH:
@@ -100,24 +82,32 @@ class MonoBehaviourReader:
             return self.object_cache[obj.assets_file.name][obj.path_id]
         if ignored_classes is None:
             ignored_classes = self.IGNORED_CLASSES
-        cls = self.get_cls(obj)
-        if cls in ignored_classes or not cls.startswith('Game.'):
-            return f'Ignored object of class "{cls}" (path id "{obj.path_id}", file "{obj.assets_file}")'
-        try:
-            type_template = self.type_trees[cls]
-            tree = obj.read_typetree(type_template, wrap=True)
+        if obj.type.name == 'MonoBehaviour':
+            cls = self.get_cls(obj)
+            if cls:
+                if cls in ignored_classes or (not cls.startswith('Game.') and not cls.startswith('CPrompt.')):
+                    return f'Ignored object of class "{cls}" (path id "{obj.path_id}", file "{obj.assets_file}")'
+            # try:
+            if cls:
+                type_template = self.type_trees[cls]
+                tree = obj.read_typetree(type_template, wrap=True)
+            else:
+                tree = obj.read_typetree(wrap=True)
             tree.cs2_class = cls                    # to determine the object type later
             tree.file_name = obj.assets_file.name   # as unique keys
             tree.path_id = obj.path_id              # as unique keys
-            self.object_cache[obj.assets_file.name][obj.path_id] = tree
-            self.read_node_helper(tree, depth, ignored_classes)
-        except Exception as e:
-            print(f'Cant read object "{obj}" with class {cls}')
-            return f'Error reading object of class "{cls}"'
+            # except Exception as e:
+            #     print(f'Cant read object "{obj}" with class {cls}')
+            #     return f'Error reading object of class "{cls}"'
+        else:
+            tree = obj.read()
+        self.object_cache[obj.assets_file.name][obj.path_id] = tree
+        self.read_node_helper(tree, depth, ignored_classes)
         return tree
 
     def read_node_helper(self, tree: NodeHelper, depth, ignored_classes):
         for key, val in tree.__dict__.items():
+            # if isinstance(val, PPtr) and val.path_id != 0 and val.type.name in ['MonoBehaviour', 'Transform', 'GameObject', 'MonoScript', 'TextAsset']:
             if isinstance(val, PPtr) and val.path_id != 0 and val.type.name == 'MonoBehaviour':
                 setattr(tree, key, self.parse_monobehaviour(val, depth + 1, ignored_classes=ignored_classes))
             elif isinstance(val, PPtr) and val.path_id == 0:
@@ -126,18 +116,19 @@ class MonoBehaviourReader:
                 setattr(tree, key,  f'Ignored asset of type "{val.type.name}"')
             elif isinstance(val, list):
                 for i, item in enumerate(val):
+                    # if isinstance(item, PPtr) and item.path_id != 0 and item.type.name in ['MonoBehaviour', 'Transform', 'GameObject', 'MonoScript']:
                     if isinstance(item, PPtr) and item.path_id != 0 and item.type.name == 'MonoBehaviour':
                         val[i] = self.parse_monobehaviour(item, depth + 1, ignored_classes=ignored_classes)
                     elif isinstance(item, PPtr) and item.path_id == 0:
                         val[i] = None
                     elif isinstance(item, NodeHelper):
                         val[i] = self.read_node_helper(item, depth + 1, ignored_classes)
-                    elif not isinstance(item, PPtr) and type(item) not in [int, str, bool, float]:
+                    elif not isinstance(item, PPtr) and type(item) not in [int, str, bool, float, NoneType]:
                         print(f'Cant read type {type(item)}')
                         pass
             elif isinstance(val, NodeHelper):
                 setattr(tree, key, self.read_node_helper(val, depth + 1, ignored_classes))
-            elif not isinstance(val, PPtr) and type(val) not in [int, str, bool, float]:
+            elif not isinstance(val, PPtr) and type(val) not in [int, str, bool, float, NoneType]:
                 print(f'Cant read type {type(val)}')
                 pass
         return tree
