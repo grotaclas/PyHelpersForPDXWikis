@@ -31,6 +31,11 @@ CS2DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Cities Skylines II'
 # (currently only needed for Cities: Skylines II)
 TYPE_TREE_GENERATOR = Path('~/Downloads/TypeTreeGenerator/TypeTreeGeneratorCLI.dll').expanduser() # linux
 
+# the folder where Millennia is installed
+MILLENNIADIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Millennia')            # windows
+# MILLENNIADIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Millennia') # cygwin
+# MILLENNIADIR = Path('~/.steam/steam/steamapps/common/Millennia').expanduser()           # linux
+
 # generated files will be stored in a game/version subfolder of this folder
 # per default we just use output in the base folder of the project
 OUTPATH = Path(__file__).absolute().parents[1] / 'output'

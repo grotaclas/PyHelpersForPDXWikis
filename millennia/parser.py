@@ -1,0 +1,534 @@
+import copy
+import warnings
+import xml.etree.ElementTree as ET
+from typing import TypeVar, Type, Callable
+
+import xmltodict
+
+from common.paradox_parser import Tree
+from millennia.millennia_lib import *
+from millennia.unity_reader import UnityReaderMillennia
+
+NE = TypeVar('NE', bound=NamedAttributeEntity)
+
+
+class MillenniaParser:
+    # allows the overriding of localization strings
+    localizationOverrides = {
+        # avoid duplicate names
+        'TECHAGE10_VICTORYCOLONYSHIP-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable) (Age of Departure)',
+        'TECHAGE10_VICTORYARCHANGEL-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable) (Age of Archangels)',
+        'TECHAGE10_VICTORYTRANSCENDENCE-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable) (Age of Transcendence)',
+
+        'Game-Culture-DiplomacyHireMercenaries-DisplayName': 'Hire Mercenaries (Age of Monuments)',
+        'Game-Culture-WarfareMercenariesHireMercenaries-DisplayName': 'Hire Mercenaries (Mercenaries national spirit)',
+
+        'UNITACTIONS-ARTIST_CULTURAL_MOVEMENT-CardTitle': 'Cultural Movement (Artist)',
+        'UNITACTIONS-CELEBRITY_CULTURAL_MOVEMENT-CardTitle': 'Cultural Movement (Celebrity)',
+
+        'Entity-UNIT_ALIENINVADER_NAVY-DisplayName': 'Alien Invader (Navy)',
+        'Entity-UNIT_BATTLESHIP_DEFENDER-DisplayName': 'Battleship (City Defender)',
+
+        'TECHAGE7_CRISISOLDONES-REPEATABLE-CardTitle': 'Beckon The Old Ones (Repeatable)',  # original has linebreaks
+
+        # originals have : and icons and html formatting
+        'UNITACTIONS-MERCHANT_DEPLOY_FOREIGN-CardTitle': 'Deploy Wealth',
+        'UNITACTIONS-ALCHEMIST_GATHERARCANA-CardTitle': 'Gather Arcana',
+        'Goods-Special-TileProduction-ANYBONUS-DisplayName': 'Gather (any bonus goods)'
+    }
+
+    def __init__(self):
+        self.unparsed_attributes_for_import = {}
+        self.all_parsed_entities = {}
+
+    @cached_property
+    def unity_reader(self) -> UnityReaderMillennia:
+        return UnityReaderMillennia()
+
+    def localize(self, key: str, localization_category: str = None, localization_suffix: str = None,
+                 default: str = None, return_none_instead_of_default=False) -> str | None:
+        """localize the key from the english millennia localization files
+
+        if the key is not found, the behavior depends on return_none_instead_of_default:
+            if it is true, None is returned
+            if it is false, the default is returned unless it is None in which case the key is returned
+        """
+        if default is None:
+            default = key
+
+        if localization_category is not None:
+            key = f'{localization_category}-{key}'
+
+        if localization_suffix is not None:
+            key = f'{key}-{localization_suffix}'
+
+        if key in self.localizationOverrides:
+            return self.localizationOverrides[key]
+        else:
+            if return_none_instead_of_default and key not in self.unity_reader.localizations:
+                return None
+            else:
+                return self.unity_reader.localizations.get(key, default)
+
+    @cached_property
+    def formatter(self):
+        from millennia.text_formatter import MillenniaWikiTextFormatter
+        return MillenniaWikiTextFormatter()
+
+    def parse_nameable_entities(self, entity_class: Type[NE], filename, resource_folder: str = 'text',
+                                element_selector: str = '.') -> dict[str, NE]:
+        result = {}
+        for entry in self.get_resource_xml(filename, resource_folder).findall(element_selector):
+            attributes = {}
+            name = ''
+            for attribute in entry:
+                if attribute.tag == entity_class._tag_for_name:
+                    name = attribute.text
+                    attributes['name'] = name
+                else:
+                    attributes[self.map_xml_tag_to_python_attribute(attribute.tag, entity_class)] = attribute.text
+            if name:
+                obj = entity_class(attributes)
+                result[name] = obj
+            else:
+                print(f'Ignoring unamed entity "{attributes}"')
+        return result
+
+    @staticmethod
+    def xml_postprocessor(path, key, value):
+        """turn dicts into Tree"""
+        if isinstance(value, dict):
+            value = Tree(value)
+        return key, value
+
+    def parse_nameable_entities_with_xmltodict(self, xml_tag: str, filename: str, resource_folder: str = 'text',
+                                               default_entity_class=None, tag_for_name: str = None, process_comments=False) -> dict[str, NamedAttributeEntity]:
+        result = {}
+        entries = []
+
+        if tag_for_name is None:
+            if default_entity_class is None:
+                raise Exception('Either tag_for_name must not be none or there must be a default_entity_class which has the attribute _tag_for_name')
+            else:
+                tag_for_name = default_entity_class._tag_for_name
+
+        for relevant_element in Tree(xmltodict.parse(self.unity_reader.text_asset_resources[resource_folder][filename],
+                                                     postprocessor=self.xml_postprocessor,
+                                                     process_comments=process_comments)
+                                     ).find_all_recursively(xml_tag):
+            if isinstance(relevant_element, list):
+                entries.extend(relevant_element)
+            else:
+                entries.append(relevant_element)
+
+        # store data so that it can be imported. It has to be done in a separate loop, because sometimes
+        # the imported entity comes later in the file
+        for entry in entries:
+            if tag_for_name in entry:   # no name tag usually means that this is a pure import
+                self.unparsed_attributes_for_import[entry[tag_for_name]] = entry
+
+        for entry in entries:
+            name = None
+            if tag_for_name in entry:
+                if entry[tag_for_name] in [
+                    'UNIT_DEBUGSCOUT',  # debugging unit in GameEntities.txt which imports UNIT_SCOUT from ages/TECHAGE1-Entities.txt
+                    'B_TOWN',  # not sure what to do with this
+                    'FAKE_ENTITY_PLAYERSTART',
+                ]:
+                    continue
+                while 'Import' in entry:  # to deal with imports which have an import as well
+                    import_entry = copy.deepcopy(self.unparsed_attributes_for_import[entry['Import']])
+                    del entry['Import']
+                    import_entry.update(entry)
+                    entry = import_entry
+
+                attributes = {}
+                name = ''
+                if default_entity_class:
+                    entity_class = default_entity_class
+                else:
+                    entity_class = self.determine_class(entry[tag_for_name], xml_tag, entry)
+                if not entity_class:
+                    # skip unhandled stuff
+                    continue
+                for key, value in entry:
+                    if key == tag_for_name:
+                        name = value
+                        attributes['name'] = name
+                    else:
+                        attributes[self.map_xml_tag_to_python_attribute(key, entity_class)] = value
+                if name:
+                    obj = entity_class(attributes)
+                    self.all_parsed_entities[name] = obj
+                    self.unparsed_attributes_for_import[name] = entry
+            else:
+                # no name tag usually means that this is a pure import
+                if 'Import' in entry and len(entry) == 1:  # pure import
+                    name = entry['Import']
+                    obj = self.all_parsed_entities[name]
+            if name:
+                result[name] = obj
+            else:
+                print(f'Ignoring unamed entity "{attributes}"')
+                continue
+        return result
+
+    @cached_property
+    def entities(self) -> dict[str, MillenniaEntity]:
+        result = {}
+
+        for folder, files in self.unity_reader.text_asset_resources.items():
+            for filename in files:
+                if filename.lower().endswith('entities') or filename.lower() == 'maptiles':
+                    result.update(self. parse_nameable_entities_with_xmltodict('EntityInfo', filename, folder, tag_for_name='ID'))
+        return result
+
+    @staticmethod
+    def determine_class(name: str, tag_name: str, attributes: Tree) -> type[NamedAttributeEntity] | None:
+        if tag_name == 'EntityInfo':
+            tags = attributes['Tags']['Tag']
+        elif tag_name == 'ACard':
+            try:
+                tags = attributes['CardTags']['Tags']['Tag']
+            except (TypeError, KeyError):  # one of the xml elements doesn't exist
+                tags = []
+        else:
+            raise Exception(f'Unimplemented tag "{tag_name}"')
+        if isinstance(tags, str):
+            tags = [tags]
+        tag_class_map = {
+            'AgeBaseTech': AgeBaseTech,
+            'Unit': Unit,
+            'Barbarian': Unit,
+            'CityBuilding': Building,
+            'Improvement': Improvement,
+            'TownSpec': TownSpecialization,
+            'Overlay': TileOverlay,
+            'CityProject': CityProject,
+            'MapTile': MapTile,
+        }
+
+        for tag, cls in tag_class_map.items():
+            if tag in tags:
+                return cls
+
+        if tag_name == 'ACard':
+            for tag in tags:
+                if 'Layer' in attributes:
+                    if tag.startswith('PurchaseCost-ResDomainGovernment') or tag == 'DomainResource:ResDomainGovernment':
+                        return GovernmentTech
+                    elif tag.startswith('PurchaseCost') or tag.startswith('DomainResource'):
+                        return NationalSpiritTech
+                elif tag.startswith('FactionThreshold'):
+                    return FactionReward
+            if 'Subtype' not in attributes or attributes['Subtype'] != 'CST_Tech':
+                return CardBaseClass
+            else:
+                return Technology
+        else:
+            raise Exception(f'No class found for "{name}"')
+
+    def get_resource_xml(self, filename: str, resource_folder: str = 'text') -> ET.Element:
+        root = ET.XML(self.unity_reader.text_asset_resources[resource_folder][filename])
+        return root
+
+    @cached_property
+    def infopedia_topic_types(self) -> dict[str, InfopediaTopicType]:
+        topic_types = {}
+        for entry in self.get_resource_xml('Infopedia'):
+            type_id = entry.find('TopicType').text
+            if type_id not in topic_types:
+                topic_types[type_id] = InfopediaTopicType(attributes={'name': type_id})
+        return topic_types
+
+    @staticmethod
+    def map_xml_tag_to_python_attribute(tag: str, cls: type[NamedAttributeEntity]):
+
+        if tag in cls.tag_to_attribute_map:
+            return cls.tag_to_attribute_map[tag]
+
+        tag = convert_xml_tag_to_python_attribute(tag)
+
+        if tag in cls.tag_to_attribute_map:
+            return cls.tag_to_attribute_map[tag]
+        else:
+            return tag
+
+    @cached_property
+    def all_entities(self) -> dict[str, NE]:
+        return dict(**self.technologies, **self.ages,
+                    **self.infopedia_topics,
+                    **self.entities, **self.domain_technologies, **self.domain_powers,
+                    **self.unit_actions, **self.needs, **self.terrains)
+
+    @cached_property
+    def all_cards(self) -> dict[str, CardBaseClass]:
+        ages_cards = {card.name: card for age in self.ages.values() for card in (list(age.other_cards.values()) + [age.base_tech])}
+        domain_cards = {card.name: card for domain_deck in self.domain_decks.values() for card in domain_deck.cards.values()}
+        sim_decks = {card.name: card for deck in self.sim_decks.values() for card in deck.values()}
+        return dict(**sim_decks, **self.technologies, **ages_cards, **domain_cards, **self.player_actions, **self.unit_actions)
+
+    @cached_property
+    def infopedia_topics(self) -> dict[str, InfopediaTopic]:
+        # these are the entries which are directly accessible in the infopedia's misc section
+        result = self.parse_nameable_entities(InfopediaTopic, 'Infopedia')
+
+        # these entries are only available as tooltips ingame
+        for loc_key in self.unity_reader.localizations:
+            if loc_key.startswith('Info-Topic-CONCEPT') and loc_key.endswith('-Title'):
+                topic_name = loc_key.removeprefix('Info-Topic-').removesuffix('-Title')
+                if topic_name not in result:
+                    result[topic_name] = InfopediaTopic({'name': topic_name, 'topicType': 'ITT_Misc'})
+        return result
+
+    @cached_property
+    def buildings(self) -> dict[str, Building]:
+        return {name: entity for name, entity in self.entities.items() if isinstance(entity, Building)}
+
+    @cached_property
+    def improvements(self) -> dict[str, Improvement]:
+        return {name: entity for name, entity in self.entities.items() if type(entity) == Improvement and entity.name != 'IMPROVEMENT_BASE'}
+
+    @cached_property
+    def tile_overlays(self) -> dict[str, TileOverlay]:
+        return {name: entity for name, entity in self.entities.items() if isinstance(entity, TileOverlay)}
+
+    @cached_property
+    def map_tiles(self) -> dict[str, MapTile]:
+        return {name: entity for name, entity in self.entities.items() if isinstance(entity, MapTile)}
+
+    @cached_property
+    def units(self) -> dict[str, Unit]:
+        return {name: entity for name, entity in self.entities.items() if isinstance(entity, Unit)}
+
+    @cached_property
+    def city_projects(self):
+        return {name: entity for name, entity in self.entities.items() if isinstance(entity, CityProject)}
+
+    def parse_decks_from_folder(self, top_folder, group_by_deck=False):
+        # TODO: implement parsing of cards and other stuff
+        result = {}
+        for folder, files in self.unity_reader.text_asset_resources.items():
+            if folder.startswith(top_folder):
+                for filename, file_contents in files.items():
+                    if filename.lower().startswith('deck'):
+                        deck_name, entities = self.parse_deck_from_file(filename, folder)
+                        if group_by_deck:
+                            result[deck_name] = entities
+                        else:
+                            result.update(entities)
+        return result
+
+    def parse_deck_from_file(self, filename, folder='text', default_entity_class=None):
+        entities = self.parse_nameable_entities_with_xmltodict('ACard',
+                                                               filename,
+                                                               resource_folder=folder,
+                                                               tag_for_name='ID',
+                                                               default_entity_class=default_entity_class)
+        xml = xmltodict.parse(self.unity_reader.text_asset_resources[folder][filename])
+        deck_name = xml['ADeck']['DeckName']
+        for entity in entities.values():
+            entity.deck_name = deck_name
+        return deck_name, entities
+
+    @cached_property
+    def technologies(self) -> dict[str, Technology]:
+        return {name: entity for age in self.ages.values() for name, entity in age.technologies.items() if isinstance(entity, Technology)}
+
+    @cached_property
+    def ages(self) -> dict[str, Age]:
+        result = {}
+        for name, cards in self.parse_decks_from_folder('text/ages', group_by_deck=True).items():
+            attributes = {
+                'name': name,
+                'base_tech': cards[f'{name}-BASE'],
+                'technologies': {name: card for name, card in cards.items() if isinstance(card, Technology)},
+                'other_cards': {name: card for name, card in cards.items() if not isinstance(card, (Technology, AgeBaseTech))},
+            }
+
+            age = Age(attributes)
+
+            for card in cards.values():
+                if hasattr(card, 'ages'):
+                    card.ages.append(age)
+                card.deck = age
+            result[name] = age
+        return result
+
+    @cached_property
+    def domain_decks(self) -> dict[str, Deck]:
+        result = {}
+        for name, cards in self.parse_decks_from_folder('text/domains', group_by_deck=True).items():
+            base_card = cards[f'{name}-AUTOMATIC']
+            attributes = {'name': name, 'cards': cards, 'age': base_card.tags.get('DomainAge'), 'resource': Resource(base_card.tags.get('DomainResource'))}
+            if attributes['resource'].name == 'ResDomainGovernment':
+                cls = Government
+                attributes['tier'] = base_card.tags.get('DomainTier')
+            else:
+                cls = NationalSpirit
+            result[name] = cls(attributes)
+            for card in cards.values():
+                card.deck = result[name]
+        return result
+
+    @cached_property
+    def domain_technologies(self):
+        return {name: card for deck in self.domain_decks.values() for name, card in deck.technologies.items()}
+
+    @cached_property
+    def national_spirits(self) -> dict[str, NationalSpirit]:
+        return {name: deck for name, deck in self.domain_decks.items() if isinstance(deck, NationalSpirit)}
+
+    @cached_property
+    def governments(self) -> dict[str, Government]:
+        return {name: deck for name, deck in self.domain_decks.items() if isinstance(deck, Government)}
+
+    @cached_property
+    def goods(self) -> dict[str, Goods]:
+        goods = self.parse_nameable_entities_with_xmltodict('GoodsInfo', 'GoodsInfo', default_entity_class=Goods)
+        tags_to_goods = {}
+        for good in goods.values():
+            if good.tags:
+                for tag in good.tags.unparsed_entries:
+                    if tag not in tags_to_goods:
+                        tags_to_goods[tag] = []
+                    tags_to_goods[tag].append(good)
+        for tag, goods_list in tags_to_goods.items():
+            goods[f'+{tag}'] = GoodsTag(tag, goods_list)
+        return goods
+
+    @cached_property
+    def domain_powers(self) -> dict[str, DomainPower]:
+        return self.parse_nameable_entities_with_xmltodict('CulturePower', 'CulturePowers',
+                                                           default_entity_class=DomainPower)
+
+    @cached_property
+    def terrains(self) -> dict[str, Terrain]:
+        return self.parse_nameable_entities_with_xmltodict('ATerrainType', 'TerrainTypes', default_entity_class=Terrain)
+
+    def get_terrains_by_tag(self, tag: str) -> list[Terrain]:
+        return self.get_entities_by_tag(tag, self.terrains)
+
+    def get_entities_by_tag(self, tag: str, entities: list[MillenniaEntity] | dict[str, MillenniaEntity] = None) -> list[MillenniaEntity]:
+        """search entities for entities with a given tag. If entities is None, self.all_entities is searched"""
+        tag = tag.removeprefix('+')
+        if entities is None:
+            entities = self.all_entities
+
+        if isinstance(entities, dict):
+            entities = list(entities.values())
+        return [entity for entity in entities if hasattr(entity, 'tags') and entity.tags.has(tag)]
+
+    @cached_property
+    def unit_actions(self) -> dict[str, UnitAction]:
+        return self.parse_deck_from_file('UnitActions', default_entity_class=UnitAction)[1]
+
+    @cached_property
+    def player_actions(self) -> dict[str, PlayerAction]:
+        return self.parse_deck_from_file('PlayerActions', default_entity_class=PlayerAction)[1]
+
+    @cached_property
+    def misc_game_data(self) -> dict[str, str]:
+        """effects which have a localization in Game-GameData-Misc"""
+        overrides = {
+            'TotalStrengthVsTopRivalRatio': '[[Power]] compared to the strongest rival Nation',  # add link
+            'StatVassalIntegration': 'Vassal integration per turn when deployed',  # add "per turn when deployed"
+            'StateReligionPopulationFrac': 'fraction of the population follows the state religion',  # original talks about worldwide population, but that seems to be wrong if the target is a region
+        }
+        result = {}
+        for loc_key, loc_text in self.unity_reader.localizations.items():
+            key = None
+            if loc_key.startswith('Game-GameData-Misc-'):
+                key = loc_key.removeprefix('Game-GameData-Misc-')
+            if loc_key.startswith('Game-Misc-'):
+                key = loc_key.removeprefix('Game-Misc-')
+            if loc_key.startswith('Game-GameData-Misc-GameVal-'):
+                key = loc_key.removeprefix('Game-GameData-Misc-GameVal-')
+            if loc_key.startswith('Game-Stat-'):
+                key = 'Stat' + loc_key.removeprefix('Game-Stat-')
+                if key.startswith('StatCrisis'):
+                    loc_text = f'{{{{icon|{key}}}}} {loc_text}'
+            if key:
+                if key in overrides:
+                    final_text = overrides[key]
+                else:
+                    final_text = self.formatter.convert_to_wikitext(loc_text)
+                if key in result:
+                    print(f'Warning overriding misc data text for "{key}"(from {loc_key}). Old text was "{result[key]}". New text is "{final_text}"')
+                result[key] = final_text
+                if key.endswith('-Base') and key.removesuffix('-Base') not in result:
+                    result[key.removesuffix('-Base')] = final_text
+
+        return result
+
+    @cached_property
+    def needs(self) -> dict[str, Need]:
+        return self.parse_nameable_entities_with_xmltodict('ANeedInfo', 'NeedInfo', default_entity_class=Need)
+
+    @cached_property
+    def sim_decks(self):
+        return self.parse_decks_from_folder('text/simdecks', group_by_deck=True)
+
+    @cached_property
+    def event_cards(self) -> dict[str, dict[str, CardBaseClass]]:
+        decks = {}
+        for deck_name in self.sim_decks:
+            tag = f'AddTo{deck_name.capitalize()}Deck'
+            decks[deck_name] = {name: card for name, card in self.all_cards.items() if
+                                card.tags.has(f'Universal{tag}') or card.tags.has(tag) or card.deck_name == deck_name}
+
+        return decks
+
+    @cached_property
+    def innovation_cards(self) -> dict[str, CardBaseClass]:
+        return {name: card for name, card in self.all_cards.items() if card.tags.has('UniversalAddToInnovationDeck') or card.tags.has('AddToInnovationDeck') or card.deck_name == 'INNOVATION'}
+
+    @cached_property
+    def chaos_cards(self) -> dict[str, CardBaseClass]:
+        return {name: card for name, card in self.all_cards.items() if card.tags.has('UniversalAddToChaosDeck') or card.tags.has('AddToChaosDeck') or card.deck_name == 'CHAOS'}
+
+    @cached_property
+    def game_values(self) -> dict[str, GameValue]:
+        return self.parse_nameable_entities_with_xmltodict('GameValue', 'GameValues', default_entity_class=GameValue, process_comments=True)
+
+    @cached_property
+    def startup_bonuses(self) -> dict[str, StartupBonus]:
+        result = {}
+        for entry in self.get_resource_xml('StartupBonuses'):
+            for child_entry in entry:
+                bonus = StartupBonus({'name': child_entry.text})
+                result[bonus.name] = bonus
+        return result
+
+    @cached_property
+    def nations(self) -> dict[str, Nation]:
+        return self.parse_nameable_entities_with_xmltodict('APlayerSetupState', 'NationConfigs', default_entity_class=Nation)
+
+    @cached_property
+    def name_tables(self) -> dict[str, Nation]:
+        return self.parse_nameable_entities_with_xmltodict('AEntityNameTableState', 'Names', default_entity_class=NameTable)
+
+    @cached_property
+    def factions(self) -> dict[str, Faction]:
+        effect_payloads = []
+        for card in self.all_cards.values():
+            effect_payloads.extend(card.traverse_effects('CE_SetStringData', lambda effect: effect['Payload'] if effect['Payload'].startswith('FactionReward') else None))
+
+        results = {}
+        for payload in effect_payloads:
+            reward_name, card_name = payload.removeprefix('FactionReward-').split(',')
+            faction_name, tier = reward_name.split('-')
+            tier = int(tier) + 1
+            if faction_name in results:
+                faction = results[faction_name]
+            else:
+                faction = Faction({'name': faction_name})
+                results[faction_name] = faction
+
+            faction_reward = self.all_cards[card_name]
+            faction_reward.faction = results[faction_name]
+            faction_reward.tier = tier
+            faction_reward.display_name = f'{faction.display_name} faction reward {tier}'
+            faction.rewards[tier] = faction_reward
+
+        return results
