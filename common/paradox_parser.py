@@ -10,7 +10,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, MutableMapping
 from tempfile import mkstemp
 from typing import Callable
 
@@ -153,14 +153,21 @@ class ParadoxParser:
         return json.loads(rakaly_result, object_hook=lambda x: Tree(x))
 
 
-class Tree(Mapping):
+class Tree(MutableMapping):
     """A wrapper around dict with some helper functions"""
+
 
     def __init__(self, dictionary: dict):
         self.dictionary = dictionary
 
     def __getitem__(self, key):
         return self.dictionary[key]
+
+    def __delitem__(self, key):
+        del self.dictionary[key]
+
+    def __setitem__(self, key, value):
+        self.dictionary[key] = value
 
     def __len__(self) -> int:
         return len(self.dictionary)
@@ -200,7 +207,11 @@ class Tree(Mapping):
         """Like find_all, but searches the whole Tree recursively"""
         for key, value in self.dictionary.items():
             if key == search_key:
-                yield value
+                if isinstance(value, list):
+                    for entry in value:
+                        yield entry
+                else:
+                    yield value
             elif isinstance(value, Tree):
                 yield from value.find_all_recursively(search_key)
             elif isinstance(value, list):
@@ -225,3 +236,44 @@ class Tree(Mapping):
     def filter_elements(self, filter_func: Callable[[str, any], bool]) -> 'Tree':
         """create a new tree which only contains the elements for which filter_func returns True"""
         return Tree({k: v for k, v in self.dictionary.items() if filter_func(k, v)})
+
+    def update(self, other: 'Tree'):
+        """Update the tree with the key/value pairs from other. Existing keys are handled depending on the type
+        of the value:
+
+        Tree/MutableMapping: the value from this tree is updated with the value from the other tree.
+        list: the value from this tree is extended with the value from the other tree.
+        everything else: the value from the other tree overwrites the value from this tree"""
+
+        for key, value in other:
+            if key in self:
+                if isinstance(value, Tree):
+                    if isinstance(self[key], Tree):
+                        self[key].update(value)
+                    else:
+                        raise Exception(f'mismatching types for key "{key}" when updating tree. The value from this tree is a "{type(self[key])}" and the value from the other tree is a "{type(value)}".')
+                elif isinstance(value, MutableMapping):
+                    if isinstance(self[key], MutableMapping):
+                        self[key].update(value)
+                    else:
+                        raise Exception(f'mismatching types for key "{key}" when updating tree. The value from this tree is a "{type(self[key])}" and the value from the other tree is a "{type(value)}".')
+                elif isinstance(value, list) and isinstance(self[key], list):
+                    self[key].extend(value)
+                elif isinstance(value, list):
+                    new_value = value.copy()
+                    new_value.append(self[key])
+                    self[key] = new_value
+                elif isinstance(self[key], list):
+                    self[key].append(value)
+                elif value is None and self[key] is not None:
+                    pass
+                else:
+                    self.dictionary[key] = value
+            else:
+                self.dictionary[key] = value
+
+    def __getstate__(self):
+        return self.dictionary
+
+    def __setstate__(self, state):
+        self.dictionary = state

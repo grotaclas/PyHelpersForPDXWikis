@@ -21,14 +21,24 @@ class WikiTextFormatter:
         return str(number)
 
     @staticmethod
-    def create_wiki_list(elements: list[str], indent=1, no_list_with_one_element=False) -> str:
+    def create_wiki_list(elements: list[str], indent=1, no_list_with_one_element=False, prefix_with_linebreak=True) -> str:
         if len(elements) == 0:
             return ''
         elif len(elements) == 1 and no_list_with_one_element:
             return elements[0]
         else:
             line_prefix = '*' * indent
-            return f'\n{line_prefix} ' + f'\n{line_prefix} '.join(elements)
+            results = []
+            if prefix_with_linebreak:
+                results.append('')
+            for element in elements:
+                if isinstance(element, list):
+                    results.append(WikiTextFormatter.create_wiki_list(element, indent+1, prefix_with_linebreak=False))
+                else:
+                    if not isinstance(element, str):
+                        element = str(element)
+                    results.append(f'{line_prefix} {element}')
+            return f'\n'.join(results)
 
     @staticmethod
     def add_red_green(number, positive_is_good: bool = True, add_plus: bool = False, add_percent: bool = False) -> str:
@@ -87,6 +97,18 @@ class WikiTextFormatter:
     @staticmethod
     def quote(text):
         return f"''“{text}”''"
+
+    @staticmethod
+    def join_with_comma_and_or(elements: list, seperator=', ', conjunction=" ''or'' ") -> str:
+        """joins a list with separator, but the last two elements are joined with the conjunction"""
+        n = len(elements)
+        if n > 1:
+            return (('{}' + seperator) * (n - 2) + '{}' + conjunction + '{}').format(*elements)
+        elif n > 0:
+            return elements[0]
+        else:
+            return ''
+
 
 # the rest of the file is an unfinished version of a better wiki-table generator
 class Cell:

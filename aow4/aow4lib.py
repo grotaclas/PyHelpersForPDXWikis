@@ -235,8 +235,8 @@ class Tome(IconEntity):
         else:
             return None
 
-    def get_wiki_link(self) -> str:
-        return f'[[{self.display_name}]]'
+    def get_wiki_link_target(self) -> str:
+        return self.display_name
 
     def get_wiki_icon(self, size: str = '24px') -> str:
         return self.get_wiki_file_tag(size)

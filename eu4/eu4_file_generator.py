@@ -33,7 +33,6 @@ class EuropaUniversalisIV(Game):
 
 eu4game = EuropaUniversalisIV()
 
-
 class Eu4FileGenerator(FileGenerator):
 
     parser: Eu4Parser

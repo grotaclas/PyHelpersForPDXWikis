@@ -235,8 +235,8 @@ class LawGroup(NameableEntity):
 class Law(AdvancedEntity):
     group: LawGroup = None
 
-    def get_wiki_link(self) -> str:
-        return f'[[{self.group.get_wiki_page()}#{self.display_name}|{self.display_name}]]'
+    def get_wiki_page_name(self) -> str:
+        return self.group.get_wiki_page()
 
     def get_wiki_icon(self) -> str:
         return self.get_wiki_file_tag()
@@ -257,8 +257,8 @@ class Technology(AdvancedEntity):
     def get_wiki_icon(self) -> str:
         return self.get_wiki_file_tag()
 
-    def get_wiki_link(self) -> str:
-        return f'[[{self.wiki_pages[self.category]}#{self.display_name}|{self.display_name}]]'
+    def get_wiki_page_name(self) -> str:
+        return self.wiki_pages[self.category]
 
 
 class BuildingGroup(NameableEntity):
