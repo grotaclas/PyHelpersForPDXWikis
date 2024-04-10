@@ -1287,6 +1287,15 @@ class CardBaseClass(NamedAttributeEntity):
                 target_text = ', '.join(sorted({entity.get_wiki_link_with_icon() for entity in parser.all_entities.values() if hasattr(entity, 'tags') and entity.tags.has(tag)}))
             else:
                 target_text = parser.formatter.convert_to_wikitext(target_text)
+                if not tag.startswith('Type') and tag not in [  # these tags are listed with the entity and there are usually too many entities to make this tooltip useful
+                    'Improvement',
+                    'Combatant',
+                    'WaterMovement',  # also a kind of type
+                    'CityCenter',  # localisation is ok here and the entities are not really shown ingame
+                ]:
+                    entities = sorted({entity.display_name for entity in parser.all_entities.values() if entity.has_localized_display_name and hasattr(entity, 'tags') and entity.tags.has(tag)})
+                    if len(entities) > 1:  #len(entities) < 20:
+                        target_text = f'{{{{hover box|{target_text}|{", ".join(entities)}}}}}'
             if target_text == '':
                 target_text = f'<tt>{target}</tt>'
             else:
