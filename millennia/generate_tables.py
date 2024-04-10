@@ -1,18 +1,10 @@
-import re
 from collections import OrderedDict
-from functools import cached_property
 from operator import attrgetter
-from pathlib import Path
-from time import sleep
 
 import sys
-from PIL.Image import Image
 
-from common.file_generator import FileGenerator
-from millennia.game import millenniagame, MillenniaFileGenerator
-from millennia.millennia_lib import DomainPower, Improvement, Unit, Age, unit_types, DomainSpecialization, NationalSpiritTech, NationalSpirit, GoodsTag, \
-    Technology
-from millennia.parser import MillenniaParser
+from millennia.game import MillenniaFileGenerator
+from millennia.millennia_lib import *
 from millennia.text_formatter import MillenniaWikiTextFormatter
 
 
@@ -258,8 +250,6 @@ class TableGenerator(MillenniaFileGenerator):
         return result
 
     def get_unlocked_by(self, entity, include_not_found_note=True):
-        # unlocks = [f'{{{{Technology|Tooltip|{tech.display_name}}}}}' if isinstance(tech, Technology) else tech.get_wiki_link_with_icon()
-        #            for tech in entity.unlocked_by]
         unlocks = [tech.get_wiki_link_with_icon()
                    for tech in entity.unlocked_by]
         if len(entity.spawned_by) > 0:
@@ -373,7 +363,6 @@ class TableGenerator(MillenniaFileGenerator):
     def get_domain_specializations_sections(self, spirit: DomainSpecialization):
         results = {}
         name = spirit.display_name.lower().replace(' ', '_')
-        # sorted_techs = sorted(spirit.technologies.values(), key=lambda tech: 1 if tech.is_age_advance else 0)  # sort advances after the normal techs
         sorted_techs = spirit.technologies.values()
         for section, contents in {
                 f'description_{name}': self.formatter.convert_to_wikitext(spirit.description),
@@ -474,8 +463,6 @@ class TableGenerator(MillenniaFileGenerator):
 
     def get_card_lists(self):
         MAX_CHOICE_COLUMNS = 4
-        # sections = {'innovation': self.parser.innovation_cards.values(),
-        #             'chaos': self.parser.chaos_cards.values()}
         sections = {deck_name.lower(): cards.values() for deck_name, cards in self.parser.event_cards.items()}
         results = {}
         for section, cards in sections.items():
@@ -558,7 +545,6 @@ class TableGenerator(MillenniaFileGenerator):
             'AI Personality': nation.personality_loc,
             'City Names': f'{nation.cityNameCollection.display_name}{{{{collapse|{self.create_wiki_list(nation.cityNameCollection.localized_names)}}}}}',
             'Town Names': f'{nation.townNameCollection.display_name}{{{{collapse|{self.create_wiki_list(nation.townNameCollection.localized_names)}}}}}',
-            # 'Town Names': f'{nation.townNameCollection.display_name}{self.create_wiki_list(nation.townNameCollection.localized_names)}',
         } for nation in sorted(self.parser.nations.values(), key=attrgetter('display_name')) if nation.name != 'random']
         return (self.get_SVersion_header() + '\n'
                 + self.make_wiki_table(data, table_classes=['mildtable'],
@@ -583,6 +569,7 @@ class TableGenerator(MillenniaFileGenerator):
         return (self.get_SVersion_header() + '\n'
                 + self.make_wiki_table(data, table_classes=['mildtable'],
                                        one_line_per_cell=True, row_id_key='id'))
+
 
 if __name__ == '__main__':
     generator = TableGenerator()
