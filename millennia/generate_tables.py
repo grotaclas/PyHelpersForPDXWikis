@@ -90,12 +90,10 @@ class TableGenerator(MillenniaFileGenerator):
         return result
 
     def improvement_sort_key(self, improvement):
-        upgrade_line = improvement.startingData.get('UpgradeLine')
-        if upgrade_line:
-            line, tier = next(iter(upgrade_line.items()))
-            return (line, int(tier), improvement.display_name)
+        if improvement.upgrade_line:
+            return improvement.upgrade_line_loc, improvement.upgrade_tier, improvement.display_name
         else:
-            return ('zzzzzzzzzz', 0, improvement.display_name)
+            return 'zzzzzzzzzz', 0, improvement.display_name
 
     @staticmethod
     def _requirements_to_strings(improvement: Improvement) -> list[str]:
@@ -130,9 +128,9 @@ class TableGenerator(MillenniaFileGenerator):
             improvements = sorted(improvements, key=self.improvement_sort_key)
             if title == 'outpost_improvements':
                 name_column = 'style="width:20%;" | Improvement'
-                build_on_column = 'class="unsortable" style="width:25%;" | Build on'
+                build_on_column = 'style="width:25%;" | Build on'
             else:
-                build_on_column = 'class="unsortable" | Build on'
+                build_on_column = 'Build on'
                 name_column = 'Improvement'
             data = [{
                 'id': improvement.display_name,
@@ -142,10 +140,10 @@ class TableGenerator(MillenniaFileGenerator):
                 'Unlocked By': self.get_unlocked_by(improvement),
                 'Base Cost': improvement.cost.format(icon_only=True),
                 build_on_column: ' '.join(self._requirements_to_strings(improvement)),
-                'class="unsortable" | Work effects': self.create_wiki_list(improvement.work_production),
-                'class="unsortable" | Passive effects': self.create_wiki_list(improvement.non_work_production),
-                'class="unsortable" | Upgrades': self.create_wiki_list([upgrade.get_wiki_link_with_icon() for upgrade in improvement.upgrades]),
-                'class="unsortable" | Notes': self.create_wiki_list(improvement.notes),
+                'Work effects': self.create_wiki_list(improvement.work_production),
+                'Passive effects': self.create_wiki_list(improvement.non_work_production),
+                'Upgrades': self._get_upgrades_column(improvement),
+                'Notes': self.create_wiki_list(improvement.notes),
                 # 'class="hidem unsortable" | Description': 'class="hidem" | ' + improvement.description,
 
             } for improvement in improvements]
@@ -164,9 +162,9 @@ class TableGenerator(MillenniaFileGenerator):
             'Building': f'{{{{iconbox|{building.display_name}|{building.description}|image={building.get_wiki_filename()}}}}}',
             'Unlocked By': self.get_unlocked_by(building),
             'Base Cost': building.cost.format(),
-            'class="unsortable" | Effects': self.create_wiki_list(building.non_work_production),
-            'class="unsortable" | Upgrades': self.create_wiki_list([upgrade.get_wiki_link_with_icon() for upgrade in building.upgrades]),
-            'class="unsortable" | Notes': self.create_wiki_list(building.notes),
+            'Effects': self.create_wiki_list(building.non_work_production),
+            'Upgrades': self._get_upgrades_column(building),
+            'Notes': self.create_wiki_list(building.notes),
             # 'class="unsortable" | Description': self.formatter.convert_to_wikitext(building.description),
             # 'class="unsortable" | Infopedia': self.formatter.convert_to_wikitext(building.infopedia),
 
@@ -176,6 +174,10 @@ class TableGenerator(MillenniaFileGenerator):
                       + self.make_wiki_table(data, table_classes=['mildtable'],
                                              one_line_per_cell=True, row_id_key='id'))
         return result
+
+    def _get_upgrades_column(self, entity: MillenniaEntity):
+        return (f'data-sort-value="{entity.upgrade_line_loc},{entity.upgrade_tier}" | ' if entity.upgrade_line else '') + self.create_wiki_list(
+            [upgrade.get_wiki_link_with_icon() for upgrade in entity.upgrades])
 
     def generate_unit_table(self):
         result = []
@@ -237,8 +239,8 @@ class TableGenerator(MillenniaFileGenerator):
                         'Sight': unit.revealRadius,
                         'Target prio': unit.targetPriority,
                         'Unrest suppression': unit.unrestSuppression,
-                        'class="unsortable" | Upgrades': self.create_wiki_list([upgrade.get_wiki_link_with_icon() for upgrade in unit.upgrades]),
-                        'class="unsortable" | Notes': self.create_wiki_list(unit.notes),
+                        'Upgrades': self._get_upgrades_column(unit),
+                        'Notes': self.create_wiki_list(unit.notes),
                         # 'class="unsortable" | Description': self.formatter.convert_to_wikitext(unit.description),
                         # 'class="unsortable" | Infopedia': self.formatter.convert_to_wikitext(unit.infopedia),
 
@@ -464,9 +466,9 @@ class TableGenerator(MillenniaFileGenerator):
             'Good': good.display_name,
             'Consumed for': self.create_wiki_list(good.consumeValues),
             'Produced in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in good.produced_in]),
-            'class="unsortable" | Made from': self.create_wiki_list([item.get_wiki_link_with_icon() for item in good.made_from]),
+            'Made from': self.create_wiki_list([item.get_wiki_link_with_icon() for item in good.made_from]),
             'Used in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in good.used_in]),
-            'class="unsortable" | Converted to': self.create_wiki_list([item.get_wiki_link_with_icon() for item in good.converted_to]),
+            'Converted to': self.create_wiki_list([item.get_wiki_link_with_icon() for item in good.converted_to]),
 
         } for good in goods]
         return (self.get_SVersion_header(scope='table') + '\n'

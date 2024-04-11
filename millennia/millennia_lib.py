@@ -359,20 +359,42 @@ class MillenniaEntity(NamedAttributeEntity):
         return Cost(res, value)
 
     @cached_property
+    def upgrade_line_tier(self) -> tuple[str|None, int|None]:
+        upgrade_lines = self.startingData.get_as_list('UpgradeLine')
+        match len(upgrade_lines):
+            case 0:
+                return None, None
+            case 1:
+                return upgrade_lines[0][0], int(upgrade_lines[0][1])
+            case _:
+                raise Exception(f'Multiple upgrade lines not supported in {self.name}')
+
+    @cached_property
+    def upgrade_line(self) -> str | None:
+        return self.upgrade_line_tier[0]
+
+    @cached_property
+    def upgrade_line_loc(self) -> str | None:
+        if self.upgrade_line:
+            return millenniagame.parser.localize(self.upgrade_line, 'Game-UpgradeLine-UpgradeLine').removeprefix('Upgrade Line: ')
+        else:
+            return None
+
+    @cached_property
+    def upgrade_tier(self) -> int | None:
+        return self.upgrade_line_tier[1]
+
+    @cached_property
     def upgrades(self):
-        if self.startingData.get('UpgradeLine'):
-            a = self.startingData.get('UpgradeLine')
-            line, tier = list(a.items())[0]
-            tier = int(tier)
-            if len(a) > 1:
-                print(a)
+        if self.upgrade_line:
             possible_upgrades = [entity for entity in millenniagame.parser.entities.values() if
-                                 entity.startingData.get('UpgradeLine') and line in entity.startingData.get('UpgradeLine')
-                                 and (int(entity.startingData.get('UpgradeLine')[line]) >= tier + 1)
+                                 entity.upgrade_line == self.upgrade_line
+                                 and entity.upgrade_tier >= self.upgrade_tier + 1
                                  and entity.has_localized_display_name  # assume unlocalized units dont exist
                                  ]
+            tier = self.upgrade_tier
             while possible_upgrades:
-                next_tier_upgrades = [upgrade for upgrade in possible_upgrades if int(upgrade.startingData.get('UpgradeLine')[line]) == tier + 1]
+                next_tier_upgrades = [upgrade for upgrade in possible_upgrades if upgrade.upgrade_tier == tier + 1]
                 if len(next_tier_upgrades) > 0:
                     return next_tier_upgrades
                 else:
