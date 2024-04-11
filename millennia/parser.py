@@ -428,6 +428,10 @@ class MillenniaParser:
         return self.parse_deck_from_file('PlayerActions', default_entity_class=PlayerAction)[1]
 
     @cached_property
+    def tile_actions(self) -> dict[str, UnitAction]:
+        return self.parse_deck_from_file('TileActions', default_entity_class=TileAction)[1]
+
+    @cached_property
     def misc_game_data(self) -> dict[str, str]:
         """effects which have a localization in Game-GameData-Misc"""
         overrides = {

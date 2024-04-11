@@ -541,7 +541,10 @@ class MillenniaEntity(NamedAttributeEntity):
             return f'Required region level: {value}'
         elif tag in ['CityAction', 'UseAction']:
             if value != 'NONE' and value not in ignored_unit_actions:
-                return f'Enables action: {parser.localize(value, localization_suffix="CardTitle")}'
+                if tag == 'UseAction':
+                    return f'Enables action: {parser.unit_actions[value].get_wiki_link_with_icon()}'
+                else:
+                    return f'Enables action: {parser.tile_actions[value].get_wiki_link_with_icon()}'
             else:
                 return ''
         elif tag == 'CityAttackStrength':
@@ -991,6 +994,10 @@ class Unit(MillenniaEntity):
 
     def get_wiki_page_name(self) -> str:
         return self.primary_type.wiki_page
+
+    @cached_property
+    def actions(self) -> list['UnitAction']:
+        return [millenniagame.parser.unit_actions[action_name] for number, action_name in self.startingData.get_as_list('UseAction') if action_name != 'NONE']
 
 
 class TownSpecialization(MillenniaEntity):
@@ -2305,10 +2312,9 @@ class Terrain(NamedAttributeEntity):
         return self.dataValues
 
 
-class UnitAction(CardBaseClass):
+class Action(CardBaseClass):
     cardSpriteName: str = None
 
-    extra_data_functions = {'description': lambda data: millenniagame.parser.localize(data['name'], localization_suffix='Tooltip', default='')}
     def get_icon_image(self) -> Image.Image | None:
         """get the icon from the game assets"""
         if self.cardSpriteName:
@@ -2317,8 +2323,24 @@ class UnitAction(CardBaseClass):
             return None
 
 
-class PlayerAction(CardBaseClass):
+class UnitAction(Action):
+
+    extra_data_functions = {'description': lambda data: millenniagame.parser.localize(data['name'], localization_suffix='Tooltip', default='')}
+
+    @cached_property
+    def units(self) -> list[Unit]:
+        """Units which have this action per default"""
+        return [unit for unit in millenniagame.parser.units.values() if self in unit.actions]
+
+
+class PlayerAction(Action):
     pass
+
+
+class TileAction(Action):
+
+    def get_wiki_filename_prefix(self):
+        return 'Unit action'
 
 
 class Need(NamedAttributeEntity):
