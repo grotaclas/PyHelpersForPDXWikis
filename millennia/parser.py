@@ -40,6 +40,7 @@ class MillenniaParser:
     def __init__(self):
         self.unparsed_attributes_for_import = {}
         self.all_parsed_entities = {}
+        self.cards_which_use_tag = {}
 
     @cached_property
     def unity_reader(self) -> UnityReaderMillennia:
@@ -536,3 +537,24 @@ class MillenniaParser:
             faction.rewards[tier] = faction_reward
 
         return results
+
+    def get_cards_which_use_tag(self, tag):
+        if tag not in self.cards_which_use_tag:
+            cards = []
+            for card in self.all_cards.values():
+                result = []
+                if 'ACardChoice' in card.choices:
+                    a = card.choices.find_all_recursively('ACardRequirement')
+                    result.extend(a)
+                if card.prereqs:
+                    b = card.prereqs.find_all_recursively('Requirement')
+                    result.extend(b)
+                for requirement in result:
+                    if requirement and requirement.get('ReqType') == 'CR_EntityTagCount' and requirement.get('Req', '').startswith(f'{tag},'):
+                        cards.append((card, [pformat(requirement.dictionary)]))
+                payloads = card.traverse_effects('CE_PlayCard',
+                                                 lambda effect: effect.get('Payload') if re.fullmatch(f'ENTTAG,\+?{tag}', effect.get('Target', '')) else None)
+                if payloads:
+                    cards.append((card, payloads))
+            self.cards_which_use_tag[tag] = cards
+        return self.cards_which_use_tag[tag]

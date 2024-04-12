@@ -627,6 +627,12 @@ class MillenniaEntity(NamedAttributeEntity):
         elif tag in ['LaserShield', 'HasAlignmentDecay']:
             return f'<pre>{tag}</pre>'
         else:
+            # can be used for testing new tags
+            # loc = parser.localize(tag, 'Game-Tag', return_none_instead_of_default=True)
+            # if loc is not None:
+            #     cards = parser.get_cards_which_use_tag(tag)
+            #     if cards:
+            #         return f'{tag}: {loc}; used in {", ".join(card.get_wiki_link_with_icon() + ";".join(payloads) for card, payloads in cards)}'
             return None
 
 
@@ -812,6 +818,14 @@ class Improvement(BuildingBaseClass):
         else:
             return 'Improvements'
 
+    def _get_note_from_tag(self, tag):
+        parser = millenniagame.parser
+        if tag in ['AetherImprovement', 'Computers', 'Docks', 'EducationBuilding', 'Factory', 'Farms', 'Modernization', 'OutpostCore', 'Pyramids', 'ReligiousBuilding', 'Scribes', 'TradePost', 'Trash', 'WeaponSmith']:
+            return parser.localize(tag, 'Game-Tag').removesuffix('s')
+        if tag == 'Furnace':
+            return 'Furnace type'
+        return super()._get_note_from_tag(tag)
+
 
 class TileOverlay(Improvement):
     pass
@@ -964,13 +978,24 @@ class Unit(MillenniaEntity):
     def _get_note_from_tag(self, tag):
         parser = millenniagame.parser
         formatter = parser.formatter
-        if tag.startswith('Type') or tag in ['ShallowWater']:
-            return parser.localize(tag, 'Game-Tag')
-        fixed_texts = {'NeutralCampSpawnPlacer': 'Spawns barbarian camps',
-                       'CombatTargetingLowestHealth': 'Targets enemy with lowest health',
-                       'GameDataKillAtZero-ActionCharges': 'Disbands after using up action charges',
-                       'EnterPeacefulTerritory': 'Can move into foreign territory without a treaty',
-                       }
+        if tag.startswith('Type') or tag in [
+            'ShallowWater', 'AirUnit', 'Barbarian', 'Scout', 'Cultist', 'Daimyo',  # unit types which don't start with type
+            'AirBomber', 'Automata', 'CombatTower', 'CombatWall', 'EarlySea', 'Explorer', 'Knight', 'Leader', 'Mercenary', 'Militia', 'Raider', 'Steampunk',
+            'WaterTransport', 'CreateImportRoute',
+            # 'RogueAI',  already displayed from the data 'NeutralSubtype,5' which has the same localization
+        ]:
+            return parser.localize(tag, 'Game-Tag').removesuffix('s')
+
+        fixed_texts = {
+            'BendTheKnee': f'Counts as Pre-Gunpowder Unit for {parser.all_cards["INNOVATION-GOVKINGDOM-BENDTHEKNEE"].get_wiki_link_with_icon()}',
+            'CombatTargetingLowestHealth': 'Targets enemy with lowest health',
+            'EnterPeacefulTerritory': 'Can move into foreign territory without a treaty',
+            'GameDataKillAtZero-ActionCharges': 'Disbands after using up action charges',
+            'JaguarBuff': f'Can be promoted to {parser.units["UNIT_JAGUAR"].get_wiki_link_with_icon()} when having {parser.domain_technologies["WARRIORPRIESTS-JAGUAR"].get_wiki_link_with_icon()}',
+            'NeutralCampSpawnPlacer': 'Spawns barbarian camps',
+            'Outrider': f'Counts as Pre-Gunpowder Unit for {parser.domain_technologies["RAIDER-OUTRIDERS"].get_wiki_link_with_icon()}',
+            'Victor': f'Counts as Pre-Gunpowder Unit for {parser.domain_technologies["RAIDER-VICTORS"].get_wiki_link_with_icon()}',
+        }
         if tag in fixed_texts:
             return fixed_texts[tag]
         for ignored_prefix in ['GameDataTooltip', 'CombatType', 'CombatAttackType', 'TagAIBehavior', 'TagAILimitType', 'TagAIIgnoreLimitType', 'WeightUnitBy']:
