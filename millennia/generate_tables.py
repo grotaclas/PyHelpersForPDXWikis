@@ -1,3 +1,4 @@
+import re
 from collections import OrderedDict
 from operator import attrgetter
 
@@ -398,8 +399,9 @@ class TableGenerator(MillenniaFileGenerator):
         results = {}
         name = spirit.display_name.lower().replace(' ', '_')
         sorted_techs = spirit.technologies.values()
+        remove_buffs_from_description = re.compile(r'\n*' + spirit.display_name + r' Government Buffs(\n((^\s*$)|(^\s{8}.*$)))*', re.MULTILINE)
         for section, contents in {
-                f'description_{name}': self.formatter.convert_to_wikitext(spirit.description),
+                f'description_{name}': remove_buffs_from_description.sub('\n', self.formatter.convert_to_wikitext(spirit.description)),
                 f'infopedia_{name}': self.formatter.convert_to_wikitext(spirit.infopedia),
                 f'requirements_{name}': self.create_wiki_list(spirit.base_tech.requirements),
                 # f'unlocks_{name}': self.create_wiki_list(
