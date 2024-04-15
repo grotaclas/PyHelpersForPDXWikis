@@ -1415,6 +1415,8 @@ class CardBaseClass(NamedAttributeEntity):
                     # for simple increase/reduce we can use format_resource to get a concise formatting with icon, red/green and plus/minus
                     # but if the value is a variable like #REWARD_XPGAIN_VALUE, it would not work so well. TODO: improve the formatting for variables
                     if operation in ['ADD', 'SUB'] and parser.formatter.is_number(value):
+                        if Decimal(value) == 0:
+                            return ''
                         if operation == 'SUB':
                             value = f'-{value}'
                         return self._prefix_target(target, f'{name_attribute}{parser.formatter.format_resource(name, value, add_plus=True)}{decay_text}')
