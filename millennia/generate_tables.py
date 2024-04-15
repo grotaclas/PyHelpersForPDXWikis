@@ -409,8 +409,7 @@ class TableGenerator(MillenniaFileGenerator):
                 f'effects_{name}': self.create_wiki_list(spirit.base_tech.all_effects),
                 f'ideals_{name}': '\n' + self.get_domain_specialization_ideals_table(sorted_techs)}.items():
             if contents:
-                if section != 'requirements_space_agency':
-                    results[section] = self.get_SVersion_header() + contents
+                results[section] = self.get_SVersion_header() + contents
         return results
 
     def generate_national_spirit_list(self):
