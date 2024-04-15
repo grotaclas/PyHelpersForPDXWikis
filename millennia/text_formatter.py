@@ -1,5 +1,6 @@
 import re
 import sys
+from decimal import Decimal
 
 from common.wiki import WikiTextFormatter
 from millennia.game import millenniagame
@@ -97,28 +98,26 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
     def format_cost(self, resource: str, value: int, icon_only=False):
         return self.format_resource(resource, value, cost=True, icon_only=icon_only)
 
-    def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False):
+    @staticmethod
+    def is_number(s: str):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+
+    def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False, add_plus=False):
         if not isinstance(resource, Resource):
             resource = Resource(resource)
         if value is None:
             value_str = ''
+        elif isinstance(value, str) and not self.is_number(value):
+            value_str = f' {value}'
         else:
             positive_is_bad = resource.positive_is_bad
             if cost:
                 positive_is_bad = not positive_is_bad
-            if float(value) > 0:
-                if positive_is_bad:
-                    color = 'red'
-                else:
-                    color = 'green'
-            elif float(value) < 0:
-                if positive_is_bad:
-                    color = 'green'
-                else:
-                    color = 'red'
-            else:
-                color = 'yellow'
-            value_str = f' {{{{{color}|{value}}}}}'
+            value_str = f' {self.add_red_green(Decimal(value), positive_is_good=not positive_is_bad, add_plus=add_plus)}'
 
         icon_str = f'{{{{icon|{resource.icon}}}}}'
         if icon_only:

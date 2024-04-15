@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import math
 from typing import List
 
@@ -42,7 +44,7 @@ class WikiTextFormatter:
 
     @staticmethod
     def add_red_green(number, positive_is_good: bool = True, add_plus: bool = False, add_percent: bool = False) -> str:
-        if not isinstance(number, (int, float)):
+        if not isinstance(number, (int, float, Decimal)):
             return str(number)
 
         if number == 0:
