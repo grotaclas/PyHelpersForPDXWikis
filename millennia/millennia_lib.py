@@ -770,6 +770,15 @@ class Improvement(BuildingBaseClass):
         return self.tags.has('OutpostCore')
 
     @cached_property
+    def terrains(self) -> list['Terrain']:
+        terrains = []
+        terrain_requirement = self.tags.get('BuildRequirementTerrain')
+        if terrain_requirement is not None:
+            for terrain_name in terrain_requirement:
+                terrains.append(millenniagame.parser.terrains[terrain_name])
+        return terrains
+
+    @cached_property
     def build_requirements(self):
         requirements = []
         locations = list(millenniagame.parser.terrains.values())
@@ -783,10 +792,7 @@ class Improvement(BuildingBaseClass):
                         requirements.append(location)
             # requirements.extend(tag_requirements)
 
-        terrain_requirement = self.tags.get('BuildRequirementTerrain')
-        if terrain_requirement is not None:
-            for terrain_name in terrain_requirement:
-                requirements.append(millenniagame.parser.terrains[terrain_name])
+        requirements.extend(self.terrains)
 
         tile_requirement = self.tags.get('BuildRequirementTile')
         if tile_requirement is not None:
@@ -2318,6 +2324,26 @@ class DomainPower(NamedAttributeEntity):
         return result
 
 
+class Landmark(NamedAttributeEntity):
+
+    category: str
+    params: Data
+
+    _tag_for_name = 'ID'
+    _localization_category: str = 'Landmark'
+
+    transform_value_functions = {'params': lambda params: Data(params['Param'] if params and 'Param' in params else [])}
+
+    @cached_property
+    def terrains(self) -> list['Terrain']:
+        if self.params.has('Placement-TerrainType'):
+            return [millenniagame.parser.terrains[self.params.get('Placement-TerrainType')]]
+        terrains = []
+        if self.params.has('Placement-TerrainTag'):
+            for _, tag in self.params.get_as_list('Placement-TerrainTag'):
+                terrains.extend(millenniagame.parser.get_terrains_by_tag(tag))
+        return terrains
+
 @dataclass
 class Gather:
     name: str
@@ -2332,6 +2358,9 @@ class Terrain(NamedAttributeEntity):
     minimapColor: str
     mapGenColor: str
     workerEntryPrefab: str
+    moveCost: int = 10
+    expansionCost: Decimal
+    terrainDefenseBonus: Decimal = Decimal(1.0)
 
     # several UI related data is ignored
 
@@ -2343,10 +2372,50 @@ class Terrain(NamedAttributeEntity):
                                  'dataValues': lambda params: Data(params['Data'])
                                  }
 
+    def __init__(self, attributes: dict[str, any]):
+        super().__init__(attributes)
+        if self.dataValues.has('MoveCost'):
+            self.moveCost = int(self.dataValues.get('MoveCost'))
+        self.expansionCost = Decimal(self.dataValues.get('ExpansionCost'))
+        if self.dataValues.has('TerrainDefenseBonus'):
+            self.terrainDefenseBonus = Decimal(self.dataValues.get('TerrainDefenseBonus'))
+
+    @cached_property
+    def foraging(self) -> list[str]:
+        results = [millenniagame.parser.formatter.format_resource(resource, value) for
+                resource, value in self.dataValues.get_as_list('TileData:Workable')
+                if float(value) != 0]
+        for card in millenniagame.parser.all_cards.values():
+            foraging_effects = card.traverse_effects('CE_AdjustGameData', lambda effect: effect['Payload'] if effect['Payload'].startswith('WorkableBonusResource') else None)
+            conditional_effects = []
+            for effect in foraging_effects:
+                _, resource, tag, operator, value = re.split('[-,]', effect)
+                assert(operator == 'ADD')
+                if self.tags.has(tag.removeprefix('+')):
+                    conditional_effects.append(millenniagame.parser.formatter.format_resource(resource, value, add_plus=True))
+            if len(conditional_effects) > 0:
+                results.append(f'With {card.get_wiki_link()}:')
+                results.append(conditional_effects)
+        return results
+
     @cached_property
     def gathers(self) -> list[Gather]:
         return [Gather(name, millenniagame.parser.localize(name, 'Goods-Special-TileProduction', 'DisplayName'), millenniagame.parser.goods[goods], amount) for
                 name, goods, amount in self.dataValues.get_as_list('TileData:GoodsProduction')]
+
+    @cached_property
+    def potential_goods(self):
+        return [tile for tag in self.tags.unparsed_entries
+                if tag in millenniagame.parser.terrain_tags_to_bonus_tiles
+                for tile in millenniagame.parser.terrain_tags_to_bonus_tiles[tag]]
+
+    @cached_property
+    def potential_landmarks(self):
+        return [landmark for landmark in millenniagame.parser.landmarks.values() if self in landmark.terrains]
+
+    @cached_property
+    def improvements(self):
+        return [improvement for improvement in millenniagame.parser.improvements.values() if self in improvement.terrains]
 
     def get_icon_image(self) -> Image.Image | None:
         """get the icon from the game assets"""
@@ -2359,6 +2428,20 @@ class Terrain(NamedAttributeEntity):
     @property
     def startingData(self):
         return self.dataValues
+
+    @cached_property
+    def is_land(self) -> bool:
+        return self.tags.has('Land')
+
+    @cached_property
+    def allows_movement(self) -> bool:
+        return self.tags.has('LandMovement') or self.tags.has('WaterMovement') or self.name in [
+            'TT_DEEPFOREST', 'TT_JUNGLE',  # they allow movement through the scouting tech
+        ]
+
+    @cached_property
+    def allows_town(self) -> bool:
+        return self.is_land and self.allows_movement
 
 
 class Action(CardBaseClass):

@@ -604,24 +604,51 @@ class TableGenerator(MillenniaFileGenerator):
                 + self.make_wiki_table(data, table_classes=['mildtable'],
                                        one_line_per_cell=True, row_id_key='id'))
 
+    def _format_landmarks(self, terrain: Terrain):
+        category_display = {
+            'Natural': 'Landmarks:',
+            'QuestZero': 'Quests:',
+            'QuestOne': 'Quests:',
+            'QuestTwo': 'Quests:',
+            'CityOfGold': 'Cities of Gold:'
+        }
+        result = []
+        for category, landmarks in unsorted_groupby(terrain.potential_landmarks, key=lambda landmark: category_display[landmark.category]):
+            result.append(f"'''{category}'''")
+            result.append(list(landmarks))
+        return self.create_wiki_list(result)
+
+    def _format_improvements(self, terrain: Terrain):
+        improvements = terrain.improvements
+        is_open_terrain = False
+        for tag in terrain.tags.unparsed_entries:
+            if tag == 'OpenTerrain':
+                is_open_terrain = True
+            else:
+                improvements.extend(self.parser.get_entities_by_tag(f'BuildRequirementTag-{tag}', self.parser.improvements))
+        improvements = [improvement.get_wiki_link_with_icon() for improvement in improvements]
+        if is_open_terrain:
+            improvements.append('Flat terrain improvements')
+        if terrain.allows_town:
+            improvements.insert(0, '{{icon|town}} Towns')
+        return self.create_wiki_list(improvements)
+
     def generate_terrain_table(self):
-        """Incomplete and not used on the wiki"""
         data = [{
             'id': terrain.display_name,
             'width=1% class="unsortable" |': terrain.get_wiki_file_tag('64px'),
             'width=10% | Tile': terrain.display_name,
-            'Foraging': '',
-            'Gathering': self.create_wiki_list([f'{gather.display_name}: {gather.goods.get_wiki_icon()} {gather.amount} {gather.goods.display_name}' for gather in terrain.gathers]),
-            ' Potential Good ': '',
-            ' Potential Landmark': '',
-            ' Allows Improvements': '',
-            ' Combat modifier': '',
-            ' Terrain type expansion cost': '',
-            ' Movement cost': '',
-            ' Allows town?': '',
+            'Foraging': self.create_wiki_list(terrain.foraging),
+            'Gathering': self.create_wiki_list([re.sub(r"Gather \(([^)]*)\)", r"\1", gather.display_name) + f': {gather.goods.get_wiki_icon()} {gather.amount} {gather.goods.display_name}' for gather in terrain.gathers]),
+            'width=10% | Potential Goods': ' '.join([tile.get_wiki_icon() for tile in terrain.potential_goods]),
+            'Potential Landmarks': self._format_landmarks(terrain), # self.create_wiki_list(terrain.potential_landmarks),
+            'Allows': self._format_improvements(terrain),
+            'width=5% | Defense bonus': f"'''×{terrain.terrainDefenseBonus}'''" if terrain.terrainDefenseBonus != 1 else '',
+            'width=5% | Terrain type expansion cost': f"'''{terrain.expansionCost}'''",
+            'width=5% | Movement cost': f"'''{terrain.moveCost}'''" if terrain.allows_movement else '{{icon|no}}',
         } for terrain in self.parser.terrains.values()]
-        return (self.get_SVersion_header() + '\n'
-                + self.make_wiki_table(data, table_classes=['mildtable'],
+        return (self.get_SVersion_header('table') + '\n'
+                + self.make_wiki_table(data, table_classes=['mildtable', 'plainlist'],
                                        one_line_per_cell=True, row_id_key='id'))
 
 

@@ -97,6 +97,13 @@ class WikiTextFormatter:
             return f'{number:g}%'
 
     @staticmethod
+    def format_yes_no(boolean: bool):
+        if boolean:
+            return '{{icon|yes}}'
+        else:
+            return '{{icon|no}}'
+
+    @staticmethod
     def quote(text):
         return f"''“{text}”''"
 

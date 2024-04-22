@@ -260,7 +260,7 @@ class MillenniaParser:
         return dict(**self.technologies, **self.ages,
                     **self.infopedia_topics,
                     **self.entities, **self.domain_technologies, **self.domain_powers,
-                    **self.unit_actions, **self.needs, **self.terrains)
+                    **self.unit_actions, **self.needs, **self.terrains, **self.landmarks)
 
     @cached_property
     def all_cards(self) -> dict[str, CardBaseClass]:
@@ -402,6 +402,10 @@ class MillenniaParser:
     def domain_powers(self) -> dict[str, DomainPower]:
         return self.parse_nameable_entities_with_xmltodict('CulturePower', 'CulturePowers',
                                                            default_entity_class=DomainPower)
+
+    @cached_property
+    def landmarks(self):
+        return self.parse_nameable_entities_with_xmltodict('Landmark', 'Landmarks', default_entity_class=Landmark)
 
     @cached_property
     def terrains(self) -> dict[str, Terrain]:
@@ -558,3 +562,27 @@ class MillenniaParser:
                     cards.append((card, payloads))
             self.cards_which_use_tag[tag] = cards
         return self.cards_which_use_tag[tag]
+
+    @staticmethod
+    def _is_standard_resource_layer(layer: Tree):
+        for tag in layer.find_all_recursively('Tag'):
+            if tag == 'StandardResource':
+                return True
+        return False
+
+    @cached_property
+    def terrain_tags_to_bonus_tiles(self) -> dict[str, list[MapTile]]:
+        result = {}
+        for layer in Tree(xmltodict.parse(self.unity_reader.text_asset_resources['text/biomes']['StandardBiome'],
+                                          postprocessor=self.xml_postprocessor)).find_all_recursively('Layer'):
+            if self._is_standard_resource_layer(layer):
+                for _, entry in layer['Entries']:
+                    if entry['EntryType'] != 'BDE_TILE':
+                        continue
+                    map_tile = self.map_tiles[entry['Data']]
+                    for _, tag in entry['RequiredTerrainTags']:
+                        tag = tag.removeprefix('+')
+                        if tag not in result:
+                            result[tag] = []
+                        result[tag].append(map_tile)
+        return result

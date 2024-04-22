@@ -128,5 +128,3 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
 
     def format_resource_without_value(self, resource: str, icon_only=False):
         return self.format_resource(resource, icon_only=icon_only)
-
-
