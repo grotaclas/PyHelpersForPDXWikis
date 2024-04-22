@@ -981,20 +981,17 @@ class Unit(MillenniaEntity):
         if tag.startswith('Type') or tag in [
             'ShallowWater', 'AirUnit', 'Barbarian', 'Scout', 'Cultist', 'Daimyo',  # unit types which don't start with type
             'AirBomber', 'Automata', 'CombatTower', 'CombatWall', 'EarlySea', 'Explorer', 'Knight', 'Leader', 'Mercenary', 'Militia', 'Raider', 'Steampunk',
-            'WaterTransport', 'CreateImportRoute',
+            'WaterTransport', 'CreateImportRoute', 'PreGunpowder',
             # 'RogueAI',  already displayed from the data 'NeutralSubtype,5' which has the same localization
         ]:
             return parser.localize(tag, 'Game-Tag').removesuffix('s')
 
         fixed_texts = {
-            'BendTheKnee': f'Counts as Pre-Gunpowder Unit for {parser.all_cards["INNOVATION-GOVKINGDOM-BENDTHEKNEE"].get_wiki_link_with_icon()}',
             'CombatTargetingLowestHealth': 'Targets enemy with lowest health',
             'EnterPeacefulTerritory': 'Can move into foreign territory without a treaty',
             'GameDataKillAtZero-ActionCharges': 'Disbands after using up action charges',
             'JaguarBuff': f'Can be promoted to {parser.units["UNIT_JAGUAR"].get_wiki_link_with_icon()} when having {parser.domain_technologies["WARRIORPRIESTS-JAGUAR"].get_wiki_link_with_icon()}',
             'NeutralCampSpawnPlacer': 'Spawns barbarian camps',
-            'Outrider': f'Counts as Pre-Gunpowder Unit for {parser.domain_technologies["RAIDER-OUTRIDERS"].get_wiki_link_with_icon()}',
-            'Victor': f'Counts as Pre-Gunpowder Unit for {parser.domain_technologies["RAIDER-VICTORS"].get_wiki_link_with_icon()}',
         }
         if tag in fixed_texts:
             return fixed_texts[tag]
