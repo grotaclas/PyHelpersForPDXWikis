@@ -1827,19 +1827,38 @@ class CardBaseClass(NamedAttributeEntity):
             case 'CR_Location':
                 if target == 'LOC,EXECLOC':
                     target_loc = f'this location'
+                elif target == 'LOC,EXTERNALTARGET':
+                    target_loc = 'selected location'
                 else:
                     target_loc = f'<tt>{target}</tt>'
                 match req.split(','):
                     case ['TERRAINTAG', tag]:
-                        return f'Terrain at {target_loc} is one of the following: {", ".join(t.get_wiki_link_with_icon() for t in parser.get_terrains_by_tag(tag))}'
+                        if tag == '[PLAYER:TransportLoadTerrainType]':
+                            return f'Terrain at {target_loc} is a type through which which water transports can move'
+                        else:
+                            return f'Terrain at {target_loc} is one of the following: {", ".join(t.get_wiki_link_with_icon() for t in parser.get_terrains_by_tag(tag))}'
                     case ['TERRAINTAGADJACENT', tag]:
                         return f'Terrain adjacent to {target_loc} is one of the following: {", ".join(t.get_wiki_link_with_icon() for t in parser.get_terrains_by_tag(tag))}'
                     case ['RIVER', 'TRUE']:
                         return f'A river is next to {target_loc}'
+                    case ['HASSTACKSPACE', 'TRUE', _player]:
+                        return f'Army at {target_loc} is not full'
                     case ['ISVASSAL', 'TRUE']:
                         return f'{target_loc} is a vassal'
                     case ['ISVASSAL', 'FALSE']:
                         return f'{target_loc} is not a vassal'
+                    case ['SUBREGION', 'TRUE']:
+                        return f'{target_loc} is a vassal ''or'' outpost'
+                    case ['SUBREGION', 'FALSE']:
+                        return f"{target_loc} is ''not'' a vassal ''nor'' an outpost"
+                    case ['TERRITORY', tag]:
+                        return f'{target_loc} is {parser.localize(tag, "UI-Req")}'
+                    case ['TILE', 'EMPTY_OR_HIDDEN']:
+                        return f'{target_loc} is empty or has a hidden good'
+                    case ['TILEDIST', 'LTE', distance]:
+                        return f'Distance to {target_loc} is at most {distance}'
+                    case ['BORDERDIST', 'GTE', distance]:
+                        return f'Distance between {target_loc} and a nations border is at least {distance}'
                 pass
             case 'CR_Entity':
                 pass
