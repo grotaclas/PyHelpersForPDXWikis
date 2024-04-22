@@ -400,14 +400,33 @@ class TableGenerator(MillenniaFileGenerator):
         name = spirit.display_name.lower().replace(' ', '_')
         sorted_techs = spirit.technologies.values()
         remove_buffs_from_description = re.compile(r'[\n\s]*' + spirit.display_name + r' Government Buffs(\n((^\s*$)|(^\s{8}.*$)))*', re.MULTILINE)
+        effects = spirit.base_tech.all_effects
+        effects_on_tags = {}
+        other_effects = []
+        i = 0
+        while i < len(effects):
+            if effects[i] == 'If the following requirements are met:':
+                match = re.match(r'^Is .*<!-- tag ([^\s-]*) -->$', effects[i+1][0])
+                if match and effects[i+2].startswith('then play the card'):
+                    tag = match.group(1).removeprefix('+')
+                    if tag not in effects_on_tags:
+                        effects_on_tags[f'effects_{name}_on_{tag}'] = []
+                    effects_on_tags[f'effects_{name}_on_{tag}'].extend(effects[i+3])
+                    i += 4
+                    continue
+            other_effects.append(effects[i])
+            i += 1
+
         for section, contents in {
                 f'description_{name}': remove_buffs_from_description.sub('\n', self.formatter.convert_to_wikitext(spirit.description)),
                 f'infopedia_{name}': self.formatter.convert_to_wikitext(spirit.infopedia),
                 f'requirements_{name}': self.create_wiki_list(spirit.base_tech.requirements),
                 # f'unlocks_{name}': self.create_wiki_list(
                 #     [unlock.get_wiki_link_with_icon() for unlock in spirit.base_tech.unlocks_as_entities]),
-                f'effects_{name}': self.create_wiki_list(spirit.base_tech.all_effects),
-                f'ideals_{name}': '\n' + self.get_domain_specialization_ideals_table(sorted_techs)}.items():
+                f'effects_{name}': self.create_wiki_list(other_effects),
+                f'ideals_{name}': '\n' + self.get_domain_specialization_ideals_table(sorted_techs),
+                **effects_on_tags
+        }.items():
             if contents:
                 results[section] = self.get_SVersion_header() + contents
         return results

@@ -111,6 +111,20 @@ class WikiTextFormatter:
         else:
             return ''
 
+    @staticmethod
+    def uc_first(text: str):
+        if len(text) > 0:
+            return text[0].upper() + text[1:]
+        else:
+            return text
+
+    @staticmethod
+    def lc_first(text: str):
+        if len(text) > 0:
+            return text[0].lower() + text[1:]
+        else:
+            return text
+
 
 # the rest of the file is an unfinished version of a better wiki-table generator
 class Cell:

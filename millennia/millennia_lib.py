@@ -1547,7 +1547,7 @@ class CardBaseClass(NamedAttributeEntity):
                     if payload_param and payload_param.startswith('TurnDelay'):
                         delay = payload_param.removeprefix('TurnDelay:')
                         when = f'After {delay} turns'
-                    return CardBaseClass.get_notes_for_card_play(payload, target_text, when, include_unlocks, collected_unlocks)
+                    return CardBaseClass.get_notes_for_card_play(payload, target_text, when, include_unlocks, collected_unlocks, target)
             case 'CE_DrawAndPlay':
                 pass
             case 'CE_SetStringData':
@@ -1715,11 +1715,14 @@ class CardBaseClass(NamedAttributeEntity):
 
     @cached_property
     def requirements(self) -> list[str]:
+        return self.get_requirements()
+
+    def get_requirements(self, ignored_tag_requirements: list[str] = None) -> list[str]:
         result = []
         if self.choice_requirements_apply_to_card and 'ACardChoice' in self.choices:
-            result.extend(self.get_requirement_texts(self.choices.find_all_recursively('ACardRequirement')))
+            result.extend(self.get_requirement_texts(self.choices.find_all_recursively('ACardRequirement'), ignored_tag_requirements))
         if self.prereqs:
-            result.extend(self.get_requirement_texts(self.prereqs.find_all_recursively('Requirement')))
+            result.extend(self.get_requirement_texts(self.prereqs.find_all_recursively('Requirement'), ignored_tag_requirements))
 
         if hasattr(self, 'is_age_advance') and self.is_age_advance:
             # add section tags for transclusion to the special age requirements(but not for the generic number-of-techs requirement(TechRequirement)
@@ -1732,7 +1735,7 @@ class CardBaseClass(NamedAttributeEntity):
                 result.append(f'At least {count} {age} technologies')
         return result
 
-    def get_requirement_texts(self, requirements: Iterator[Tree]):
+    def get_requirement_texts(self, requirements: Iterator[Tree], ignored_tag_requirements: list[str] = None):
         results = []
         for requirement in requirements:
             if requirement is None:  # empty Requirement block
@@ -1745,7 +1748,7 @@ class CardBaseClass(NamedAttributeEntity):
             target = requirement.get('Target')
             req_type = requirement.get('ReqType')
             add_to_entity_buffer = requirement.get_or_default('AddToEntityBuffer', False)
-            req_text = self.get_requirement_text(req_type, req, target, requirement)
+            req_text = self.get_requirement_text(req_type, req, target, requirement, ignored_tag_requirements)
             if req_text is None:
                 print(f'Unhandled req type {req_type} with req "{req}"')
                 pprint(requirement.dictionary)
@@ -1769,7 +1772,7 @@ class CardBaseClass(NamedAttributeEntity):
             target_text = f'Any {target_text}'
         return f'{target_text}: {text}'
 
-    def get_requirement_text(self, req_type: str, req: str, target: str, requirement: Tree) -> str | None:
+    def get_requirement_text(self, req_type: str, req: str, target: str, requirement: Tree, ignored_tag_requirements: list[str] = None) -> str | None:
         parser = millenniagame.parser
         match req_type:
             case 'CR_GameDataTotal':
@@ -1844,9 +1847,10 @@ class CardBaseClass(NamedAttributeEntity):
                     return self._prefix_target(target, f'Has {parser.national_spirits[req].get_wiki_link_with_icon()}')
             case 'CR_CheckTag':
                 tag = req.removeprefix('+')
+                if ignored_tag_requirements and tag in ignored_tag_requirements:
+                    return ''
                 what = parser.formatter.convert_to_wikitext(parser.localize(tag, 'Game-Tag', default=f'<tt>{tag}</tt>'))
                 return self._prefix_target(target, f'Is a {what}<!-- tag {req} -->')
-                pass
             case 'CR_Region':
                 if req == '!IDLE':
                     # if requirement.get_or_default('AddToEntityBuffer', False):
@@ -1884,9 +1888,9 @@ class CardBaseClass(NamedAttributeEntity):
                 return f'{{{{icon|no}}}} Disabled with the message {parser.formatter.quote(msg)}'
 
     @staticmethod
-    def get_notes_for_card_play(card, target: str = None, when: str = None, include_unlocks=True, collected_unlocks: list[Unlock]=None) -> list[str]:
-        if target and not target.startswith(' '):
-            target = f' {target}'
+    def get_notes_for_card_play(card, target_text: str = None, when: str = None, include_unlocks=True, collected_unlocks: list[Unlock]=None, target: str = None) -> list[str]:
+        if target_text and not target_text.startswith(' '):
+            target_text = f' {target_text}'
         if when:
             when_text = f'{when}, '
         else:
@@ -1909,20 +1913,34 @@ class CardBaseClass(NamedAttributeEntity):
 
         if card_effects:
             if card_obj.has_localized_display_name:
-                card_name = f'{millenniagame.parser.formatter.quote(card_obj.display_name)}<!-- {card} -->'
+                # card_name = f'{millenniagame.parser.formatter.quote(card_obj.display_name)}<!-- {card} -->'
+                card_name = f'{millenniagame.parser.formatter.quote(card_obj.display_name)}(<tt>{card}</tt>)'
             else:
                 card_name = f'<tt>{card}</tt>'
-            if card_obj.requirements:
-                notes.append(f'{when_text}If the following requirements are met:')
-                notes.append(card_obj.requirements)
-                notes.append(f'then play the card {card_name}{target}:')
-                for unlock in new_unlocks:
-                    unlock.add_condition(card_obj.requirements)
+            if target and target.startswith('ENTTAG,'):
+                requirements = card_obj.get_requirements(ignored_tag_requirements=[target.removeprefix('ENTTAG,').removeprefix('+')])
             else:
-                notes.append(f'{when_text}Play card {card_name}{target}:')
-            notes.append(
-                card_effects
-            )
+                requirements = card_obj.requirements
+            if requirements:
+                notes.append(f'{when_text}If the following requirements are met:')
+                notes.append(requirements)
+                notes.append(f'then play the card {card_name}{target_text}:')
+                for unlock in new_unlocks:
+                    unlock.add_condition(requirements)
+                notes.append(card_effects)
+            else:
+                # notes.append(f'{when_text}Play card {card_name}{target_text}:')
+                if when_text:
+                    target_text = re.sub(r'^ on ', 'for ', target_text)
+                else:
+                    target_text = millenniagame.parser.formatter.uc_first(target_text.removeprefix(' on '))
+                if len(when_text + target_text) > 0:
+                    notes.append(f'{when_text}{target_text}<!-- Play card {card} -->:')
+                    notes.append(card_effects)
+                else:
+                    # inline the effect, because we have no details
+                    notes.extend(card_effects)
+
         if collected_unlocks is not None:
             collected_unlocks.extend(new_unlocks)
         return notes
