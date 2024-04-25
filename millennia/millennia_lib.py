@@ -1370,6 +1370,16 @@ class CardBaseClass(NamedAttributeEntity):
             target_text = 'region'
         elif target == 'PLAYER,ALLPLAYERS':
             target_text = 'all players'
+        elif target.startswith('PLAYER,ALLPLAYERSBYDIPLOMATICRELATIONSHIP:'):
+            target_type = target.removeprefix('PLAYER,ALLPLAYERSBYDIPLOMATICRELATIONSHIP:')
+            if target_type.startswith('!'):
+                target_bool = 'FALSE'
+                target_type = target_type.removeprefix('!')
+            else:
+                target_bool = 'TRUE'
+            target_text = f'all {parser.localize(target_type + "," + target_bool, "UI-Req").lower()} players'
+        elif target.startswith('PLAYER,ALLPLAYERSBYGAMEDATA:'):
+            target_text = f'players which have the game data <tt>{target.removeprefix("PLAYER,ALLPLAYERSBYGAMEDATA:")}</tt>'
         elif target == 'PLAYER':
             if ignore_default_targets:
                 return ''
@@ -1656,7 +1666,15 @@ class CardBaseClass(NamedAttributeEntity):
             case 'CE_PlayerMessage':
                 pass
             case 'CE_DiplomaticRelationship':
-                pass
+                if payload.startswith('PLAYERS_ALL,'):
+                    target_loc = 'all players'
+                    relationship = payload.partition(',')[2]
+                else:
+                    relationship, _, second_payload_parameter = payload.partition(',')
+                    assert second_payload_parameter == '{CurrentPlayer}', f'unexpected payload parameter {second_payload_parameter}'
+                    target_loc = self.format_effect_target(target)
+                relationship_loc = parser.localize(relationship, 'Game-Misc-DiplomaticRelationship').lower()
+                return f'Change diplomatic relationship with {target_loc} to {relationship_loc}'
             case 'CE_MovementTypeOverride':
                 terrain, _land = payload.split(',')
                 return f'Allow movement through {parser.terrains[terrain].get_wiki_link_with_icon()}'
