@@ -355,7 +355,7 @@ if __name__ == '__main__':
         on_build_unlocks = {}
         for asset in self.parsed_assets.values():
             if hasattr(asset, 'UnlockOnBuild'):
-                for unlock in asset.UnlockOnBuild.unlock_names:
+                for unlock in asset.UnlockOnBuild.unlocks:
                     if unlock.name not in on_build_unlocks:
                         on_build_unlocks[unlock.name] = []
                     on_build_unlocks[unlock.name].append(asset)
