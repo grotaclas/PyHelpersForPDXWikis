@@ -1606,6 +1606,8 @@ class CardBaseClass(NamedAttributeEntity):
                 match payload.split(','):
                     case ['REMOVEBLACKMAP']:
                         return parser.localize('Card-RemoveBlackmap-Tooltip')
+                    case ['ACTIONCOMPLETE']:
+                        return parser.localize('Card-Action-Complete')
                     case ['ADOPTRELIGION', 'NONE']:
                         return self._prefix_target(target, 'Remove state religion')
                     case ['APPLYFACTIONREWARDS']:
