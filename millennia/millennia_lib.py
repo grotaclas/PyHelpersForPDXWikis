@@ -2242,6 +2242,15 @@ class Goods(NamedAttributeEntity):
                                      values['ConsumeValue'] if isinstance(values['ConsumeValue'], list) else [values['ConsumeValue']])]
                                  }
 
+    def is_same_or_matches_tag(self, other: 'Goods') -> bool:
+        if self == other:
+            return True
+        elif type(other) != Goods:
+            # other is a subclass, so let them decide
+            return other.is_same_or_matches_tag(self)
+        else:
+            return False
+
     def get_icon_image(self) -> Image.Image | None:
         """get the icon from the game assets"""
         return millenniagame.parser.unity_reader.get_image_resource(f'ui/icons/Goods{self.name}-icon')
@@ -2269,7 +2278,7 @@ class Goods(NamedAttributeEntity):
         users = []
         for building in list(millenniagame.parser.buildings.values()) + list(millenniagame.parser.improvements.values()):
             for chain in building.get_production_chains():
-                if chain.source_goods == self:
+                if self.is_same_or_matches_tag(chain.source_goods):
                     users.append(building)
         return list(dict.fromkeys(users))  # de-duplicate without changing the order
 
@@ -2278,7 +2287,7 @@ class Goods(NamedAttributeEntity):
         sources = []
         for building in list(millenniagame.parser.buildings.values()) + list(millenniagame.parser.improvements.values()):
             for chain in building.get_production_chains():
-                if chain.result_goods == self:
+                if self.is_same_or_matches_tag(chain.result_goods):
                     sources.append(chain.source_goods)
         return list(dict.fromkeys(sources))  # de-duplicate without changing the order
 
@@ -2287,7 +2296,7 @@ class Goods(NamedAttributeEntity):
         result_goods = []
         for building in list(millenniagame.parser.buildings.values()) + list(millenniagame.parser.improvements.values()):
             for chain in building.get_production_chains():
-                if chain.source_goods == self:
+                if self.is_same_or_matches_tag(chain.source_goods):
                     result_goods.append(chain.result_goods)
         return list(dict.fromkeys(result_goods))  # de-duplicate without changing the order
 
@@ -2305,6 +2314,12 @@ class GoodsTag(Goods):
     def get_wiki_link(self) -> str:
         return '/'.join(goods.get_wiki_link() for goods in self.goods)
 
+    def is_same_or_matches_tag(self, other: 'Goods') -> bool:
+        for goods in self.goods:
+            if goods == other:
+                return True
+
+        return False
 
 class DomainPower(NamedAttributeEntity):
     iconName: str = None
