@@ -828,8 +828,14 @@ class Improvement(BuildingBaseClass):
         parser = millenniagame.parser
         if tag in ['AetherImprovement', 'Computers', 'Docks', 'EducationBuilding', 'Factory', 'Farms', 'Modernization', 'OutpostCore', 'Pyramids', 'ReligiousBuilding', 'Scribes', 'TradePost', 'Trash', 'WeaponSmith']:
             return parser.localize(tag, 'Game-Tag').removesuffix('s')
-        if tag == 'Furnace':
-            return 'Furnace type'
+        fixed_texts = {
+            'Furnace': 'Furnace type',
+            'StandardOutpostImprovement': 'Standard outpost improvement',
+            'CastleOutpostImprovement': 'Castle outpost improvement',
+            'ColonyOutpostImprovement': 'Colony outpost improvement',
+        }
+        if tag in fixed_texts:
+            return fixed_texts[tag]
         return super()._get_note_from_tag(tag)
 
 
@@ -1457,6 +1463,8 @@ class CardBaseClass(NamedAttributeEntity):
                             return self._handle_unlock_effect(Unlock(power, type=f'the {power.get_domain_name_and_icon()} domain power', target=self.format_effect_target(target, ignore_default_targets=True)), include_unlocks, collected_unlocks)
                     elif (int(value) == 0 and operation == 'SET') or (int(value) == 1 and operation == 'SUB'):
                         return self._prefix_target(target, f'Disables the culture power {power.get_wiki_link_with_icon()}')
+                elif name == 'DiplomacyLocked' and operation in ['ADD', 'SET'] and value == '1':
+                    return self._prefix_target(target, 'Disable diplomacy')
                 elif name == 'AirUnitsUnlocked' and operation == 'SET' and value == '1':
                     return ''  # It is just used to keep track if air units are available to the player(e.g. to show air unit capacity in tooltips)
                 elif name.removeprefix('#') in parser.misc_game_data:
@@ -1630,6 +1638,8 @@ class CardBaseClass(NamedAttributeEntity):
                         return f'Reset expedition'
                     case ['EXPEDITIONRESOLVE'] if target == 'ENT,EXEC':
                         return f'Determine if the expedition was successful'
+                    case ['REFRESHECON']:
+                        return ''  # recalculates economy data
             case 'CE_UnlockContent':
                 return self._handle_unlock_effect(Unlock(self._get_entity_by_name(payload)), include_unlocks, collected_unlocks)
             case 'CE_ResearchTech':
