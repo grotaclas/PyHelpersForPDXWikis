@@ -594,14 +594,21 @@ class TableGenerator(MillenniaFileGenerator):
                 + self.make_wiki_table(data, table_classes=['mildtable'],
                                        one_line_per_cell=True, row_id_key='id'))
 
+    @staticmethod
+    def _add_suffix(string: str, suffix: str):
+        """adds a suffix if the string does not have the suffix yet (check is done without spaces and case-insensitive)"""
+        if not string.lower().replace(' ', '').endswith(suffix.lower().replace(' ', '')):
+            string = string + suffix
+        return string
+
     def generate_nation_table(self):
         data = [{
             'id': nation.display_name,
             'Nation': f"'''{nation.display_name}'''",
             'Flag !! Bonus !! Effect': nation.get_wiki_file_tag('30px') + f'\n{{{{#lst:Nations|{nation.startupBonuses[0].transclude_section_name}}}}}',
             'AI Personality': nation.personality_loc,
-            'City Names': f'{nation.cityNameCollection.display_name}{{{{collapse|{self.create_wiki_list(nation.cityNameCollection.localized_names)}}}}}',
-            'Town Names': f'{nation.townNameCollection.display_name}{{{{collapse|{self.create_wiki_list(nation.townNameCollection.localized_names)}}}}}',
+            'City Names': f'{self._add_suffix(nation.cityNameCollection.display_name, " Cities")}{{{{collapse|{self.create_wiki_list(nation.cityNameCollection.localized_names)}}}}}',
+            'Town Names': f'{self._add_suffix(nation.townNameCollection.display_name, " Towns")}{{{{collapse|{self.create_wiki_list(nation.townNameCollection.localized_names)}}}}}',
         } for nation in sorted(self.parser.nations.values(), key=attrgetter('display_name')) if nation.name != 'random']
         return (self.get_SVersion_header() + '\n'
                 + self.make_wiki_table(data, table_classes=['mildtable'],
