@@ -315,6 +315,13 @@ class Data(Storage):
                 results.append(result)
         return results
 
+    def get_as_value_list(self, tag: str) -> list[str]:
+        """return a list of data entries which match the tag followed by a comma"""
+        return [entry.partition(',')[2]
+                for entry in self.unparsed_entries
+                if entry.startswith(f'{tag},')
+                ]
+
 
 class MillenniaEntity(NamedAttributeEntity):
     import_entity: str
@@ -421,8 +428,16 @@ class MillenniaEntity(NamedAttributeEntity):
     @cached_property
     def spawned_by(self):
         result = [tech for tech in (list(millenniagame.parser.technologies.values()) + [age for age in millenniagame.parser.ages.values()] + list(
-            millenniagame.parser.domain_technologies.values()) + [card for deck in millenniagame.parser.event_cards.values() for card in deck.values()] + list(
-            millenniagame.parser.domain_powers.values()) + list(millenniagame.parser.unit_actions.values())) if self.name in tech.spawns]
+            millenniagame.parser.domain_technologies.values()) + [card for deck in millenniagame.parser.event_cards.values() for card in deck.values()] +
+                                    list(millenniagame.parser.unit_actions.values())) if self.name in tech.spawns]
+        spawn_powers = [power for power in millenniagame.parser.domain_powers.values() if self.name in power.spawns]
+        filtered_powers = list(spawn_powers)
+        for power in spawn_powers:
+            for linked_power in power.all_linked_powers_recursive:
+                if linked_power in filtered_powers:
+                    filtered_powers.remove(linked_power)
+        result.extend(filtered_powers)
+
         if self.name == 'B_RELIGION_BIRTHPLACE':  # hardcoded via AReligionInfo.cCreateReligionStartingBuildingEntity
             for power in millenniagame.parser.domain_powers.values():
                 if power.effectType == 'CET_ReligionCreate':
@@ -2331,6 +2346,7 @@ class GoodsTag(Goods):
 
         return False
 
+
 class DomainPower(NamedAttributeEntity):
     iconName: str = None
     domain: str  # TODO parse domain
@@ -2382,10 +2398,24 @@ class DomainPower(NamedAttributeEntity):
                 result.append(self.params.get('SpawnUnitType'))
             case 'CET_PlayCard':
                 result.extend(millenniagame.parser.all_cards[self.params.get('CardName')].spawns)
-        linked_power = self.params.get('LinkedPower')
-        if linked_power and linked_power in millenniagame.parser.domain_powers:
-            result.extend(millenniagame.parser.domain_powers[linked_power].spawns)
+        for power in self.linked_powers:
+            result.extend(power.spawns)
         return result
+
+    @cached_property
+    def linked_powers(self) -> list['DomainPower']:
+        return [
+            millenniagame.parser.domain_powers[power_name] for power_name in self.params.get_as_value_list('LinkedPower')
+            if power_name in millenniagame.parser.domain_powers
+        ]
+
+    @cached_property
+    def all_linked_powers_recursive(self) -> set['DomainPower']:
+        result = set()
+        for power in self.linked_powers:
+            result.add(power)
+            result.update(power.all_linked_powers_recursive)
+        return  result
 
 
 class Landmark(NamedAttributeEntity):
