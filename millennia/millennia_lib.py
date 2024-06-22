@@ -383,7 +383,9 @@ class MillenniaEntity(NamedAttributeEntity):
     @cached_property
     def upgrade_line_loc(self) -> str | None:
         if self.upgrade_line:
-            return millenniagame.parser.localize(self.upgrade_line, 'Game-UpgradeLine-UpgradeLine').removeprefix('Upgrade Line: ')
+            loc = millenniagame.parser.localize(self.upgrade_line, 'Game-UpgradeLine-UpgradeLine')
+            loc = millenniagame.parser.formatter.strip_formatting(loc)
+            return loc.removeprefix('Upgrade Line: ')
         else:
             return None
 
