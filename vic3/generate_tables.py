@@ -7,7 +7,7 @@ from operator import attrgetter
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from vic3.text_formatter import Vic3WikiTextFormatter
 from vic3.vic3_file_generator import Vic3FileGenerator
-from vic3.vic3lib import Country, Technology, ProductionMethod, StateTrait, Building, BuildingGroup
+from vic3.vic3lib import Country, Technology, ProductionMethod, StateTrait, Building, BuildingGroup, StateResource
 
 
 class TableGenerator(Vic3FileGenerator):
@@ -185,6 +185,48 @@ class TableGenerator(Vic3FileGenerator):
                                      )
 
         return self.get_version_header() + '\n{{clear}}\n' + table
+
+    def _format_resource(self, amount: int, undiscovered_amount: int):
+        if undiscovered_amount > 0 and amount > 0:
+            return f'{amount} ({undiscovered_amount})'
+        elif undiscovered_amount > 0 and amount == 0:
+            return f'({undiscovered_amount})'
+        else:
+            return f'{amount}'
+
+    def _format_resource_name(self, resource: StateResource):
+        return re.sub('_.*$', '', resource.building_group.removeprefix("bg_"))
+
+    def generate_state_data_lua(self):
+        lua_tables = []
+        for state in self.parser.states.values():
+            if state.is_water():
+                continue
+            traits = ', '.join(f'"{trait.display_name}"' for trait in state.traits)
+            homelands = ', '.join(f'"{self.parser.localize(culture.removeprefix("cu:"))}"' for culture in state.homelands)
+            resource_amounts = {}
+            for res in state.resources.values():
+                if not res.is_arable:
+                    name = self._format_resource_name(res)
+                    if name not in resource_amounts:
+                        resource_amounts[name] = {'amount': 0, 'undiscovered_amount': 0}
+                    # this is needed for gold to add gold and gold fields together
+                    resource_amounts[name]['amount'] += res.amount
+                    resource_amounts[name]['undiscovered_amount'] += res.undiscovered_amount
+            resources = ', '.join(f'{name} = "{self._format_resource(amounts["amount"], amounts["undiscovered_amount"])}"'
+                                  for name, amounts in resource_amounts.items())
+            arable_resources = ', '.join(f'"{self.parser.building_groups[res.building_group].display_name}"' for res in state.resources.values() if res.is_arable)
+            lua_tables.append(f'''p["{state.display_name}"] = {{
+    arable_land = {state.arable_land},
+    arable_resources = {{ {arable_resources} }},
+    resources = {{ {resources} }},
+    traits = {{ {traits} }},
+    homelands = {{ {homelands} }},
+    region = "{self.parser.state_to_strategic_region_map[state.name].display_name}"
+}}''')
+
+        return 'local p = {};\n\n' + '\n\n'.join(lua_tables) + '\n\nreturn p'
+
 
     def iconify(self, what: any, iconify_param: str = None) -> str:
         if isinstance(what, list):
