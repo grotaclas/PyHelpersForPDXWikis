@@ -236,6 +236,22 @@ local p = {};
 
 ''' + '\n\n'.join(lua_tables) + '\n\nreturn p'
 
+    def generate_strategic_region_table(self):
+        regions = [{
+            'Strategic Region': f'id="{region.display_name}" |{region.display_name}',
+            'Script name': region.name,
+            'States': f'{{{{MultiColumn|{self.create_wiki_list(sorted(state.display_name for state in region.states))}|2}}}}',
+            'State #': len(region.states),
+            'Countries present': f'{{{{MultiColumn|{self.create_wiki_list([country.get_wiki_link_with_icon() for country in region.countries])}|2}}}}',
+            'Country #': len(region.countries)
+        } for region in sorted(self.parser.strategic_regions.values(), key=attrgetter('display_name'))
+            if not region.is_water]
+        table = self.make_wiki_table(regions, table_classes=['wikitable', 'plainlist'],
+                                     one_line_per_cell=True,
+                                         )
+
+        return self.get_SVersion_header('table') + '\n' + table
+
     def iconify(self, what: any, iconify_param: str = None) -> str:
         if isinstance(what, list):
             return ', '.join([self.iconify(item, iconify_param) for item in what])

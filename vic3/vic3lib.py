@@ -5,6 +5,7 @@ which adds a description, icon, modifiers and required technologies(not all subc
 import inspect
 import re
 from functools import cached_property
+from operator import attrgetter
 from typing import Any
 
 from common.paradox_lib import NameableEntity, PdxColor, IconEntity
@@ -179,6 +180,11 @@ class StateTrait(AdvancedEntity):
 class StrategicRegion(NameableEntity):
     states: list[State]
     is_water = False
+
+    @cached_property
+    def countries(self) -> list['Country']:
+        all_countries = vic3game.parser.countries
+        return sorted({all_countries[country] for state in self.states for country in state.owners}, key=attrgetter('display_name'))
 
 
 class Country(NameableEntity):
