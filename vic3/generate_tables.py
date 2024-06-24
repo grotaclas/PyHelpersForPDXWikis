@@ -240,9 +240,9 @@ local p = {};
         regions = [{
             'Strategic Region': f'id="{region.display_name}" |{region.display_name}',
             'Script name': region.name,
-            'States': f'{{{{MultiColumn|{self.create_wiki_list(sorted(state.display_name for state in region.states))}|2}}}}',
+            'States': f'{{{{MultiColumn|{self.create_wiki_list(sorted(state.display_name for state in region.states))}\n|2}}}}',
             'State #': len(region.states),
-            'Countries present': f'{{{{MultiColumn|{self.create_wiki_list([country.get_wiki_link_with_icon() for country in region.countries])}|2}}}}',
+            'Countries present': f'{{{{MultiColumn|{self.create_wiki_list([country.get_wiki_link_with_icon() for country in region.countries])}\n|2}}}}',
             'Country #': len(region.countries)
         } for region in sorted(self.parser.strategic_regions.values(), key=attrgetter('display_name'))
             if not region.is_water]
