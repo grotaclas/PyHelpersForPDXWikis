@@ -121,12 +121,12 @@ class BuildingTableGenerator(Vic3FileGenerator):
             if scaling_type in pm.building_modifiers:
                 for modifier in pm.building_modifiers[scaling_type]:
                     wiki_text = modifier.format_for_wiki()
-                    if wiki_text.endswith(' input per level'):
-                        wiki_text = re.sub(r'(?<=}}) [-a-zA-Z ]* input per level', '', wiki_text)
+                    if wiki_text.endswith(' input per level') or wiki_text.endswith(' input'):
+                        wiki_text = re.sub(r'(?<=}}) [-a-zA-Z ]* input( per level)?', '', wiki_text)
                         wiki_text += self.get_scaling_type_reference(scaling_type, 'workforce_scaled')
                         result['input'].append(wiki_text)
-                    elif wiki_text.endswith(' output per level'):
-                        wiki_text = re.sub(r'(?<=}}) [-a-zA-Z ]* output per level', '', wiki_text)
+                    elif wiki_text.endswith(' output per level') or wiki_text.endswith(' output'):
+                        wiki_text = re.sub(r'(?<=}}) [-a-zA-Z ]* output( per level)?', '', wiki_text)
                         wiki_text += self.get_scaling_type_reference(scaling_type, 'workforce_scaled')
                         result['output'].append(wiki_text)
                     elif profession_per_level.search(wiki_text):
