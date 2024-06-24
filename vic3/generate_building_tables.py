@@ -60,7 +60,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
             bg = bg.parent_group
         return bg
 
-    def generate_building_table(self, category: str = None, group: str = None):
+    def generate_building_table(self, category: str = None, group: str = None, excluded_groups: list[str] = None):
         buildings_to_display = self.parser.buildings.values()
         if category is not None:
             buildings_to_display = [building for building in buildings_to_display if
@@ -68,6 +68,9 @@ class BuildingTableGenerator(Vic3FileGenerator):
         if group is not None:
             buildings_to_display = [building for building in buildings_to_display if
                                     building.building_group.name == group]
+        if excluded_groups is not None:
+            buildings_to_display = [building for building in buildings_to_display if
+                                    building.building_group.name not in excluded_groups]
         buildings = [{
             'Name': f'{{{{iconbox|{building.display_name}||image={building.get_wiki_filename()}}}}}\n',
             'Category': self.parser.localize(building.building_group.category.upper() + '_BUILDINGS'),
