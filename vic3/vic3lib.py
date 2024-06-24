@@ -22,6 +22,21 @@ class ModifierType(NameableEntity):
     prefix: str = None
     postfix: str = None
 
+    # new format
+    decimals: int = None
+    color: str = None
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        super().__init__(name, display_name, **kwargs)
+        if self.decimals is not None:
+            self.num_decimals = self.decimals
+        if self.color == 'good':
+            self.good = True
+        if self.color == 'bad':
+            self.good = False
+        if self.color == 'neutral':
+            self.neutral = True
+
     def format_value(self, value):
         prefix = ''
         postfix = ''

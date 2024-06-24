@@ -386,7 +386,7 @@ class Vic3Parser:
 
     @cached_property
     def modifier_types(self) -> dict[str, ModifierType]:
-        return self.parse_nameable_entities('common/modifier_types', ModifierType)
+        return self.parse_nameable_entities('common/modifier_type_definitions', ModifierType)
 
     def get_modifier_type_or_default(self, modifier_name: str) -> ModifierType:
         if modifier_name in self.modifier_types:
@@ -421,7 +421,11 @@ class Vic3Parser:
         return [self.technologies[tech_name] for tech_name in section]
 
     def _parse_modifier_data(self, data: Tree):
-        return [Modifier(mod_name, self.localize('modifier_' + mod_name),
+        return [Modifier(mod_name, self.localize(
+            key='modifier_' + mod_name,
+            # version 1.7 removed the modifier_ prefix from the localisations, but I'm not sure if that's always teh case, so this code allows both
+            default=self.localize(mod_name)
+        ),
                          modifier_type=self.get_modifier_type_or_default(mod_name), value=mod_value)
                 for mod_name, mod_value in data]
 
