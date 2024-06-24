@@ -448,8 +448,13 @@ class Vic3Parser:
             'group': lambda group_name: law_groups[group_name]})
 
     def _get_monument_location(self, name, data):
+        if 'possible' not in data:
+            return None
         try:
             conditions = data['possible']['error_check']['this']
+        except KeyError:  # new format?
+            conditions = data['possible']
+        try:
             if isinstance(conditions, list):
                 for condition in conditions:
                     if 'state_region' in condition:
