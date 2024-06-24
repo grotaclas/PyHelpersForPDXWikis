@@ -295,6 +295,8 @@ class BuildingGroup(NameableEntity):
     is_military: bool = False
     default_building: str = None
     ignores_productivity_when_hiring: bool = False
+    min_productivity_to_hire: float = 0
+    owns_other_buildings: bool = False
 
     def __init__(self, name: str, display_name: str, parent_group: 'BuildingGroup' = None, **kwargs):
         super().__init__(name, display_name)

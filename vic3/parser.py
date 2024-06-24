@@ -484,27 +484,39 @@ class Vic3Parser:
         BuildingGroup.max_hiring_rate = self.defines['NEconomy']['DEFAULT_MAX_HIRING_RATE']
         BuildingGroup.proportionality_limit = self.defines['NEconomy']['EMPLOYMENT_PROPORTIONALITY_LIMIT']
         building_groups = {}
-        for name, data in self.parser.parse_folder_as_one_file('common/building_groups'):
-            entity_values = {}
-            for k, v in data:
-                if k in ['category', 'always_possible', 'economy_of_scale', 'is_subsistence',
-                         'auto_place_buildings', 'capped_by_resources',
-                         'discoverable_resource', 'depletable_resource', 'can_use_slaves', 'land_usage',
-                         'cash_reserves_max', 'stateregion_max_level',
-                         'urbanization', 'min_hiring_rate', 'max_hiring_rate', 'proportionality_limit',
-                         'hires_unemployed_only', 'infrastructure_usage_per_level', 'fired_pops_become_radical',
-                         'pays_taxes', 'is_government_funded', 'created_by_trade_routes', 'subsidized', 'is_military',
-                         'default_building', 'ignores_productivity_when_hiring']:
-                    entity_values[k] = v
-                elif k == 'parent_group':
-                    entity_values['parent_group'] = building_groups[v]
-                elif k in ['lens', 'inheritable_construction', 'should_auto_expand', 'economy_of_scale_ai_factor', 'is_shown_in_outliner']:
-                    pass
-                else:
-                    raise Exception('Unsupported key {} when parsing BuildingGroup "{}"'.format(k, name))
-            building_groups[name] = BuildingGroup(name, self.localize(name), **entity_values)
+        unparsed_bgs = [(name, data) for name, data in self.parser.parse_folder_as_one_file('common/building_groups')]
+        while len(unparsed_bgs) > 0:
+            name, data = unparsed_bgs.pop(0)
+            if 'parent_group' in data and data['parent_group'] not in building_groups:
+                # delay parsing till some time after the parent group
+                unparsed_bgs.append((name, data))
+            else:
+                building_groups[name] = self._parse_building_group(building_groups, data, name)
 
         return building_groups
+
+    def _parse_building_group(self, parsed_building_groups: dict[str, BuildingGroup], data, name: str) -> BuildingGroup:
+        entity_values = {}
+        for k, v in data:
+            if k in ['category', 'always_possible', 'economy_of_scale', 'is_subsistence',
+                     'auto_place_buildings', 'capped_by_resources',
+                     'discoverable_resource', 'depletable_resource', 'can_use_slaves', 'land_usage',
+                     'cash_reserves_max', 'stateregion_max_level',
+                     'urbanization', 'min_hiring_rate', 'max_hiring_rate', 'proportionality_limit',
+                     'hires_unemployed_only', 'infrastructure_usage_per_level', 'fired_pops_become_radical',
+                     'pays_taxes', 'is_government_funded', 'created_by_trade_routes', 'subsidized', 'is_military',
+                     'default_building', 'ignores_productivity_when_hiring',
+                     'min_productivity_to_hire', 'owns_other_buildings']:
+                entity_values[k] = v
+            elif k == 'parent_group':
+                entity_values['parent_group'] = parsed_building_groups[v]
+            elif k in ['lens', 'inheritable_construction', 'should_auto_expand', 'economy_of_scale_ai_factor', 'foreign_investment_ai_factor',
+                       'is_shown_in_outliner']:
+                pass
+            else:
+                raise Exception('Unsupported key {} when parsing BuildingGroup "{}"'.format(k, name))
+        group = BuildingGroup(name, self.localize(name), **entity_values)
+        return group
 
     def _parse_pm_modifiers(self, modifier_section: Tree):
         result = {}
