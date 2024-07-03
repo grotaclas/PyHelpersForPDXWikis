@@ -39,7 +39,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
             'economy_of_scale': 'Has economy of scale',
             'is_subsistence': 'Is a subsistence building',
             'auto_place_buildings': 'Gets built automatically',
-            'capped_by_resources': 'Building level is limited by the available resources in the state',
+            'capped_by_resources': 'Building level is limited by state resources',
             'discoverable_resource': 'Resources can be discovered',
             'depletable_resource': 'Resources can deplete',
             'can_use_slaves': 'Can use slaves',
@@ -47,6 +47,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
             'pays_taxes': 'Pays no taxes',
             'is_government_funded': 'Is government-funded',
             'created_by_trade_routes': 'Gets created by trade routes',
+            'always_self_owning': 'Is always self-owned',
         }
         for attribute, message in notes_for_building_groups.items():
             if hasattr(building.building_group, attribute) and getattr(building.building_group, attribute) != \
@@ -99,9 +100,9 @@ class BuildingTableGenerator(Vic3FileGenerator):
             new_header += '!! rowspan="2" width=100px | Group '
         else:
             column_specs = [column for column in column_specs if column[0] != 'Group']
-        new_header += '''!! rowspan="2" width=150px | Required technology !! colspan="3" style="text-align: center;" | Per Level !! rowspan="2" | Production methods !! rowspan="2" width=400px | Notes
+        new_header += '''!! rowspan="2" width=150px | Required technology !! colspan="3" style="text-align: center;" | Per Level !! rowspan="2" | Production methods !! rowspan="2" style="max-width:400px;" | Notes
 |-
-! {{icon|construction}} Cost !! Urbanization !! {{icon|infrastructure}} Cost'''
+! {{icon|construction}} Cost !! {{hover box|Urbanization|Urb.}} !! {{icon|infrastructure}} Cost'''
 
         table = self.make_wiki_table(buildings, column_specs=column_specs, table_classes=['mildtable', 'plainlist'],
                                      one_line_per_cell=True,

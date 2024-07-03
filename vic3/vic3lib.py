@@ -312,6 +312,7 @@ class BuildingGroup(NameableEntity):
     ignores_productivity_when_hiring: bool = False
     min_productivity_to_hire: float = 0
     owns_other_buildings: bool = False
+    always_self_owning: bool = False
 
     def __init__(self, name: str, display_name: str, parent_group: 'BuildingGroup' = None, **kwargs):
         super().__init__(name, display_name)
