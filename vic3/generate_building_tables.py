@@ -47,7 +47,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
             'pays_taxes': 'Pays no taxes',
             'is_government_funded': 'Is government-funded',
             'created_by_trade_routes': 'Gets created by trade routes',
-            'always_self_owning': 'Is always self-owned',
+            'always_self_owning': 'Always workforce-owned',
         }
         for attribute, message in notes_for_building_groups.items():
             if hasattr(building.building_group, attribute) and getattr(building.building_group, attribute) != \
