@@ -56,6 +56,7 @@ class CS2Parser:
         'Game.Prefabs.TransportLinePrefab',     # line tools
         'Game.Prefabs.StaticObjectPrefab',      # ploppable assets like vegatation and traffic stops
         'Game.Prefabs.AssetStampPrefab',        # intersections
+        'Game.Prefabs.SurfacePrefab',           # surface landscaping like grass
     ]):
         """Reads assets with the type MonoBehaviour. These can then be accessed via self.parsed_assets
 
@@ -307,7 +308,8 @@ if __name__ == '__main__':
                 hasattr(asset, 'UIObject') and
                 asset.UIObject.group and
                 hasattr(asset.UIObject.group, 'menu')
-                and asset.UIObject.group.menu.name == 'Landscaping'}
+                and asset.UIObject.group.menu.name == 'Landscaping'
+                and asset not in self.vegetations.values()}
 
     @cached_property
     def roads(self) -> Dict[str, CS2_ASSET]:

@@ -414,8 +414,13 @@ class SignatureBuilding(CS2Asset):
     def get_unlock_image(self) -> Path:
         return cs2game.game_path / 'Cities2_Data/StreamingAssets/~UI~/GameUI'
 
+
 class StaticObjectPrefab(NamedAsset):
     circular: bool
+
+
+class Surface(NamedAsset):
+    pass
 
 
 class Track(NamedAsset):
