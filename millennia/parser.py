@@ -344,7 +344,8 @@ class MillenniaParser:
     @cached_property
     def ages(self) -> dict[str, Age]:
         result = {}
-        for name, cards in self.parse_decks_from_folder('text/ages', group_by_deck=True).items():
+        ages = self.parse_decks_from_folder('text/ages', group_by_deck=True)
+        for name, cards in sorted(ages.items(), key=lambda item: item[0]):
             attributes = {
                 'name': name,
                 'base_tech': cards[f'{name}-BASE'],
@@ -353,13 +354,15 @@ class MillenniaParser:
             }
 
             age = Age(attributes)
-
             for card in cards.values():
                 if hasattr(card, 'ages'):
                     card.ages.append(age)
                 card.deck = age
             result[name] = age
-        return result
+
+        # sort ages by number and then by name so that the default ages are sorted before the variant ages
+        sorted_ages = dict(sorted(result.items(), key=lambda entry: (entry[1].order, entry[0])))
+        return sorted_ages
 
     @cached_property
     def domain_decks(self) -> dict[str, Deck]:

@@ -501,10 +501,10 @@ class TableGenerator(MillenniaFileGenerator):
             'class="unsortable"|': good.get_wiki_icon('40px'),
             'Good': good.display_name,
             'Consumed for': self.create_wiki_list(good.consumeValues),
-            'Produced in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in good.produced_in]),
-            'Made from': self.create_wiki_list([item.get_wiki_link_with_icon() for item in good.made_from]),
-            'Used in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in good.used_in]),
-            'Converted to': self.create_wiki_list([item.get_wiki_link_with_icon() for item in good.converted_to]),
+            'Produced in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in sorted(good.produced_in, key=lambda b:b.display_name)]),
+            'Made from': self.create_wiki_list([item.get_wiki_link_with_icon() for item in sorted(good.made_from, key=lambda b:b.display_name)]),
+            'Used in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in sorted(good.used_in, key=lambda b:b.display_name)]),
+            'Converted to': self.create_wiki_list([item.get_wiki_link_with_icon() for item in sorted(good.converted_to, key=lambda b:b.display_name)]),
 
         } for good in goods]
         return (self.get_SVersion_header(scope='table') + '\n'

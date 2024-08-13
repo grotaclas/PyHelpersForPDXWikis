@@ -427,7 +427,7 @@ class MillenniaEntity(NamedAttributeEntity):
         ) if self.name in tech.unlock_names]
         if self.name == 'B_PARTHENON':  # TODO: find a better way to discover or present this information
             result.append(millenniagame.parser.ages['TECHAGE3_HEROES'])
-        return result
+        return sorted(result, key=lambda tech: tech.display_name)
 
     @cached_property
     def spawned_by(self):
