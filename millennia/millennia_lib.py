@@ -72,6 +72,7 @@ class Resource(NameableEntity):
                       'ResDomainArts': 'Arts XP',
                       'ResDomainDiplomacy': 'Diplomacy XP',
                       'ResDomainEngineering': 'Engineering XP',
+                      'ResDomainEnigneering': 'Engineering XP',
                       'ResDomainExploration': 'Exploration XP',
                       'ResDomainGovernment': 'Government XP',
                       'ResDomainWarfare': 'Warfare XP',
@@ -104,6 +105,7 @@ class Resource(NameableEntity):
         'ResDomainDiplomacy': 'diplomacy',
         'ResDomainDiplomacyMax': 'diplomacy',
         'ResDomainEngineering': 'engineering',
+        'ResDomainEnigneering': 'engineering',
         'ResDomainEngineeringMax': 'engineering',
         'ResDomainExploration': 'exploration',
         'ResDomainExplorationMax': 'exploration',
@@ -1190,6 +1192,8 @@ class CardBaseClass(NamedAttributeEntity):
         call get_data_from_effect for effects which match effect_type
         return a list of the return values of get_data_from_effect. Return values which are None are skipped"""
         result = []
+        if not self.choices:
+            return []
         for effects in self.choices.find_all_recursively('ACardEffect'):
             if not isinstance(effects, list):
                 effects = [effects]
@@ -1224,6 +1228,8 @@ class CardBaseClass(NamedAttributeEntity):
         if collected_unlocks is None:
             collected_unlocks = []
         results = {}
+        if not self.choices:
+            return results
         for i, choice in enumerate(self.choices.find_all('ACardChoice')):
             new_unlocks = []
             effects = self.get_effects_for_choice(choice, include_unlocks, new_unlocks)
@@ -1438,7 +1444,7 @@ class CardBaseClass(NamedAttributeEntity):
             case 'CE_AdjustGameData':
                 name, operation, value = payload.split(',')
                 if payload_param and payload_param.startswith('BuffDecay'):
-                    decay_text = f'(decays by {payload_param.split(":")[2]} per turn)'
+                    decay_text = f'(decays by {payload_param.split(":")[1]} per turn)'
                 else:
                     decay_text = ''
                 if name.startswith('Workable'):
@@ -2399,7 +2405,11 @@ class DomainPower(NamedAttributeEntity):
             case 'CET_SpawnUnit':
                 result.append(self.params.get('SpawnUnitType'))
             case 'CET_PlayCard':
-                result.extend(millenniagame.parser.all_cards[self.params.get('CardName')].spawns)
+                card_name = self.params.get('CardName')
+                if card_name in millenniagame.parser.all_cards:
+                    result.extend(millenniagame.parser.all_cards[card_name].spawns)
+                else:
+                    print(f'Warning: "{self.name}" tried to play non-existing card "{card_name}"')
         for power in self.linked_powers:
             result.extend(power.spawns)
         return result
