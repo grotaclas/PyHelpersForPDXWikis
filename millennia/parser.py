@@ -171,7 +171,7 @@ class MillenniaParser:
                         obj = self.all_parsed_entities[name]
                     else:
                         # the imports are not necessarily loaded before, so we have to use a lazy loading to load them later
-                        obj = LazyObject(lambda: self.all_parsed_entities[name])
+                        obj = LazyObject(self.all_parsed_entities, name)
             if name:
                 result[name] = obj
             else:
@@ -598,13 +598,20 @@ class LazyObject:
     _wrapped = None
     _is_init = False
 
-    def __init__(self, factory):
+    def __init__(self, all_parsed_entities, name):
         # Assign using __dict__ to avoid the setattr method.
-        self.__dict__['_factory'] = factory
+        self.__dict__['_all_parsed_entities'] = all_parsed_entities
+        self.__dict__['_name'] = name
+        self.__dict__['_delayed_assignments'] = {}
 
     def _setup(self):
-        self._wrapped = self._factory()
+        self._wrapped = self._all_parsed_entities[self._name]
+        for name, value in self._delayed_assignments.items():
+            setattr(self._wrapped, name, value)
         self._is_init = True
+
+    def _can_be_setup(self):
+        return self._name in self._all_parsed_entities
 
     def new_method_proxy(func):
         """
@@ -622,6 +629,8 @@ class LazyObject:
         # every other attribute should be on the wrapped object.
         if name in {"_is_init", "_wrapped"}:
             self.__dict__[name] = value
+        elif not self._is_init and not self._can_be_setup():
+            self._delayed_assignments[name] = value
         else:
             if not self._is_init:
                 self._setup()
