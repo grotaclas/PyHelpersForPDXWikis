@@ -47,6 +47,10 @@ class UnityReaderMillennia(UnityReader):
         }
         # hardcode for now, because I don't know how to find the correct asset file for this
         assets_by_file[-408601418] = assets_by_file['icons_assets_all_ad02b564ddc6c14f0e10a16434542f04.bundle']
+        assets_by_file[1112987004] = assets_by_file['ui_assets_all_8c6ab47e921ca988e51416d838398d99.bundle']
+        assets_by_file[1660673648] = assets_by_file['terrain_assets_all_039ac80e5fd37ef71e9beaccba108c68.bundle']
+        assets_by_file[-412252452] = assets_by_file['misc_assets_all_c381a1b532ed57ecf82df07889416534.bundle']
+        assets_by_file[-576843670] = assets_by_file['units_assets_all_f0c426b84953f8cc97c142b8c592cce0.bundle']
         assets = {}
         for entry in self.catalog_entries:
             if entry['dependencyKey']:
@@ -62,6 +66,10 @@ class UnityReaderMillennia(UnityReader):
             else:
                 print(f'No dependency key for: {entry["primaryKey"]}')
         return assets
+
+    @cached_property
+    def assets_by_key_lowercase(self) -> dict[str, PPtr]:
+        return {key.lower(): asset for key, asset in self.assets_by_key.items()}
 
     @cached_property
     def catalog_entries(self):
@@ -150,7 +158,7 @@ class UnityReaderMillennia(UnityReader):
 
     def get_entity_icon(self, entity_name) -> Image.Image | None:
         path = f'entities/icons/{entity_name}'
-        if path not in self.assets_by_key:
+        if path not in self.assets_by_key_lowercase:
             path += '-icon'  # try it with icon suffix
         return self.get_image_resource(path)
 
@@ -164,8 +172,8 @@ class UnityReaderMillennia(UnityReader):
 
     def get_image_resource(self, path) -> Image.Image | None:
         path = path.lower()
-        if path in self.assets_by_key:
-            sprite = self.assets_by_key[path].read()
+        if path in self.assets_by_key_lowercase:
+            sprite = self.assets_by_key_lowercase[path].read()
             # we can't just return sprite.image, because unityPy crops the images
             if isinstance(sprite, Texture2D):
                 # texture2D would need a different handling, but they don't seem to crop the image, so we don't need the custom processing

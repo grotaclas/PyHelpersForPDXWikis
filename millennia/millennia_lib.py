@@ -915,6 +915,7 @@ unit_types = {
     'AirUnit': UnitType('AirUnit', 'Air units', 'Airforce'),
     'Militia': UnitType('Militia', 'Militia units', 'Army'),
     'TypeDefenses': UnitType('TypeDefenses', 'Defenses', 'Army'),
+    'Megafauna': UnitType('Megafauna', 'Megafauna', 'Barbarians'),
     'Unit': UnitType('Unit', 'Land units', 'Army'),  # there is no tag for land units, so we assume that all remaining units are land units
     'TILEHARVEST': UnitType('TILEHARVEST', 'Harvesting units', 'Civilian'),  # special handling
     'SETTLER': UnitType('SETTLER', 'Settlers', 'Civilian'),  # special handling
