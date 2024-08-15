@@ -807,7 +807,7 @@ class Improvement(BuildingBaseClass):
         if tag_requirements is not None:
             for tag_requirement in tag_requirements:
                 for location in locations:
-                    if location.tags.has(tag_requirement):
+                    if location.tags.has(tag_requirement.removeprefix('+')):
                         requirements.append(location)
             # requirements.extend(tag_requirements)
 
