@@ -87,6 +87,8 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
                     target = parser.goods[link_target].get_wiki_link_with_icon()
                 else:
                     target = link_target
+            case 'ALT_Tile':
+                target = parser.map_tiles[link_target].get_wiki_link()
             case _:
                 print(f'Error: unhandled link type: {link_type}', file=sys.stderr)
                 target = link_target

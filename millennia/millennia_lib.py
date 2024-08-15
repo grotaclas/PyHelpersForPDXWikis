@@ -878,6 +878,8 @@ class MapTile(MillenniaEntity):
             goods_name = self.startingData.get_as_list('GoodsProduction')[0][1]
             goods = millenniagame.parser.goods[goods_name]
             return f'Goods {goods}.png'
+        elif not self.tags.has('BonusTile'):
+            return ''
         else:
             return super().get_wiki_filename()
 
@@ -889,7 +891,15 @@ class MapTile(MillenniaEntity):
             return None
 
     def get_wiki_page_name(self) -> str:
-        return 'Tiles'
+        page_map = {'MT_CITYCENTER': 'Region',
+                    'MT_NEUTRAL_TOWN': 'Minor Nation',
+                    }
+        if self.name in page_map:
+            return page_map[self.name]
+        elif self.tags.has('BonusTile'):
+            return 'Tiles'
+        else:
+            return 'Landmarks'
 
     @cached_property
     def gathers(self) -> list['Gather']:
