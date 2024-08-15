@@ -893,6 +893,7 @@ class MapTile(MillenniaEntity):
     def get_wiki_page_name(self) -> str:
         page_map = {'MT_CITYCENTER': 'Region',
                     'MT_NEUTRAL_TOWN': 'Minor Nation',
+                    'MT_ROGUEAIFACTORY': 'Age 10',
                     }
         if self.name in page_map:
             return page_map[self.name]
