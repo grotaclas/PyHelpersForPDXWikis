@@ -63,6 +63,12 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
                     target = parser.infopedia_topics[link_target].display_name
                 elif link_target.startswith('MENU_'):
                     return link_text  # strip link, because they seem to be used for complex nested tooltips
+                elif link_target == 'DLC1':
+                    if link_text == '<sprite name="IconDLC1">':
+                        return '{{icon|ancient worlds}}'
+                    else:
+                        target = 'Ancient Worlds'
+                        link_text = link_text.replace('DLC1', 'Ancient Worlds')
                 else:
                     target = link_target
             case 'ALT_CulturePower':

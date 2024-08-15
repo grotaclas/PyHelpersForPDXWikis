@@ -35,7 +35,8 @@ class MillenniaParser:
         # originals have : and icons and html formatting
         'UNITACTIONS-MERCHANT_DEPLOY_FOREIGN-CardTitle': 'Deploy Wealth',
         'UNITACTIONS-ALCHEMIST_GATHERARCANA-CardTitle': 'Gather Arcana',
-        'Goods-Special-TileProduction-ANYBONUS-DisplayName': 'Gather (any bonus goods)'
+        'Goods-Special-TileProduction-ANYBONUS-DisplayName': 'Gather (any bonus goods)',
+        'Game-Tag-TypeDLC1': 'Needs {{icon|ancient worlds}}',
     }
 
     def __init__(self):
