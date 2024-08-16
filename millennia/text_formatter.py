@@ -69,8 +69,15 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
                     else:
                         target = 'Ancient Worlds'
                         link_text = link_text.replace('DLC1', 'Ancient Worlds')
+                elif ('PLAYERACTIONS-' + link_target) in parser.player_actions:
+                    return parser.player_actions['PLAYERACTIONS-' + link_target].get_wiki_link_with_icon()
+                elif ('UNITACTIONS-' + link_target) in parser.unit_actions:
+                    return parser.unit_actions['UNITACTIONS-' + link_target].get_wiki_link_with_icon()
+                elif link_target in parser.domain_decks:
+                    return parser.domain_decks[link_target].get_wiki_link_with_icon()
                 else:
-                    target = link_target
+                    print(f'Error: unhandled parameter "{link_target}" for link type: {link_type}', file=sys.stderr)
+                    target = link_text
             case 'ALT_CulturePower':
                 target = f'Culture#{parser.localize(link_target, "Game-Culture", "DisplayName")}'
             case 'ALT_Unit':
