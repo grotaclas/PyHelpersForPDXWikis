@@ -433,7 +433,11 @@ class MillenniaEntity(NamedAttributeEntity):
     def spawned_by(self):
         result = [tech for tech in (list(millenniagame.parser.technologies.values()) + [age for age in millenniagame.parser.ages.values()] + list(
             millenniagame.parser.domain_technologies.values()) + [card for deck in millenniagame.parser.event_cards.values() for card in deck.values()] +
-                                    list(millenniagame.parser.unit_actions.values())) if self.name in tech.spawns]
+                                    list(millenniagame.parser.unit_actions.values()))
+                  if self.name in tech.spawns
+                  # filter out things without a display name, because they are either not used or triggered by another effect in which
+                  # case that other effect is already listed
+                  and tech.has_localized_display_name]
         spawn_powers = [power for power in millenniagame.parser.domain_powers.values() if self.name in power.spawns]
         filtered_powers = list(spawn_powers)
         for power in spawn_powers:

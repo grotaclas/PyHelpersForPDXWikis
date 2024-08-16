@@ -26,6 +26,8 @@ class MillenniaParser:
 
         'UNITACTIONS-ARTIST_CULTURAL_MOVEMENT-CardTitle': 'Cultural Movement (Artist)',
         'UNITACTIONS-CELEBRITY_CULTURAL_MOVEMENT-CardTitle': 'Cultural Movement (Celebrity)',
+        'UNITACTIONS-MOTHERSHIP_RANDOMEFFECT-CardTitle': 'Random effect of the [[Alien Mothership]] at the start of a turn',
+        'UNITACTIONS-DOCK_SPAWNUTILITY-CardTitle': 'Building the first [[dock]]',
 
         'Entity-UNIT_ALIENINVADER_NAVY-DisplayName': 'Alien Invader (Navy)',
         'Entity-UNIT_BATTLESHIP_DEFENDER-DisplayName': 'Battleship (City Defender)',
