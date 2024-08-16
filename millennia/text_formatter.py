@@ -13,7 +13,7 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
         replacements = {
             r'<sprite name="IconLineBreak">': '\n\n',  # I have no idea why this is an icon
             r'<sprite name="Icon([^"]*)">': r'{{icon|\1}}',  # replace icons with icon tags. Icons which have different names were already replaced
-            r'<indent=[0-9]+%> *\*': '*',   # just use the default item list in wiki style
+            r'<indent=[0-9]+%> *[*+]?': '*',   # just use the default item list in wiki style
             r'</indent>': '',
             r'<margin=[0-9]+%>': '',   # used similarly as indent, but for a whole section
             r'</margin>': '',
