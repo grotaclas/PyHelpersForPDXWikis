@@ -27,7 +27,7 @@ class MillenniaParser:
         'UNITACTIONS-ARTIST_CULTURAL_MOVEMENT-CardTitle': 'Cultural Movement (Artist)',
         'UNITACTIONS-CELEBRITY_CULTURAL_MOVEMENT-CardTitle': 'Cultural Movement (Celebrity)',
         'UNITACTIONS-MOTHERSHIP_RANDOMEFFECT-CardTitle': 'Random effect of the [[Alien Mothership]] at the start of a turn',
-        'UNITACTIONS-INVADER_RAZEGOODTILE-CardTitle': 'Alien invader razing a bonus tile',
+        'UNITACTIONS-INVADER_RAZEGOODTILE-CardTitle': '[[Alien invader]] razing a bonus tile',
         'UNITACTIONS-DOCK_SPAWNUTILITY-CardTitle': 'Building the first [[dock]]',
 
         'Entity-UNIT_ALIENINVADER_NAVY-DisplayName': 'Alien Invader (Navy)',

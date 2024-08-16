@@ -2587,6 +2587,24 @@ class UnitAction(Action):
         """Units which have this action per default"""
         return [unit for unit in millenniagame.parser.units.values() if self in unit.actions]
 
+    def is_real_unit_action(self):
+        # some unit actions are just helpers which are called by other effects. These don't usually have a display name
+        # We can't check it with self.has_localized_display_name, because some actions which dont have a display name get one via overrides,
+        # but these are not real unit actions either and they should not get an icon or be linked
+        return (self.name + '-CardTitle') in millenniagame.parser.unity_reader.localizations
+
+    def get_wiki_link(self) -> str:
+        if self.is_real_unit_action():
+            return super().get_wiki_link()
+        else:
+            return self.display_name
+
+    def get_wiki_icon(self, size: str = '24px', link='self') -> str:
+        if self.is_real_unit_action():
+            return super().get_wiki_icon(size, link)
+        else:
+            return ''
+
 
 class PlayerAction(Action):
     pass
