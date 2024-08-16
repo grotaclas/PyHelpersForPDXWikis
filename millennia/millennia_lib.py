@@ -992,7 +992,7 @@ class Unit(MillenniaEntity):
                                   'UNITACTIONS-STANDARD_RAZE', 'UNITACTIONS-STANDARD_TRANSPORTLOAD', 'UNITACTIONS-STANDARD_AIRLIFT',
                                   'UNITACTIONS-STANDARD_KILLSELF'],
             ignored_tags=['CheckIdle', 'ProvideVisibility', 'TrainableUnit', 'Combatant', 'Unit', 'WaterMovement', 'NavalTarget', 'NonCombatant',
-                          'DestroyAtEndOfCombat', 'ShipTest', 'DiscoveryNaval', 'DefenderTrackStatusFromCombatResult',
+                          'ShipTest', 'DiscoveryNaval', 'DefenderTrackStatusFromCombatResult',
                           'TypeProjectile',  # seems to have no effect. maybe it is for the combat viewer
                           ],
             ignored_data_with_default_values={'StatOrgDamageFactor': ['1', '1.0'],
@@ -1025,6 +1025,7 @@ class Unit(MillenniaEntity):
             'ShallowWater', 'AirUnit', 'Barbarian', 'Scout', 'Cultist', 'Daimyo',  # unit types which don't start with type
             'AirBomber', 'Automata', 'CombatTower', 'CombatWall', 'EarlySea', 'Explorer', 'Knight', 'Leader', 'Mercenary', 'Militia', 'Raider', 'Steampunk',
             'WaterTransport', 'CreateImportRoute', 'PreGunpowder',
+            'DestroyAtEndOfCombat'
             # 'RogueAI',  already displayed from the data 'NeutralSubtype,5' which has the same localization
         ]:
             return parser.localize(tag, 'Game-Tag').removesuffix('s')
