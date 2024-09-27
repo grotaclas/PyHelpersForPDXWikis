@@ -3,14 +3,15 @@ import sys
 from typing import Callable, TypeVar, Type
 
 from PyHelpersForPDXWikis.localsettings import VIC3DIR
-from common.paradox_parser import ParadoxParser
+from common.jomini_parser import JominiParser
+from common.paradox_parser import ParadoxParser, ParsingWorkaround, QuestionmarkEqualsWorkaround
 from vic3.vic3lib import *
 from common.paradox_lib import NameableEntity
 AE = TypeVar('AE', bound=AdvancedEntity)
 NE = TypeVar('NE', bound=NameableEntity)
 
 
-class Vic3Parser:
+class Vic3Parser(JominiParser):
     """Parses Victoria 3 game data into objects of the vic3lib module.
 
     This object should not be constructed directly, instead it should be accessed as vic3game.parser so that there
@@ -26,38 +27,15 @@ class Vic3Parser:
     localizationOverrides = {'recognized': 'Recognized'}  # there doesn't seem to be a localization for this
 
     def __init__(self):
-        self.parser = ParadoxParser(VIC3DIR / 'game')
-
-    @cached_property
-    def _localization_dict(self):
-        localization_dict = {}
-        for path in (VIC3DIR / 'game' / 'localization' / 'english').glob('**/*_l_english.yml'):
-            with path.open(encoding='utf-8-sig') as f:
-                for line in f:
-                    match = re.fullmatch(r'\s*([^#\s:]+):\d?\s*"(.*)"[^"]*', line)
-                    if match:
-                        localization_dict[match.group(1)] = match.group(2)
-        return localization_dict
-
-    def localize(self, key: str, default: str = None) -> str:
-        """localize the key from the english vic3 localization files
-
-        if the key is not found, the default is returned
-        unless it is None in which case the key is returned
-        """
-        if default is None:
-            default = key
-
-        if key in self.localizationOverrides:
-            return self.localizationOverrides[key]
-        else:
-            return self._localization_dict.get(key, default)
+        super().__init__(VIC3DIR / 'game')
+        self.localization_folder_iterator = (VIC3DIR / 'game' / 'localization' / 'english').glob('**/*_l_english.yml')
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE],
                                 extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
                                 transform_value_functions: dict[str, Callable[[any], any]] = None,
                                 entity_level: int = 0,
-                                level_headings_keys: dict[str, 0] = None) -> dict[str, NE]:
+                                level_headings_keys: dict[str, 0] = None,
+                                parsing_workarounds: list[ParsingWorkaround] = None) -> dict[str, NE]:
         """parse a folder into objects which are subclasses of NameableEntity
 
         Args:
@@ -100,7 +78,9 @@ class Vic3Parser:
         entities = self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
                                                  previous_headings=[],
                                                  transform_value_functions=transform_value_functions,
-                                                 tree=self.parser.parse_folder_as_one_file(folder, overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys),
+                                                 tree=self.parser.parse_folder_as_one_file(folder,
+                                                                                           overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys,
+                                                                                           workarounds=parsing_workarounds),
                                                  entity_level=entity_level, current_level=0,
                                                  level_headings_keys=level_headings_keys)
 
@@ -112,10 +92,15 @@ class Vic3Parser:
         entities = {}
         for heading, data in tree:
             if heading == 'if':
-                conditions = data['limit']
                 entities.update(self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
                                                               headings, transform_value_functions,
                                                               data.filter_elements(lambda k, v: k != 'limit'),
+                                                              entity_level, current_level, level_headings_keys,
+                                                              conditions=data['limit']))
+            elif heading == 'else':
+                entities.update(self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
+                                                              headings, transform_value_functions,
+                                                              data,
                                                               entity_level, current_level, level_headings_keys,
                                                               conditions))
             else:
