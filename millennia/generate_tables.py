@@ -606,7 +606,7 @@ class TableGenerator(MillenniaFileGenerator):
             'id': nation.display_name,
             'Nation': f"'''{nation.display_name}'''",
             'Flag !! Bonus !! Effect': nation.get_wiki_file_tag('42px') + f'\n{{{{#lst:Nations|{nation.startupBonuses[0].transclude_section_name}}}}}',
-            'AI Personality': nation.personality_loc,
+            'AI Personality': f'[[#{nation.personality_loc}|{nation.personality_loc}]]',
             'City Names': f'{self._add_suffix(nation.cityNameCollection.display_name, " Cities")}{{{{collapse|{self.create_wiki_list(nation.cityNameCollection.localized_names)}}}}}',
             'Town Names': f'{self._add_suffix(nation.townNameCollection.display_name, " Towns")}{{{{collapse|{self.create_wiki_list(nation.townNameCollection.localized_names)}}}}}',
         } for nation in sorted(self.parser.nations.values(), key=attrgetter('display_name')) if nation.name != 'random']
