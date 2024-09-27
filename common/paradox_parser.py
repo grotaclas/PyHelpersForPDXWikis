@@ -42,6 +42,14 @@ class UnmarkedListWorkaround(ParsingWorkaround):
     replacement_regexes = {r'(=\s*)(list\s+[^#{}=\n]+)': r'\1{ \2 }'}
 
 
+class QuestionmarkEqualsWorkaround(ParsingWorkaround):
+    """replaces statements like
+        x ?= y
+    with
+        x = y"""
+    replacement_regexes = {r' \?= ': ' = '}
+
+
 class ParadoxParser:
     """the parse_ methods parse paradox development studio game scripts into python objects"""
 

@@ -455,7 +455,7 @@ class Character(NameableEntity):
     interest_group: InterestGroup = None
     ideology: str = ''
     traits: list[str] = []
-    commander_rank: str
+    commander_rank: str = None
     hq: str
     ruler: bool = False
     heir: bool = False
@@ -473,7 +473,8 @@ class Character(NameableEntity):
     commander_usage: Tree = None
     interest_group_leader_usage: Tree = None
 
-    availability: str = '1836'
+    start: str = None
+    end: str = None
 
     def __init__(self, name: str, display_name: str, **kwargs):
         if 'template' in kwargs:
@@ -493,3 +494,12 @@ class Character(NameableEntity):
             'Admiral': self.is_admiral or (self.commander_usage and self.commander_usage['role'] == 'admiral'),
             'Agitator': self.is_agitator or self.agitator_usage,
         }.items() if has_role]
+
+    @cached_property
+    def availability(self) -> str:
+        result = ''
+        if self.start is not None:
+            result = self.start
+        if self.end is not None:
+            result = f'{result} - {self.end}'
+        return result

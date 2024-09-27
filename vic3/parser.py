@@ -294,9 +294,14 @@ class Vic3Parser(JominiParser):
         dynamic_names = {}
         for tag, dynamic_names_sections in self.parser.parse_folder_as_one_file('common/dynamic_country_names'):
             dynamic_names[tag] = []
-            for section in dynamic_names_sections.find_all('dynamic_country_name'):
-                if 'is_revolutionary' not in section or not section['is_revolutionary']:
-                    dynamic_names[tag].append(self.localize(section['name']))
+            # sometimes dynamic_names_sections is a list, because there are multiple sections for the same tag. To make
+            # parsing easier, we always use a list
+            if not isinstance(dynamic_names_sections, list):
+                dynamic_names_sections = [dynamic_names_sections]
+            for tag_section in dynamic_names_sections:
+                for section in tag_section.find_all('dynamic_country_name'):
+                    if 'is_revolutionary' not in section or not section['is_revolutionary']:
+                        dynamic_names[tag].append(self.localize(section['name']))
         return dynamic_names
 
     def _get_state_resources(self, name, state_data: Tree) -> dict[str, StateResource]:
@@ -624,21 +629,26 @@ class Vic3Parser(JominiParser):
             'description': lambda name, data: self.localize(f'ACHIEVEMENT_DESC_{name}')
         })
 
-    def _character_availability(self, name, data):
-        start = '0'
+    def _character_end(self, name, data):
         end = '0'
+        for usage in ['agitator_usage', 'commander_usage', 'interest_group_leader_usage']:
+            if usage in data:
+                if 'latest_usage_date' in data[usage] and str(data[usage]['latest_usage_date']) > end:
+                    end = str(data[usage]['latest_usage_date'])
+        if end == '0':
+            end = None
+        return end
+
+    def _character_start(self, name, data):
+        start = '0'
         for usage in ['agitator_usage', 'commander_usage', 'interest_group_leader_usage']:
             if usage in data:
                 if 'earliest_usage_date' in data[usage] and (start == '0' or str(data[usage]['earliest_usage_date']) < start):
                     start = str(data[usage]['earliest_usage_date'])
-                if 'latest_usage_date' in data[usage] and str(data[usage]['latest_usage_date']) > end:
-                    end = str(data[usage]['latest_usage_date'])
-        result = ''
-        if start != '0':
-            result = start
-        if end != '0':
-            result = f'{result} - {end}'
-        return result
+        if start == '0':
+            start = None
+        return start
+
 
     @cached_property
     def characters(self) -> dict[str, Character]:
@@ -655,11 +665,13 @@ class Vic3Parser(JominiParser):
         template_chars = self.parse_nameable_entities(f'common/character_templates/', Character,
                                                       transform_value_functions=transform_value_functions,
                                                       extra_data_functions={'is_template': lambda name, data: True,
-                                                                            'availability': self._character_availability,
+                                                                            'start': self._character_start,
+                                                                            'end': self._character_end,
                                                                             })
 
         transform_value_functions['template'] = lambda template: template_chars[template]
         chars = self.parse_nameable_entities(f'common/history/characters/', Character,
+                                             parsing_workarounds=[QuestionmarkEqualsWorkaround()],
                                              entity_level=2, level_headings_keys={'country': 1},
                                              transform_value_functions=transform_value_functions,
                                              extra_data_functions={
@@ -667,7 +679,6 @@ class Vic3Parser(JominiParser):
                         #     self.localize(data["first_name"]) + ' ' + self.localize(data["last_name"]) if 'first_name' in data else data['template'],
                         'name': lambda name, data:
                             data['first_name'] + '_' + data['last_name'] if 'first_name' in data else template_chars[data['template']].first_name + '_' + template_chars[data['template']].last_name,
-                        'availability': lambda name, data: '1836'
 
                     },
                                              )
