@@ -1,5 +1,7 @@
 from functools import cached_property
 
+from eu4.paths import eu4outpath
+
 try:
     # when used by PyHelpersForPDXWikis
     from PyHelpersForPDXWikis.localsettings import EU4DIR
@@ -8,7 +10,6 @@ except: # when used by ck2utils
     EU4DIR = eu4dir
 from common.paradox_lib import Game
 from common.file_generator import FileGenerator
-from common.wiki import WikiTextFormatter
 from eu4.parser import Eu4Parser
 
 
@@ -33,10 +34,14 @@ class EuropaUniversalisIV(Game):
 
 eu4game = EuropaUniversalisIV()
 
+
 class Eu4FileGenerator(FileGenerator):
 
     parser: Eu4Parser
 
     def __init__(self):
         super().__init__(eu4game)
+        self.outpath = eu4outpath
+        if not self.outpath.exists():
+            self.outpath.mkdir(parents=True)
 
