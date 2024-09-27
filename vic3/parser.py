@@ -162,6 +162,11 @@ class Vic3Parser(JominiParser):
             'exiles': 'Voice of the People',
             'voice_of_the_people_content': 'Voice of the People',
             'voice_of_the_people_preorder': 'Voice of the People preorder',
+            'rp1_content': 'Colossus of the South',
+            'ep1_content': 'Sphere of Influence',
+            'ep1_cosmetics': 'Sphere of Influence',
+            'foreign_investment': 'Sphere of Influence',
+            'power_bloc_features': 'Sphere of Influence',
         }
         dlcs = []
         for key, value in conditions:
