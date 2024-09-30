@@ -1645,6 +1645,8 @@ class CardBaseClass(NamedAttributeEntity):
                             return ''  # sunset effects are not executed at that moment and instead happen when the age ends
                         elif string.startswith('PrefabAppend:'):
                             return ''  # changes map graphics
+                        elif string.startswith('BuildHelperHintTag-') or string.startswith('BuildHelperHintType-'):
+                            return ''  # used for categories in the build helper
                         else:
                             value_text = f'<tt>{value}</tt>'
                         return f'Set <tt>{string}</tt> to {value_text}'
@@ -1803,6 +1805,8 @@ class CardBaseClass(NamedAttributeEntity):
                 return self._prefix_target(target, f'Apply {payload} damage{note}')
             case 'CE_RebuildLighting':
                 return ''  # graphical effects
+            case 'CE_UnlockEntityInfopedia':
+                return ''  # just adds it to the infopedia
 
     @cached_property
     def requirements(self) -> list[str]:
