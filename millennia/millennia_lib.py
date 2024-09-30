@@ -1896,6 +1896,8 @@ class CardBaseClass(NamedAttributeEntity):
                     else:
                         neg = ''
                     return f'the {self.format_effect_target(target)} was{neg} the first to enter the {age.get_wiki_link_with_icon()}'
+                elif name == '#STARTBONUS_DELAYEDUNIT' and operation == 'EQ':
+                    return 'the appropriate starting bonus has been selected'
                 else:
                     what = f'<tt>{name}</tt>'
                 if 'IsCost' in requirement and requirement['IsCost'].upper() == 'TRUE':
