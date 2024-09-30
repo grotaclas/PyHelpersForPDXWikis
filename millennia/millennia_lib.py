@@ -1228,7 +1228,8 @@ class CardBaseClass(NamedAttributeEntity):
 
     @cached_property
     def spawns(self) -> list[str]:
-        return self.traverse_effects('CE_SpawnEntity', lambda effect: effect['Payload'].split(',')[1])
+        return (self.traverse_effects('CE_SpawnEntity', lambda effect: effect['Payload'].split(',')[1]) +
+                self.traverse_effects('CE_UpgradeUnit', lambda effect: effect['Payload']))
 
     @staticmethod
     def _get_entity_by_name(name):
@@ -1570,7 +1571,24 @@ class CardBaseClass(NamedAttributeEntity):
                 if 'ExtraTargetParam' in effect:
                     parameters += f' and <tt>{effect["ExtraTargetParam"]}</tt>'
                 return f'Spawns{count} {entity_string}{location}{parameters}'
-                pass
+            case 'CE_UpgradeUnit':
+                entity_name = payload
+                if target == 'ENT,EXEC':
+                    old_entity = 'this unit'
+                elif target.startswith('ENTTAGATLOC,'):
+                    old_entity = target.split(',')[1]
+                else:
+                    return None  # unhandled
+
+                if 'TargetLimit' in effect:
+                    count = f' {effect["TargetLimit"]}'
+                else:
+                    count = ''
+                if entity_name in parser.all_entities:
+                    entity_string = parser.all_entities[entity_name].get_wiki_link_with_icon()
+                else:
+                    entity_string = entity_name
+                return f'Upgrades{count} {old_entity} to {entity_string}'
             case 'CE_AddCard':
                 pass
             case 'CE_AddCardsByTag':
