@@ -1518,6 +1518,8 @@ class CardBaseClass(NamedAttributeEntity):
                 elif name == 'TileExpeditionChance-{CurrentPlayer}':
                     name = 'success chance'
                     value = f'{Decimal(value):%}'
+                elif name == 'DataVersion':
+                    return ''  # seems to be used to track save game versions
                 else:
                     name = f'<tt>{name}</tt>'
                 if value.removeprefix('#') in parser.misc_game_data:
