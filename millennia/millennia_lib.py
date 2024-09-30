@@ -1942,7 +1942,11 @@ class CardBaseClass(NamedAttributeEntity):
                     case ['ISVASSAL', 'TRUE']:
                         return f'{target_loc} is a vassal'
                     case ['ISVASSAL', 'FALSE']:
-                        return f'{target_loc} is not a vassal'
+                        return f'{target_loc} is ''not'' a vassal'
+                    case ['REGIONTYPE', 'OUTPOST', 'TRUE']:
+                        return f'{target_loc} is an outpost'
+                    case ['REGIONTYPE', 'OUTPOST', 'FALSE']:
+                        return f"{target_loc} is ''not'' an outpost"
                     case ['SUBREGION', 'TRUE']:
                         return f'{target_loc} is a vassal ''or'' outpost'
                     case ['SUBREGION', 'FALSE']:
