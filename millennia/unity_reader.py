@@ -1,5 +1,6 @@
 import base64
 import json
+import re
 import xml.etree.ElementTree as ET
 from functools import cached_property
 from pathlib import Path
@@ -108,6 +109,30 @@ class UnityReaderMillennia(UnityReader):
                 print(f'Warning: duplicate text asset "{data.name}" with path "{path}"')
             text_by_path[path][data.name] = data.text
         return text_by_path
+
+    @staticmethod
+    def _is_xml(string: str):
+        """rudimentary xml detection"""
+        for line in string.split('\n'):
+            if re.match(r'^\s*<', line):
+                return True
+            elif re.match(r'^\s*$', line):
+                continue
+            else:
+                return False
+        return False
+
+    def dump_text_resources(self, output_folder: Path):
+        for folder_name, files in self.text_asset_resources.items():
+            folder = output_folder / folder_name
+            folder.mkdir(parents=True, exist_ok=True)
+            for filename, contents in files.items():
+                if self._is_xml(contents):
+                    file_extension = 'xml'
+                else:
+                    file_extension = 'txt'
+                with open(folder / f'{filename}.{file_extension}', 'w') as file:
+                    file.write(contents)
 
     @cached_property
     @disk_cache(game=millenniagame)
