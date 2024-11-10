@@ -578,7 +578,7 @@ class Vic3Parser(JominiParser):
     @cached_property
     def technology_unlocks(self) -> dict[str, list[AE]]:
         unlocks = {tech_name: [] for tech_name in self.technologies.keys()}
-        entity_dict_with_possible_tech_requirements = [self.buildings, self.laws, self.production_methods, self.decrees, self.diplomatic_actions, self.parties, self.state_traits]
+        entity_dict_with_possible_tech_requirements = [self.buildings, self.laws, self.production_methods, self.decrees, self.diplomatic_actions, self.parties, self.state_traits, self.ideologies]
         for entity_dict in entity_dict_with_possible_tech_requirements:
             for entity in entity_dict.values():
                 for tech in entity.required_technologies:
@@ -693,3 +693,17 @@ class Vic3Parser(JominiParser):
         # filter out templated characters
         return {name: char for name, char in (template_chars | chars).items() if name not in templates_to_remove}
 
+    def _parse_technologies_from_ideology_data(self, name, data):
+        technologies = []
+        if 'possible' in data:
+            for tree in data['possible'].find_all('owner'):
+                for techname in tree.find_all('has_technology_researched'):
+                    technologies.append(self.technologies[techname])
+        return technologies
+
+    @cached_property
+    def ideologies(self) -> dict[str, Ideology]:
+        return self.parse_advanced_entities('common/ideologies', Ideology, extra_data_functions={
+            'law_approvals': lambda name, data: {law: approval for k, v in data if k.startswith('lawgroup_') for law, approval in v},
+            'required_technologies': self._parse_technologies_from_ideology_data,
+        })

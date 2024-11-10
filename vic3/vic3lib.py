@@ -428,6 +428,15 @@ class Party(AdvancedEntity):
         return 'Political party'
 
 
+class Ideology(AdvancedEntity):
+    character_ideology: bool = False
+    priority: int = 0
+    show_in_list: bool = True
+    leader_weight: Tree
+    possible: Tree
+    law_approvals: dict[Law, str]
+
+
 class InterestGroup(AdvancedEntity):
     def get_wiki_link_with_icon(self) -> str:
         return self.get_wiki_icon() + ' ' + self.display_name
