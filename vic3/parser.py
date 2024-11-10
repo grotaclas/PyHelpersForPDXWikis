@@ -24,7 +24,9 @@ class Vic3Parser(JominiParser):
     """
 
     # allows the overriding of localization strings
-    localizationOverrides = {'recognized': 'Recognized'}  # there doesn't seem to be a localization for this
+    localizationOverrides = {'recognized': 'Recognized', # there doesn't seem to be a localization for this
+                             'GNI': 'Guarani (GNI)',  # there are two tags called Guarani: GNI and GRI
+                             }
 
     def __init__(self):
         super().__init__(VIC3DIR / 'game')
