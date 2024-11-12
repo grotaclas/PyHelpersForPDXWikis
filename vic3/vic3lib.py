@@ -36,43 +36,30 @@ class ModifierType(NameableEntity):
             self.good = False
         if self.color == 'neutral':
             self.neutral = True
+        self.display_name = self._get_fully_localized_display_name()
 
-    def format_value(self, value):
-        prefix = ''
-        postfix = ''
-        formatted_value = value
-        if type(value) == int or type(value) == float:
-            if value > 0:
-                prefix = '+'
-            if value < 0:
-                prefix = '−'   # unicode minus
-                formatted_value = abs(value)
+    def _get_fully_localized_display_name(self) -> str:
+        parser = vic3game.parser
+        display_name = parser.localize(
+            key='modifier_' + self.name,
+            # version 1.7 removed the modifier_ prefix from the localisations, but I'm not sure if that's always the case, so this code allows both
+            default=parser.localize(self.name))
+        display_name = parser.formatter.format_localization_text(display_name, [])
 
-        if self.boolean:
-            if type(value) != bool:
-                raise Exception('Unexpected value "{}" for modifier {}'.format(value, self.name))
-            if value:
-                formatted_value = 'yes'
-            else:
-                formatted_value = 'no'
+        return display_name
 
-        if self.percent:
-            self.assert_number(value)
-            formatted_value *= 100
-            postfix += '%'
+    @cached_property
+    def icon(self):
+        icon = self.display_name
+        # remove links
+        icon = re.sub(r'\[\[[^|]*\|([^]]*)]]', r'\1', icon)
+        # remove icon tags
+        icon = re.sub(r'\{\{icon\|[^}]*}}(&nbsp;)?\s*', '', icon)
 
-        if self.num_decimals is not None:
-            try:
-                self.assert_number(value)
-                format_string = f'{{:.{self.num_decimals}f}}'
-                formatted_value = format_string.format(formatted_value)
-            except:
-                return f'{prefix}{formatted_value}{postfix}'
+        return icon
 
-        if self.good is None or value == 0:
-            prefix = "'''" + prefix
-            postfix = postfix + "'''"
-        else:
+    def get_color_for_value(self, value) -> str:
+        if self.good is not None and value != 0:
             if self.boolean:
                 if value:
                     value_for_coloring = 1
@@ -85,16 +72,63 @@ class ModifierType(NameableEntity):
                 else:
                     value_for_coloring = -1 * value
             if value_for_coloring > 0:
-                prefix = '{{green|' + prefix
-                postfix = postfix + '}}'
+                return 'green'
             elif value_for_coloring < 0:
-                prefix = '{{red|' + prefix
-                postfix = postfix + '}}'
+                return 'red'
+
+        return 'black'
+
+    def format_value(self, value):
+        try:
+            formatted_value = self.format_value_without_color(value)
+
+            color = self.get_color_for_value(value)
+            if color in ['red', 'green']:
+                prefix = f'{{{{{color}|'
+            else:
+                prefix = f'{{{{color|{color}|'
+            postfix = '}}'
+        except:
+            formatted_value = value
+            prefix = ''
+            postfix = ''
 
         if self.postfix:
             postfix += vic3game.parser.formatter.format_localization_text(vic3game.parser.localize(self.postfix), [])
         if self.prefix:
             prefix = vic3game.parser.formatter.format_localization_text(vic3game.parser.localize(self.prefix), []) + prefix
+
+        return f'{prefix}{formatted_value}{postfix}'
+
+    def format_value_without_color(self, value):
+        formatted_value = value
+        postfix = ''
+        prefix = ''
+        if type(value) == int or type(value) == float:
+            if value > 0:
+                prefix = '+'
+            if value < 0:
+                prefix = '−'  # unicode minus
+                formatted_value = abs(value)
+        if self.boolean:
+            if type(value) != bool:
+                raise Exception('Unexpected value "{}" for modifier {}'.format(value, self.name))
+            if value:
+                formatted_value = 'yes'
+            else:
+                formatted_value = 'no'
+        if self.percent:
+            self.assert_number(value)
+            formatted_value *= 100
+            postfix += '%'
+
+        if self.num_decimals is not None:
+            try:
+                self.assert_number(value)
+                format_string = f'{{:.{self.num_decimals}f}}'
+                formatted_value = format_string.format(formatted_value)
+            except:
+                pass
 
         return f'{prefix}{formatted_value}{postfix}'
 
@@ -107,14 +141,21 @@ class Modifier(NameableEntity):
     modifier_type: ModifierType
     value: Any
 
+    def __init__(self, name: str, modifier_type: ModifierType, value: Any):
+        super().__init__(name, modifier_type.display_name, modifier_type=modifier_type, value=value)
+
     def format_for_wiki(self):
-        text = vic3game.parser.formatter.format_localization_text(self.display_name, [])
         value = self.modifier_type.format_value(self.value)
         if self.modifier_type.boolean:
-            return f'{text}: {value}'
+            return f'{self.display_name}: {value}'
         else:
-            return f'{value} {text}'
+            return f'{value} {self.display_name}'
 
+    def format_for_lua(self) -> list:
+        """To be passed to https://vic3.paradoxwikis.com/Module:Iconify
+
+        The output still has to be passed to a lua serializer"""
+        return [self.modifier_type.get_color_for_value(self.value), self.modifier_type.format_value_without_color(self.value), {'icon': self.modifier_type.icon}]
 
 class AdvancedEntity(IconEntity):
     """Adds various extra fields. Not all of them are used by all subclasses"""

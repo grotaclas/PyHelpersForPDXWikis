@@ -418,12 +418,7 @@ class Vic3Parser(JominiParser):
         return [self.technologies[tech_name] for tech_name in section]
 
     def _parse_modifier_data(self, data: Tree):
-        return [Modifier(mod_name, self.localize(
-            key='modifier_' + mod_name,
-            # version 1.7 removed the modifier_ prefix from the localisations, but I'm not sure if that's always teh case, so this code allows both
-            default=self.localize(mod_name)
-        ),
-                         modifier_type=self.get_modifier_type_or_default(mod_name), value=mod_value)
+        return [Modifier(mod_name, modifier_type=self.get_modifier_type_or_default(mod_name), value=mod_value)
                 for mod_name, mod_value in data]
 
     def parse_modifier_section(self, name, data) -> list[Modifier]:
