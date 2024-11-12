@@ -1750,6 +1750,9 @@ class CardBaseClass(NamedAttributeEntity):
                     assert second_payload_parameter == '{CurrentPlayer}', f'unexpected payload parameter {second_payload_parameter}'
                     target_loc = self.format_effect_target(target)
                 relationship_loc = parser.localize(relationship, 'Game-Misc-DiplomaticRelationship').lower()
+                if '\n' in relationship_loc:
+                    # strip formatting and additional descriptions in other lines
+                    relationship_loc = parser.formatter.strip_formatting(relationship_loc.split('\n')[0])
                 return f'Change diplomatic relationship with {target_loc} to {relationship_loc}'
             case 'CE_MovementTypeOverride':
                 terrain, _land = payload.split(',')
