@@ -133,6 +133,9 @@ local techs = p.techs
         }
         return data
 
+    def generate_flat_terrain_improvements_list(self):
+        return 'Flat Terrain Improvements:{{collapse|\n' + '\n'.join('* ' + improvement.get_wiki_link_with_icon() for improvement in sorted(self.parser.get_entities_by_tag('BuildRequirementTag-OpenTerrain', self.parser.improvements), key=attrgetter('display_name'))) + '\n}}'
+
 
 if __name__ == '__main__':
     generator = TemplateGenerator()
