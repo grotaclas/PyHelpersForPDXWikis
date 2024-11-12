@@ -93,7 +93,10 @@ class Resource(NameableEntity):
                       'ResSpecialPowerCharge': 'Archangel Charge',
                       'ResSpecialists': 'Specialists',
                       'ResSpecialistsMax': 'Maximum Specialists',
-                      'StatUnrestSuppression': 'Unrest suppression'
+                      'StatUnrestSuppression': 'Unrest suppression',
+                      'StatUnrest': 'Unrest',
+                      'ResScrap': 'Scrap',
+                      'ResWarheads': 'Warheads',
                       # 'ResTempMonumentProgress': 'Monument Progress'  # is just in the loc files
                       }
 
@@ -1067,7 +1070,7 @@ class Unit(MillenniaEntity):
 
     @cached_property
     def actions(self) -> list['UnitAction']:
-        return [millenniagame.parser.unit_actions[action_name] for number, action_name in self.startingData.get_as_list('UseAction') if action_name != 'NONE']
+        return [millenniagame.parser.unit_actions[action_name] for number, action_name in self.startingData.get_as_list('UseAction') if action_name != 'NONE' and action_name != 'UNITACTIONS-BOMBER_STRATEGICBOMBING_TOGGLE']
 
 
 class TownSpecialization(MillenniaEntity):
@@ -1266,7 +1269,8 @@ class CardBaseClass(NamedAttributeEntity):
                 if len(requirement_trees) > 0:
                     requirements = self.get_requirement_texts(requirement_trees)
                     for unlock in new_unlocks:
-                        unlock.add_condition(requirements)
+                        for requirement in requirements:
+                            unlock.add_condition(requirement)
                     if len(requirements) == 1:
                         match = re.match(r'^At least (.*) \(This requirement is used as the cost\)$', requirements[0])
                         if match:
@@ -1628,7 +1632,7 @@ class CardBaseClass(NamedAttributeEntity):
                     if payload_param and payload_param.startswith('TurnDelay'):
                         delay = payload_param.removeprefix('TurnDelay:')
                         when = f'After {delay} turns'
-                    return CardBaseClass.get_notes_for_card_play(payload, target_text, when, include_unlocks, collected_unlocks, target)
+                    return CardBaseClass.get_notes_for_card_play(payload, target_text, when, include_unlocks, collected_unlocks, target, parent_effect=self)
             case 'CE_DrawAndPlay':
                 pass
             case 'CE_SetStringData':
@@ -1760,7 +1764,11 @@ class CardBaseClass(NamedAttributeEntity):
             case 'CE_RemoveBuffs':
                 pass
             case 'CE_SpawnLandmark':
-                category, min_radius, max_radius = payload.split(',')
+                if payload.count(',') == 2:
+                    category, min_radius, max_radius = payload.split(',')
+                elif ',' not in payload:
+                    category = payload
+                    min_radius = max_radius = 0
                 category_locs = {
                     'QuestZero': 'Quest 0',
                     'QuestOne': 'Quest I',
@@ -1808,6 +1816,8 @@ class CardBaseClass(NamedAttributeEntity):
             case 'CE_RebuildLighting':
                 return ''  # graphical effects
             case 'CE_UnlockEntityInfopedia':
+                return ''  # just adds it to the infopedia
+            case 'CE_UnlockInfopedia':
                 return ''  # just adds it to the infopedia
 
     @cached_property
@@ -2010,7 +2020,7 @@ class CardBaseClass(NamedAttributeEntity):
                 return f'{{{{icon|no}}}} Disabled with the message {parser.formatter.quote(msg)}'
 
     @staticmethod
-    def get_notes_for_card_play(card, target_text: str = None, when: str = None, include_unlocks=True, collected_unlocks: list[Unlock]=None, target: str = None) -> list[str]:
+    def get_notes_for_card_play(card, target_text: str = None, when: str = None, include_unlocks=True, collected_unlocks: list[Unlock]=None, target: str = None, parent_effect=None) -> list[str]:
         if target_text and not target_text.startswith(' '):
             target_text = f' {target_text}'
         if when:
@@ -2031,7 +2041,10 @@ class CardBaseClass(NamedAttributeEntity):
         card_obj = millenniagame.parser.all_cards[card]
         # card_effects = card_obj.get_effects(include_unlocks=True, recursive=True)
         new_unlocks = []
-        card_effects = card_obj.get_effects(include_unlocks=include_unlocks, recursive=True, collected_unlocks=new_unlocks)
+        if parent_effect == card_obj:  # to avoid infinite recursion
+            card_effects = ''
+        else:
+            card_effects = card_obj.get_effects(include_unlocks=include_unlocks, recursive=True, collected_unlocks=new_unlocks)
 
         if card_effects:
             if card_obj.has_localized_display_name:
@@ -2480,7 +2493,7 @@ class DomainPower(NamedAttributeEntity):
 class Landmark(NamedAttributeEntity):
 
     category: str
-    params: Data
+    params: Data = Data([])
 
     _tag_for_name = 'ID'
     _localization_category: str = 'Landmark'

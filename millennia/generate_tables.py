@@ -479,8 +479,9 @@ class TableGenerator(MillenniaFileGenerator):
                     results.append(f'[[File:{spirit.get_wiki_image_filename()}|300px|right]]')  # TODO: change size back to 320px after the old images left the cache
                     results.append(f'==== Description ====')
                     results.append(sections[f'description_{name}'])
-                    results.append(f'==== Infopedia ====')
-                    results.append(sections[f'infopedia_{name}'])
+                    if f'infopedia_{name}' in sections:
+                        results.append(f'==== Infopedia ====')
+                        results.append(sections[f'infopedia_{name}'])
                     if f'requirements_{name}' in sections and name != 'space_agency':  # TODO: space agency requirements only apply to some of the effects
                         results.append(f'==== Requirements ====')
                         results.append(sections[f'requirements_{name}'])
@@ -620,7 +621,9 @@ class TableGenerator(MillenniaFileGenerator):
             'QuestZero': 'Quests:',
             'QuestOne': 'Quests:',
             'QuestTwo': 'Quests:',
-            'CityOfGold': 'Cities of Gold:'
+            'CityOfGold': 'Cities of Gold:',
+            'NaturalRuins': 'Natural Ruins:',
+            'WastelandRuins': 'Wasteland Ruins:',
         }
         result = []
         for category, landmarks in unsorted_groupby(terrain.potential_landmarks, key=lambda landmark: category_display[landmark.category]):
