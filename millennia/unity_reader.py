@@ -7,7 +7,7 @@ from pathlib import Path
 
 from PIL import Image
 import UnityPy
-from UnityPy.classes import PPtr, Texture2D
+from UnityPy.classes import PPtr, Texture2D, GUID
 from UnityPy.export import SpriteHelper
 from UnityPy import Environment
 from UnityPy.files import File
@@ -40,33 +40,122 @@ class UnityReaderMillennia(UnityReader):
 
     @cached_property
     def assets_by_key(self) -> dict[str, PPtr]:
+        """Gets assets by their addressable key
+
+        Several fallbacks are used for assets which are not found, but there are still some which are missing. It might be broken data or they
+        are stored differently. It seems to only affect unit textures which are not used for the wiki"""
         container = self.env.container
         assets_by_file = {
             f.name: f.container
             for f in self.env.files.values()
             if isinstance(f, File) and not f.is_dependency
         }
-        # hardcode for now, because I don't know how to find the correct asset file for this
-        assets_by_file[-408601418] = assets_by_file['icons_assets_all_ad02b564ddc6c14f0e10a16434542f04.bundle']
-        assets_by_file[1112987004] = assets_by_file['ui_assets_all_8c6ab47e921ca988e51416d838398d99.bundle']
-        assets_by_file[1660673648] = assets_by_file['terrain_assets_all_039ac80e5fd37ef71e9beaccba108c68.bundle']
-        assets_by_file[-412252452] = assets_by_file['misc_assets_all_c381a1b532ed57ecf82df07889416534.bundle']
-        assets_by_file[-576843670] = assets_by_file['units_assets_all_f0c426b84953f8cc97c142b8c592cce0.bundle']
+
+        # collect data for fallbacks
+        extra_map = {}
+        for i, bucket in enumerate(self.catalog.buckets):
+            locs = []
+            for entry in bucket['entries']:
+                locs.append(self.catalog.entries[entry])
+            extra_map[self.catalog.keys[i]] = locs
+        # collect names for error messages
+        name_map = {}
+        for obj in self.env.objects:
+            if obj.type.name in ['TextAsset', 'Texture2D']:
+                data = obj.read()
+                if data.m_Name not in name_map:
+                    name_map[data.m_Name] = []
+                name_map[data.m_Name].append(data.assets_file.name)
+                if data.assets_file.parent and hasattr(data.assets_file.parent, 'name'):
+                    name_map[data.m_Name].append(data.assets_file.parent.name)
+
         assets = {}
         for entry in self.catalog_entries:
             if entry['dependencyKey']:
                 if entry['dependencyKey'] in assets_by_file:
                     if str(entry['internalId']) in assets_by_file[entry['dependencyKey']]:
+                        # this is how it should work
                         assets[entry['primaryKey']] = assets_by_file[entry['dependencyKey']][str(entry['internalId'])]
                     else:
+                        # old fallbacks which dont happen anymore
                         if str(entry['internalId']) in container:
+                            print(f'Found primary key "{entry["primaryKey"]}" by using old fallback with the container. This should not happen anymore')
                             assets[entry['primaryKey']] = container[str(entry['internalId'])]
+                        else:
+                            print(f'Old fallback when looking for primary key "{entry["primaryKey"]}" did not work. This should not happen anymore')
                 else:
-                    print(f'Dependency key "{entry["dependencyKey"]}" not found for "{entry["primaryKey"]}"')
+                    # fallback via the extra map
+                    possible_name = entry['primaryKey'].split('/')[-1]
+                    possible_sources = extra_map[entry['dependencyKey']]
+                    other_assets = []
+                    for source in possible_sources:
+                        if source['primaryKey'] in assets_by_file:
+                            if str(entry['internalId']) in assets_by_file[source['primaryKey']]:
+                                asset = assets_by_file[source['primaryKey']][str(entry['internalId'])]
+                                other_assets.append(asset)
+
+                    if len(other_assets) == 1:
+                        obj = other_assets[0].read()
+                        # comparing the name was originally implemented to make sure that the addressable found the correct asset
+                        # but many millennia assets have slightly different names than the addressables. And there don't seem to be cases in which
+                        # the asset is wrong if there is only one asset
+                        ignore_name_mismatch = True
+                        if ignore_name_mismatch or obj.m_Name.lower() == possible_name.lower():
+                            assets[entry['primaryKey']] = other_assets[0]
+                        else:
+                            print(f'Name mismatch. Expected "{possible_name}", actual "{obj.m_Name}" in Dependency key "{entry["dependencyKey"]}" when looking for key "{entry["primaryKey"]}"')
+                    elif len(other_assets) > 1:
+                        # fallback by matching the keys of the entry to the m_RenderDataKey of an asset
+                        names = []
+                        asset_with_matching_names = []
+                        good_asset = None
+                        for asset in other_assets:
+                            if not asset:
+                                continue
+                            obj = asset.read()
+                            names.append(obj.m_Name)
+                            if hasattr(obj, 'm_RenderDataKey'):
+                                render_data_key_hex = self._guid_to_hex(obj.m_RenderDataKey[0])
+                                if render_data_key_hex in entry['keys']:
+                                    # definitely the correct object
+                                    good_asset = asset
+                                    break
+                            if obj.m_Name.lower() == possible_name.lower():
+                                asset_with_matching_names.append(asset)
+                                if good_asset is None:
+                                    good_asset = asset
+                                else:
+                                    good_asset = None
+                                    break
+                        if good_asset is None and len(asset_with_matching_names) == 1:
+                            # fallback by looking for an asset which has the same name, but only use it if there is just one
+                            good_asset = asset_with_matching_names[0]
+                        if good_asset is not None:
+                            assets[entry['primaryKey']] = good_asset
+                        else:
+                            # print(f'Multiple entries for Dependency key "{entry["dependencyKey"]}". Primary key "{entry["primaryKey"]}". Other names: {",".join(names)}')
+                            pass
+                    else:
+                        print(f'Dependency key "{entry["dependencyKey"]}" not found for "{entry["primaryKey"]}"|{name_map[possible_name] if possible_name in name_map else ""}')
 
             else:
-                print(f'No dependency key for: {entry["primaryKey"]}')
+                if entry['provider'] == 'UnityEngine.ResourceManagement.ResourceProviders.AssetBundleProvider':
+                    pass  # asset bundles don't have a dependency key
+                else:
+                    print(f'No dependency key for: {entry["primaryKey"]}')
+
         return assets
+
+    @staticmethod
+    def _guid_to_hex(guid: GUID):
+        """convert the data fields of the GUID to hex and concatenate them"""
+        render_key_str = ''
+        for i in range(4):
+            int_data = getattr(guid, f'data_{i}_')
+            hex_data = f'{int_data:0{8}x}'  # length 8 to not lose 0's in the middle
+            # for some reason the value is reversed
+            render_key_str += hex_data[::-1]
+        return render_key_str
 
     @cached_property
     def assets_by_key_lowercase(self) -> dict[str, PPtr]:
@@ -212,3 +301,11 @@ class UnityReaderMillennia(UnityReader):
             return original_image.transpose(Image.FLIP_TOP_BOTTOM)
         else:
             return None
+
+
+if __name__ == '__main__':
+    # output all keys for debugging
+    unity_reader = UnityReaderMillennia()
+    keys = unity_reader.assets_by_key.keys()
+    for key in sorted(keys):
+        print(key)
