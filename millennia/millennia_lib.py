@@ -853,7 +853,8 @@ class Improvement(BuildingBaseClass):
 
     def _get_note_from_tag(self, tag):
         parser = millenniagame.parser
-        if tag in ['AetherImprovement', 'Computers', 'Docks', 'EducationBuilding', 'Factory', 'Farms', 'Modernization', 'OutpostCore', 'Pyramids', 'ReligiousBuilding', 'Scribes', 'TradePost', 'Trash', 'WeaponSmith']:
+        if tag in ['AetherImprovement', 'Computers', 'Docks', 'EducationBuilding', 'Factory', 'Farms', 'Modernization', 'OutpostCore', 'Pyramids', 'ReligiousBuilding', 'Scribes', 'TradePost', 'Trash', 'WeaponSmith']\
+                or tag.startswith('TypeDLC'):
             return parser.localize(tag, 'Game-Tag').removesuffix('s')
         fixed_texts = {
             'Furnace': 'Furnace type',
