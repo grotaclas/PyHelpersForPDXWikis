@@ -183,7 +183,7 @@ class IconMixin:
             icon += ' '
         return icon + self.get_wiki_link()
 
-    def get_wiki_file_tag(self, size: str = '24px', link: str = None) -> str:
+    def get_wiki_file_tag(self, size: str|None = '24px', link: str = None) -> str:
         """link='self' can be used to link the image to this entity"""
         filename = self.get_wiki_filename()
         if filename:
@@ -193,7 +193,11 @@ class IconMixin:
                 if link == 'self':
                     link = self.get_wiki_link_target()
                 link_param = f'|link={link}'
-            return f'[[File:{filename}|{size}|{self.display_name}{link_param}]]'
+            if size is None:
+                size_param = ''
+            else:
+                size_param = f'|{size}'
+            return f'[[File:{filename}{size_param}|{self.display_name}{link_param}]]'
 
         return ''
 
