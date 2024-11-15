@@ -39,8 +39,6 @@ class MillenniaParser:
         'UNITACTIONS-MERCHANT_DEPLOY_FOREIGN-CardTitle': 'Deploy Wealth',
         'UNITACTIONS-ALCHEMIST_GATHERARCANA-CardTitle': 'Gather Arcana',
         'Goods-Special-TileProduction-ANYBONUS-DisplayName': 'Gather (any bonus goods)',
-        'Game-Tag-TypeDLC1': 'Needs {{icon|ancient worlds}}',
-        'Game-Tag-TypeDLC2': 'Needs {{icon|atomic ambitions}}',
     }
 
     def __init__(self):

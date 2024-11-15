@@ -653,6 +653,10 @@ class MillenniaEntity(NamedAttributeEntity):
             return f'<pre>{tag.removeprefix("DataLinkAction:")}</pre>'
         elif tag in ['LaserShield', 'HasAlignmentDecay']:
             return f'<pre>{tag}</pre>'
+        elif tag.startswith('TypeDLC'):
+            dlc_name = tag.removeprefix('Type')
+            dlc = parser.dlcs[dlc_name]
+            return f'Needs {dlc.get_wiki_icon()}'
         else:
             # can be used for testing new tags
             # loc = parser.localize(tag, 'Game-Tag', return_none_instead_of_default=True)
@@ -853,8 +857,7 @@ class Improvement(BuildingBaseClass):
 
     def _get_note_from_tag(self, tag):
         parser = millenniagame.parser
-        if tag in ['AetherImprovement', 'Computers', 'Docks', 'EducationBuilding', 'Factory', 'Farms', 'Modernization', 'OutpostCore', 'Pyramids', 'ReligiousBuilding', 'Scribes', 'TradePost', 'Trash', 'WeaponSmith']\
-                or tag.startswith('TypeDLC'):
+        if tag in ['AetherImprovement', 'Computers', 'Docks', 'EducationBuilding', 'Factory', 'Farms', 'Modernization', 'OutpostCore', 'Pyramids', 'ReligiousBuilding', 'Scribes', 'TradePost', 'Trash', 'WeaponSmith']:
             return parser.localize(tag, 'Game-Tag').removesuffix('s')
         fixed_texts = {
             'Furnace': 'Furnace type',
@@ -1030,6 +1033,7 @@ class Unit(MillenniaEntity):
     def _get_note_from_tag(self, tag):
         parser = millenniagame.parser
         formatter = parser.formatter
+
         if tag.startswith('Type') or tag in [
             'ShallowWater', 'AirUnit', 'Barbarian', 'Scout', 'Cultist', 'Daimyo',  # unit types which don't start with type
             'AirBomber', 'Automata', 'CombatTower', 'CombatWall', 'EarlySea', 'Explorer', 'Knight', 'Leader', 'Mercenary', 'Militia', 'Raider', 'Steampunk',
@@ -1037,7 +1041,10 @@ class Unit(MillenniaEntity):
             'DestroyAtEndOfCombat'
             # 'RogueAI',  already displayed from the data 'NeutralSubtype,5' which has the same localization
         ]:
-            return parser.localize(tag, 'Game-Tag').removesuffix('s')
+            if tag.startswith('TypeDLC'):
+                return super()._get_note_from_tag(tag)
+            else:
+                return parser.localize(tag, 'Game-Tag').removesuffix('s')
 
         fixed_texts = {
             'CombatTargetingLowestHealth': 'Targets enemy with lowest health',
@@ -2852,4 +2859,4 @@ class DLC(NamedAttributeEntity):
     def get_wiki_icon(self, size: str = '', link='self') -> str:
         if size:
             size = '|' + size
-        return f'{{{{icon|{self.display_name}{size}}}}}'
+        return f'{{{{icon|{self.display_name.lower()}{size}}}}}'
