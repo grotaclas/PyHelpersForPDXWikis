@@ -149,8 +149,6 @@ class MillenniaParser:
                     import_entry.update(entry)
                     entry = import_entry
 
-                attributes = {}
-                name = ''
                 if default_entity_class:
                     entity_class = default_entity_class
                 else:
@@ -158,16 +156,13 @@ class MillenniaParser:
                 if not entity_class:
                     # skip unhandled stuff
                     continue
-                for key, value in entry:
-                    if key == tag_for_name:
-                        name = value
-                        attributes['name'] = name
-                    else:
-                        attributes[self.map_xml_tag_to_python_attribute(key, entity_class)] = value
-                if name:
-                    obj = entity_class(attributes)
+                obj = self.create_entity(entity_class, tag_for_name, entry)
+                if obj:
+                    name = obj.name
                     self.all_parsed_entities[name] = obj
                     self.unparsed_attributes_for_import[name] = entry
+                else:
+                    name = ''
             else:
                 # no name tag usually means that this is a pure import
                 if 'Import' in entry and len(entry) == 1:  # pure import
@@ -180,9 +175,23 @@ class MillenniaParser:
             if name:
                 result[name] = obj
             else:
-                print(f'Ignoring unamed entity "{attributes}"')
+                print(f'Ignoring unamed entity "{entry}"')
                 continue
         return result
+
+    def create_entity(self, entity_class: Type[NE], tag_for_name: str, data: Tree) -> NE|None:
+        attributes = {}
+        name = ''
+        for key, value in data:
+            if key == tag_for_name:
+                name = value
+                attributes['name'] = name
+            else:
+                attributes[self.map_xml_tag_to_python_attribute(key, entity_class)] = value
+        if name:
+            return entity_class(attributes)
+        else:
+            return None
 
     @cached_property
     def entities(self) -> dict[str, MillenniaEntity]:
@@ -554,6 +563,21 @@ class MillenniaParser:
             faction.rewards[tier] = faction_reward
 
         return results
+
+    @cached_property
+    def megaprojects(self) -> dict[str, MegaProject]:
+        megaprojects = self.parse_nameable_entities_with_xmltodict('AMegaprojectInfo', 'Megaprojects', default_entity_class=MegaProject)
+        for project in megaprojects.values():
+            parsed_stages = []
+            for stage_data in project.stages.find_all('Stage'):
+                stage_data['project'] = project
+                parsed_stages.append(self.create_entity(MegaProjectStage, MegaProjectStage._tag_for_name, stage_data))
+            project.stages = parsed_stages
+        return megaprojects
+
+    @cached_property
+    def megaproject_stages(self) -> dict[str, MegaProjectStage]:
+        return {stage.name: stage for project in self.megaprojects.values() for stage in project.stages}
 
     def get_cards_which_use_tag(self, tag):
         if tag not in self.cards_which_use_tag:

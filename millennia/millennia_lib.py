@@ -426,7 +426,8 @@ class MillenniaEntity(NamedAttributeEntity):
                 list(millenniagame.parser.domain_technologies.values()) +
                 [deck for deck in millenniagame.parser.domain_decks.values()] +
                 [card for deck in millenniagame.parser.event_cards.values() for card in deck.values()] +
-                [reward for faction in millenniagame.parser.factions.values() for reward in faction.rewards.values()]
+                [reward for faction in millenniagame.parser.factions.values() for reward in faction.rewards.values()] +
+                list(millenniagame.parser.megaproject_stages.values())
         ) if self.name in tech.unlock_names]
         if self.name == 'B_PARTHENON':  # TODO: find a better way to discover or present this information
             result.append(millenniagame.parser.ages['TECHAGE3_HEROES'])
@@ -2791,3 +2792,45 @@ class Faction(NamedAttributeEntity):
 
     def get_wiki_filename(self) -> str:
         return ''
+
+
+class MegaProjectStage(NamedAttributeEntity):
+    _localization_suffix = 'TITLE'
+    _tag_for_name = 'StageID'
+
+    project: 'MegaProject'
+    iconName: str
+    factionRewardFirst: int
+    factionRewardSecond: int
+    stageCard: CardBaseClass
+
+    transform_value_functions = {'stageCard': lambda card_name: millenniagame.parser.all_cards[card_name]}
+
+    @cached_property
+    def _localization_category(self):
+        return f'Megaprojects-{self.project.name}'
+
+    @cached_property
+    def unlock_names(self) -> list[str]:
+        return [unlock.entity_name for unlock in self.unlocks]
+
+    @cached_property
+    def unlocks(self):
+        return self.stageCard.unlocks
+
+    def get_icon_image(self) -> Image.Image | None:
+        """get the icon from the game assets"""
+        return millenniagame.parser.unity_reader.get_image_resource(f'UI/Icons/{self.iconName}-ICON')
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'Megaproject'
+
+    def get_wiki_page_name(self) -> str:
+        return 'Megaprojects'
+
+
+class MegaProject(NamedAttributeEntity):
+    _tag_for_name = 'ProjectID'
+    _localization_suffix = 'Title'
+    _localization_category = 'UI-Megaprojects'
+    stages: list[MegaProjectStage]
