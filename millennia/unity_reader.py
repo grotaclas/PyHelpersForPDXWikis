@@ -190,13 +190,13 @@ class UnityReaderMillennia(UnityReader):
             resource_name = key_parts[-1]
             path = '/'.join(key_parts[:-1])
             path = path.lower()
-            if resource_name.lower() != data.name.lower():
-                print(f'Warning: resource name "{resource_name}" does not match asset name "{data.name}" in path "{path}"')
+            if resource_name.lower() != data.m_Name.lower():
+                print(f'Warning: resource name "{resource_name}" does not match asset name "{data.m_Name}" in path "{path}"')
             if path not in text_by_path:
                 text_by_path[path] = {}
-            if data.name in text_by_path[path]:
-                print(f'Warning: duplicate text asset "{data.name}" with path "{path}"')
-            text_by_path[path][data.name] = data.text
+            if data.m_Name in text_by_path[path]:
+                print(f'Warning: duplicate text asset "{data.m_Name}" with path "{path}"')
+            text_by_path[path][data.m_Name] = data.m_Script
         return text_by_path
 
     @staticmethod
