@@ -107,9 +107,13 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
         else:
             return f'[[{target}|{link_text}]]'
 
-    def strip_formatting(self, text):
+    def strip_formatting(self, text, strip_newlines=False):
         """strip HTML formatting and millenia-links"""
-        return re.sub(r'LINKSTART\[[^]]*](.*?)LINKEND', r'\1', re.sub(r'<[^<]+?>', '', text))
+        stripped_text = re.sub(r'LINKSTART\[[^]]*](.*?)LINKEND', r'\1', re.sub(r'<[^<]+?>', '', text))
+        if strip_newlines:
+            stripped_text = re.sub(r'\s*[\r\n]+\s*',' ', stripped_text)
+        # remove space from the beginning and end which might have been left over from the other stripping
+        return stripped_text.strip()
 
     def format_cost(self, resource: str, value: int, icon_only=False):
         return self.format_resource(resource, value, cost=True, icon_only=icon_only)

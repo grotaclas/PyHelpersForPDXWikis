@@ -226,7 +226,7 @@ class NamedAttributeEntity(AttributeEntity, MillenniaIconMixin):
         if display_name is None:
             display_name = self.name
             self.has_localized_display_name = False
-        display_name = millenniagame.parser.formatter.strip_formatting(display_name)
+        display_name = millenniagame.parser.formatter.strip_formatting(display_name, strip_newlines=True)
         return display_name
 
     def get_icon_image(self) -> Image.Image | None:
