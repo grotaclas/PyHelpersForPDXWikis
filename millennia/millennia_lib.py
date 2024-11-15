@@ -198,7 +198,7 @@ class NamedAttributeEntity(AttributeEntity, MillenniaIconMixin):
 
     def __init__(self, attributes: dict[str, any]):
         self.name = attributes['name']
-        if 'display_name' not in self.extra_data_functions:
+        if 'display_name' not in self.extra_data_functions and 'display_name' not in attributes:
             self.extra_data_functions = self.extra_data_functions.copy()  # copy to not modify the class attribute of the subclass
             self.extra_data_functions['display_name'] = self._get_display_name
 
@@ -1844,6 +1844,10 @@ class CardBaseClass(NamedAttributeEntity):
                 age = millenniagame.parser.ages[reqs[1].removesuffix('-BASE')]
                 count = reqs[2]
                 result.append(f'At least {count} {age} technologies')
+        if self.tags.has('RequiresDLC'):
+            for dlc_tag in self.tags.get('RequiresDLC'):
+                dlc = millenniagame.parser.dlcs[dlc_tag]
+                result.append(f'DLC {dlc.get_wiki_link_with_icon()} is active')
         return result
 
     def get_requirement_texts(self, requirements: Iterator[Tree], ignored_tag_requirements: list[str] = None):
@@ -2834,3 +2838,17 @@ class MegaProject(NamedAttributeEntity):
     _localization_suffix = 'Title'
     _localization_category = 'UI-Megaprojects'
     stages: list[MegaProjectStage]
+
+
+class DLC(NamedAttributeEntity):
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'DLC'
+
+    def get_wiki_link_target(self):
+        return self.display_name
+
+    def get_wiki_icon(self, size: str = '', link='self') -> str:
+        if size:
+            size = '|' + size
+        return f'{{{{icon|{self.display_name}{size}}}}}'

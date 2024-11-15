@@ -624,6 +624,21 @@ class MillenniaParser:
                         result[tag].append(map_tile)
         return result
 
+    @cached_property
+    def dlcs(self) -> dict[str, DLC]:
+        """find DLCs by localisation, because their other configuration is hardcoded
+
+        the returned dict has each DLC twice, once with the LCC_ prefix and once without it, but they both use the same DLC object
+        which does not use the prefix in its name """
+        dlcs = {}
+        for loc_key, loc_text in self.unity_reader.localizations.items():
+            if loc_key.startswith('UI-ContentCodeDisplayName-'):
+                name = loc_key.removeprefix('UI-ContentCodeDisplayName-').removeprefix('LCC_')
+                display_name = self.formatter.strip_formatting(loc_text)
+                dlc = DLC({'name': name, 'display_name': display_name})
+                dlcs[name] = dlc
+                dlcs[f'LCC_{name}'] = dlc
+        return dlcs
 
 class LazyObject:
 

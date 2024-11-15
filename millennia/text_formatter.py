@@ -51,8 +51,6 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
         return result
 
     def _replace_links(self, matchobj: re.Match):
-        groups = matchobj.groups()
-        a = matchobj.groupdict()
         parser = millenniagame.parser
         link_type = matchobj.group('linktype')
         link_target = matchobj.group('linktarget')
@@ -63,13 +61,13 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
                     target = parser.infopedia_topics[link_target].display_name
                 elif link_target.startswith('MENU_'):
                     return link_text  # strip link, because they seem to be used for complex nested tooltips
-                elif link_target in ['DLC1', 'DLC2']:
-                    dlc_name = {'DLC1': 'Ancient Worlds', 'DLC2': 'Atomic Ambitions'}[link_target]
+                elif link_target.startswith('DLC'):
+                    dlc = parser.dlcs[link_target]
                     if link_text == f'<sprite name="Icon{link_target}">':
-                        return f'{{{{icon|{dlc_name.lower()}}}}}'
+                        return f'{{{{icon|{dlc.display_name.lower()}}}}}'
                     else:
-                        target = dlc_name
-                        link_text = link_text.replace(link_target, dlc_name)
+                        target = dlc.display_name
+                        link_text = link_text.replace(link_target, dlc.display_name)
                 elif ('PLAYERACTIONS-' + link_target) in parser.player_actions:
                     return parser.player_actions['PLAYERACTIONS-' + link_target].get_wiki_link_with_icon()
                 elif ('UNITACTIONS-' + link_target) in parser.unit_actions:
