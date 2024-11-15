@@ -353,7 +353,7 @@ class MillenniaEntity(NamedAttributeEntity):
                                      data['Data'] if 'Data' in data else [])
                                  }
 
-    extra_data_functions = {'description': lambda data: millenniagame.parser.formatter.strip_formatting(
+    extra_data_functions = {'description': lambda data: millenniagame.parser.formatter.strip_formatting_and_effects_from_description(
         millenniagame.parser.localize(data['name'], 'Entity', 'DetailText', default='')),
                             'infopedia': lambda data: millenniagame.parser.localize(data['name'], 'Entity', 'InfopediaText', default='')}
 
