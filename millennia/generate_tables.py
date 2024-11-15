@@ -664,6 +664,20 @@ class TableGenerator(MillenniaFileGenerator):
                 + self.make_wiki_table(data, table_classes=['mildtable', 'plainlist'],
                                        one_line_per_cell=True, row_id_key='id'))
 
+    def generate_diplomacy_table(self,):
+        data = [{
+            'id': action.display_name,
+            'Action': action.display_name,
+            'Uni/Bilateral': '',
+            'Negotiations opened?': '',
+            'Conditions': self.create_wiki_list(action.requirements),
+            'Effect': self.create_wiki_list(action.all_effects),
+            'Description': self.formatter.convert_to_wikitext(action.description),
+
+        } for action in sorted(self.parser.player_actions.values(), key=attrgetter('display_name')) if action.tags.has('EmbassyRequiredAction') or action.tags.has('EnvoyPlayerAction') or action.tags.has('EmbassyRequiredAction') or action.tags.has('StandardPlayerAction') or action.tags.has('TreatyAction')]
+        table = self.get_SVersion_header(scope='table') + '\n' + self.make_wiki_table(data, table_classes=['mildtable'], one_line_per_cell=True,
+                                                                                      row_id_key='id')
+        return table
 
 if __name__ == '__main__':
     generator = TableGenerator()
