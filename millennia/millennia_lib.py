@@ -1678,9 +1678,16 @@ class CardBaseClass(NamedAttributeEntity):
                         return f'Set <tt>{string}</tt> to {value_text}'
                 pass
             case 'CE_Tooltip':
+                if not isinstance(payload, str):
+                    # @TODO: remove this workaround for broken tooltip in TECHAGE7_VICTORYHARMONY-StateReligionOffice-Tooltip
+                    #  that tooltip has two Payload elements instead of one Payload and one PayloadParam element
+                    payload = payload[0]
                 if payload.endswith('LineBreak'):
                     return ''
                 tooltip = parser.formatter.strip_formatting(parser.localize(payload, default=''))
+                if payload_param and payload_param.startswith('FormatParam:'):
+                    tooltip = tooltip.replace('{0}', payload_param.removeprefix('FormatParam:'))
+
                 if tooltip:
                     return f'Tooltip: {parser.formatter.quote(tooltip.strip())}'
                 else:
