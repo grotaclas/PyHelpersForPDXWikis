@@ -403,6 +403,7 @@ class TableGenerator(MillenniaFileGenerator):
         name = spirit.display_name.lower().replace(' ', '_')
         sorted_techs = spirit.technologies.values()
         remove_buffs_from_description = re.compile(r'[\n\s]*' + spirit.display_name + r' Government Buffs(\n((^\s*$)|(^\s{8}.*$)))*', re.MULTILINE)
+        remove_dlc_from_infopedia = re.compile(r'\s*\n+\s*\{\{icon\|(' + '|'.join(dlc.display_name.lower() for dlc in self.parser.dlcs.values()) + r')}}\s*$')
         effects = spirit.base_tech.all_effects
         effects_on_tags = {}
         other_effects = []
@@ -422,7 +423,7 @@ class TableGenerator(MillenniaFileGenerator):
 
         for section, contents in {
                 f'description_{name}': remove_buffs_from_description.sub('\n', self.formatter.convert_to_wikitext(spirit.description)),
-                f'infopedia_{name}': self.formatter.convert_to_wikitext(spirit.infopedia),
+                f'infopedia_{name}': remove_dlc_from_infopedia.sub('', self.formatter.convert_to_wikitext(spirit.infopedia)),
                 f'requirements_{name}': self.create_wiki_list(spirit.base_tech.requirements),
                 # f'unlocks_{name}': self.create_wiki_list(
                 #     [unlock.get_wiki_link_with_icon() for unlock in spirit.base_tech.unlocks_as_entities]),
