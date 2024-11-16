@@ -143,7 +143,7 @@ class TableGenerator(MillenniaFileGenerator):
                 'id': improvement.display_name,
                 # 'class="unsortable" | ': improvement.get_wiki_file_tag('64px'),
                 # 'Improvement': improvement.display_name,
-                name_column: f'{{{{iconbox|{improvement.display_name}|{self._get_improvement_description(improvement)}|image={improvement.get_wiki_filename()}}}}}',
+                name_column: f'{{{{iconbox|{improvement.display_name}|{self._get_improvement_description(improvement)}|image={improvement.get_wiki_filename()}|w=350px}}}}',
                 'Unlocked By': self.get_unlocked_by(improvement),
                 'Base Cost': improvement.cost.format(icon_only=True),
                 build_on_column: ' '.join(self._requirements_to_strings(improvement)),
