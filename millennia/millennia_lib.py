@@ -1027,6 +1027,17 @@ class Unit(MillenniaEntity):
         if tag == 'DeployedGoods':
             goods = parser.goods[entry[0]]
             return f'Production when deployed: {goods.get_wiki_icon()} {{{{green|{value}}}}} {goods.display_name}'
+        if tag == 'TileHarvestTag':
+            where, harvest_tag = value.split('-')
+            tiles = [tile.get_wiki_link_with_icon() for tile in parser.get_entities_by_tag(harvest_tag, parser.map_tiles)]
+            return f'Can harvest {" and ".join(tiles)}'
+        if tag == 'TileHarvestProductionCode':
+            production_type = parser.localize(value, 'Goods-Special-TileProduction', 'DisplayName')
+            return f'Harvests via {production_type}'
+        if tag == 'TriggerOnLocalImprovementBuilt':
+            card = parser.all_cards[value]
+            return f'Execute {card.get_wiki_link_with_icon()} when an improvement on this tile is constructed'
+
 
         return super()._get_note_from_data(tag, value, entry, ignored_unit_actions)
 
