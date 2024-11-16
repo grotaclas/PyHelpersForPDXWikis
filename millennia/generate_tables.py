@@ -120,8 +120,11 @@ class TableGenerator(MillenniaFileGenerator):
 
     def get_improvement_sections(self):
         sections = {
-            'improvements': [improvement for improvement in self.parser.improvements.values() if
-                                not improvement.is_outpost_improvement and not improvement.tags.has('RebuildableTown') and not improvement.is_outpost_specialization],
+            'improvements': [improvement for improvement in self.parser.improvements.values()
+                             if improvement.has_localized_display_name
+                             and not improvement.is_outpost_improvement
+                             and not improvement.tags.has('RebuildableTown')
+                             and not improvement.is_outpost_specialization],
             'outpost_improvements': [improvement for improvement in self.parser.improvements.values() if improvement.is_outpost_improvement],
         }
         for improvement in self.parser.improvements.values():
@@ -172,7 +175,7 @@ class TableGenerator(MillenniaFileGenerator):
             # 'class="unsortable" | Description': self.formatter.convert_to_wikitext(building.description),
             # 'class="unsortable" | Infopedia': self.formatter.convert_to_wikitext(building.infopedia),
 
-        } for building in buildings]
+        } for building in buildings if building.has_localized_display_name]
         # result.append(f'== {title} ==')
         result.append(self.get_SVersion_header(scope='table') + '\n'
                       + self.make_wiki_table(data, table_classes=['mildtable'],
