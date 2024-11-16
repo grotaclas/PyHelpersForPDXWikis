@@ -25,14 +25,8 @@ class TemplateGenerator(MillenniaFileGenerator):
     def generate_technology_template(self, group_results=False):
         grouped_results = {}
         list_results = ['<includeonly>{{#switch:{{padleft:|1|{{lc:{{{2}}}}}}}']
-        # result = ['<includeonly>{{#switch:{{lc:{{{2}}}}}']
-        # current_first_letter = None
         default_case = '| #default = <span style="color: red; font-size: 11px;">(unrecognized string “{{{2}}}” for [[Template:Technology]])</span>[[Category:Pages with unrecognized template strings]]'
         for first_letter, techs in groupby(sorted(self.parser.technologies.values(), key=attrgetter('display_name')), key=lambda tech: tech.display_name[0].lower()):
-            # print(first_letter, ', '.join([t.display_name for t in techs]))
-            # exit()
-            # print(first_letter, len([tech for tech in techs if not tech.is_age_advance]))
-            # continue
             result = []
             result.append(f'|{first_letter} = ' + '{{#switch:{{lc:{{{2}}}}}')
             for tech in techs:
@@ -49,22 +43,6 @@ class TemplateGenerator(MillenniaFileGenerator):
             grouped_results[first_letter] = result
         list_results.append(default_case)
         list_results.append('}}</includeonly><noinclude>{{template doc}}')
-        list_results.append("""
-== test ==
-* a
-*b
-*c
-*d
-*e
-*f
-*g
-*h
-*i
-*j
-*k
-*l
-
-""")
         list_results.append('[[Category:Templates]]</noinclude>')
         if group_results:
             return grouped_results
@@ -72,7 +50,6 @@ class TemplateGenerator(MillenniaFileGenerator):
             return list_results
 
     def generate_technology_template_all_in_one(self):
-        # result = []
         techs = sorted(self.parser.technologies.values(), key=attrgetter('name'))
         result = ['<includeonly>{{#switch:{{{1}}}']
         default_case = '| #default = <span style="color: red; font-size: 11px;">(unrecognized string “{{{1}}}” for [[Template:Technology]])</span>[[Category:Pages with unrecognized template strings]]'
