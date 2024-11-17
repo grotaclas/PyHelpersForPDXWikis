@@ -95,6 +95,9 @@ generates most of the tables on the wiki
 #### millennia/generate_templates.py
 experimental code to generate tooltip templates
 
+#### millennia/dump_xml.py
+exports the XML files from the unity assets. Expects the output folder as the only parameter. The files will be written in subfolders according to the addressables of the unity assets
+
 # Sample code
     from vic3.game import vic3game
 
