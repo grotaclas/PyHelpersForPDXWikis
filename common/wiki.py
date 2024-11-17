@@ -23,7 +23,7 @@ class WikiTextFormatter:
         return str(number)
 
     @staticmethod
-    def create_wiki_list(elements: list[str], indent=1, no_list_with_one_element=False, prefix_with_linebreak=True) -> str:
+    def create_wiki_list(elements: list[str], indent=1, no_list_with_one_element=False, prefix_with_linebreak=True, format_with_icon=False) -> str:
         if len(elements) == 0:
             return ''
         elif len(elements) == 1 and no_list_with_one_element:
@@ -35,10 +35,13 @@ class WikiTextFormatter:
                 results.append('')
             for element in elements:
                 if isinstance(element, list):
-                    results.append(WikiTextFormatter.create_wiki_list(element, indent+1, prefix_with_linebreak=False))
+                    results.append(WikiTextFormatter.create_wiki_list(element, indent+1, prefix_with_linebreak=False, format_with_icon=format_with_icon))
                 else:
                     if not isinstance(element, str):
-                        element = str(element)
+                        if format_with_icon:
+                            element = element.get_wiki_link_with_icon()
+                        else:
+                            element = str(element)
                     results.append(f'{line_prefix} {element}')
             return f'\n'.join(results)
 

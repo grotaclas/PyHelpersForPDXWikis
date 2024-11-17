@@ -183,8 +183,8 @@ class TableGenerator(MillenniaFileGenerator):
         return result
 
     def _get_upgrades_column(self, entity: MillenniaEntity):
-        return (f'data-sort-value="{entity.upgrade_line_loc},{entity.upgrade_tier}" | ' if entity.upgrade_line else '') + self.create_wiki_list(
-            [upgrade.get_wiki_link_with_icon() for upgrade in entity.upgrades])
+        return ((f'data-sort-value="{entity.upgrade_line_loc},{entity.upgrade_tier}" | ' if entity.upgrade_line else '') +
+                self.create_wiki_list(entity.upgrades, format_with_icon=True))
 
     def generate_unit_table(self):
         result = []
@@ -259,15 +259,14 @@ class TableGenerator(MillenniaFileGenerator):
         return result
 
     def get_unlocked_by(self, entity, include_not_found_note=True):
-        unlocks = [tech.get_wiki_link_with_icon()
-                   for tech in entity.unlocked_by]
+        unlocks = entity.unlocked_by.copy()
         if len(entity.spawned_by) > 0:
             unlocks.append('Spawned by:')
-            unlocks.append([tech.get_wiki_link_with_icon() for tech in entity.spawned_by])
+            unlocks.append(entity.spawned_by)
         if len(unlocks) == 0 and include_not_found_note:
             return f"''Nothing''<ref name=\"no_unlock_found\">{self.name_of_this_tool} did not find a way to unlock or spawn this in the game. This probably means that it was disabled and is not available. But there might be a way to spawn it which {self.name_of_this_tool} can't handle. In this case, please leave a message about this on the talk page</ref>"
         else:
-            return self.create_wiki_list(unlocks)
+            return self.create_wiki_list(unlocks, format_with_icon=True)
 
     def generate_unit_action_table(self):
         headers = {'unit_action_common_table': 'Common unit actions', 'unit_action_table': 'Other unit actions'}
@@ -506,10 +505,10 @@ class TableGenerator(MillenniaFileGenerator):
             'class="unsortable"|': good.get_wiki_icon('40px'),
             'Good': good.display_name,
             'Consumed for': self.create_wiki_list(good.consumeValues),
-            'Produced in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in sorted(good.produced_in, key=lambda b:b.display_name)]),
-            'Made from': self.create_wiki_list([item.get_wiki_link_with_icon() for item in sorted(good.made_from, key=lambda b:b.display_name)]),
-            'Used in': self.create_wiki_list([building.get_wiki_link_with_icon() for building in sorted(good.used_in, key=lambda b:b.display_name)]),
-            'Converted to': self.create_wiki_list([item.get_wiki_link_with_icon() for item in sorted(good.converted_to, key=lambda b:b.display_name)]),
+            'Produced in': self.create_wiki_list(sorted(good.produced_in, key=lambda b:b.display_name), format_with_icon=True),
+            'Made from': self.create_wiki_list(sorted(good.made_from, key=lambda b:b.display_name), format_with_icon=True),
+            'Used in': self.create_wiki_list(sorted(good.used_in, key=lambda b:b.display_name), format_with_icon=True),
+            'Converted to': self.create_wiki_list(sorted(good.converted_to, key=lambda b:b.display_name), format_with_icon=True),
 
         } for good in goods]
         return (self.get_SVersion_header(scope='table') + '\n'
@@ -636,19 +635,18 @@ class TableGenerator(MillenniaFileGenerator):
         return self.create_wiki_list(result)
 
     def _format_improvements(self, terrain: Terrain):
-        improvements = terrain.improvements
+        improvements = terrain.improvements.copy()
         is_open_terrain = False
         for tag in terrain.tags.unparsed_entries:
             if tag == 'OpenTerrain':
                 is_open_terrain = True
             else:
                 improvements.extend(self.parser.get_entities_by_tag(f'BuildRequirementTag-{tag}', self.parser.improvements))
-        improvements = [improvement.get_wiki_link_with_icon() for improvement in improvements]
         if is_open_terrain:
             improvements.append('Flat terrain improvements')
         if terrain.allows_town:
             improvements.insert(0, '{{icon|town}} Towns')
-        return self.create_wiki_list(improvements)
+        return self.create_wiki_list(improvements, format_with_icon=True)
 
     def generate_terrain_table(self):
         data = [{
