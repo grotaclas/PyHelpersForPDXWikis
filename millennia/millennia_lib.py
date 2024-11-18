@@ -1920,9 +1920,7 @@ class CardBaseClass(NamedAttributeEntity):
     def get_requirement_text(self, req_type: str, req: str, target: str, requirement: Tree, ignored_tag_requirements: list[str] = None) -> str | None:
         parser = millenniagame.parser
         match req_type:
-            case 'CR_GameDataTotal':
-                pass
-            case 'CR_EntityTagCount' | 'CR_EntityTypeCount' | 'CR_GameData' | 'CR_GameDataAny':
+            case 'CR_EntityTagCount' | 'CR_EntityTypeCount' | 'CR_GameData' | 'CR_GameDataAny' | 'CR_GameDataTotal':
                 if req_type == 'CR_GameDataAny':
                     any_target = True
                 else:
@@ -1931,7 +1929,7 @@ class CardBaseClass(NamedAttributeEntity):
                 # TODO: unify approach of 'what' handling between effects and requirements
                 if req_type == 'CR_EntityTagCount':
                     what = parser.formatter.convert_to_wikitext(parser.localize(name, 'Game-Tag', default=f'<tt>{name}</tt>'))
-                elif req_type == 'CR_GameData' and name.removeprefix('#') in parser.misc_game_data:
+                elif req_type.startswith('CR_GameData') and name.removeprefix('#') in parser.misc_game_data:
                     what = parser.misc_game_data[name.removeprefix('#')]
                 elif name in parser.all_entities:
                     what = parser.all_entities[name].get_wiki_link_with_icon()
