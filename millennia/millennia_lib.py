@@ -2025,7 +2025,23 @@ class CardBaseClass(NamedAttributeEntity):
                     return self._prefix_target(target, f'Owns a region which is constructing a building')
                 pass
             case 'CR_DiplomaticRelationship':
-                pass
+                relation_type, op = req.split(',')
+                if op == 'TRUE':
+                    is_loc = 'Is'
+                    have_loc = 'Has'
+                elif op == 'FALSE':
+                    is_loc = 'Is not'
+                    have_loc = 'Does not have'
+                else:
+                    print(f'Unknown op "{op}" for CR_DiplomaticRelationship')
+                    return None
+                relation_locs = {'DR_Alliance': f'{is_loc} allied with',
+                                 'DR_Hostile': f'{is_loc} hostile towards',
+                                 'DR_OpenBorders': f'{have_loc} open borders with',
+                                 'DR_Peace': f'{is_loc} at peace with',
+                                 'DR_War': f'{is_loc} at war with', }
+                return f'{relation_locs[relation_type]} {self.format_effect_target(target)}'
+
             case 'CR_DiplomaticRelationshipValue':
                 pass
             case 'CR_ChosenAge':
