@@ -650,7 +650,8 @@ class MillenniaEntity(NamedAttributeEntity):
         elif tag == 'RelocateOnPlayerOwnerChange':
             return 'Relocate when owner changes'
         elif tag.startswith('DataLinkAction:'):
-            return f'<pre>{tag.removeprefix("DataLinkAction:")}</pre>'
+            action = tag.split(',')[1]
+            return f'{{{{DataLinkAction|{action}}}}}'
         elif tag in ['LaserShield', 'HasAlignmentDecay']:
             return f'<pre>{tag}</pre>'
         elif tag.startswith('TypeDLC'):
@@ -1686,7 +1687,8 @@ class CardBaseClass(NamedAttributeEntity):
                     return ''
                 tooltip = parser.formatter.strip_formatting(parser.localize(payload, default=''))
                 if payload_param and payload_param.startswith('FormatParam:'):
-                    tooltip = tooltip.replace('{0}', payload_param.removeprefix('FormatParam:'))
+                    tooltip_parameter = payload_param.removeprefix('FormatParam:')
+                    tooltip = tooltip.replace('{0}', tooltip_parameter)
 
                 if tooltip:
                     return f'Tooltip: {parser.formatter.quote(tooltip.strip())}'
@@ -2878,3 +2880,23 @@ class DLC(NamedAttributeEntity):
         if size:
             size = '|' + size
         return f'{{{{icon|{self.display_name.lower()}{size}}}}}'
+
+@dataclass
+class DataLinkAction:
+    name: str
+    card: CardBaseClass
+    """this card applies the data link effect"""
+    entities: list[MillenniaEntity]
+    """entities which use this DataLinkAction"""
+    target: str
+    """usually PLAYER"""
+    value_type: str
+    """if this value in the target changes, the data link gets recalculated"""
+
+    @cached_property
+    def effects(self) -> list[str]:
+        return self.card.get_effects()
+
+    @cached_property
+    def tooltips(self) -> list[str]:
+        return [effect.removeprefix('Tooltip: ') for effect in self.effects if isinstance(effect, str) and effect.startswith('Tooltip: ')]

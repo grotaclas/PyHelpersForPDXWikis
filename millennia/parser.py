@@ -638,6 +638,24 @@ class MillenniaParser:
                 dlcs[f'LCC_{name}'] = dlc
         return dlcs
 
+    @cached_property
+    def data_link_actions(self) -> dict[str, DataLinkAction]:
+        actions = {}
+        for entity in self.all_entities.values():
+            if hasattr(entity, 'tags') and entity.tags.has('DataLinkAction'):
+                target_value, link_card_name = entity.tags.get('DataLinkAction').split(',')
+                target, value_type = target_value.split(':')
+                if link_card_name in actions:
+                    action = actions[link_card_name]
+                    assert action.target == target
+                    assert action.value_type == value_type
+                    action.entities.append(entity)
+                else:
+                    card = self.all_cards[link_card_name]
+                    actions[link_card_name] = DataLinkAction(link_card_name, card, [entity], target, value_type)
+
+        return actions
+
 class LazyObject:
 
     _wrapped = None
