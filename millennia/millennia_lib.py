@@ -1452,6 +1452,8 @@ class CardBaseClass(NamedAttributeEntity):
             target_text = f'all {parser.localize(target_type + "," + target_bool, "UI-Req").lower()} players'
         elif target.startswith('PLAYER,ALLPLAYERSBYGAMEDATA:'):
             target_text = f'players which have the game data <tt>{target.removeprefix("PLAYER,ALLPLAYERSBYGAMEDATA:")}</tt>'
+        elif target.startswith('PLAYER,LOCOWNER'):
+            target_text = f'the owner of this location'
         elif target == 'PLAYER':
             if ignore_default_targets:
                 return ''
