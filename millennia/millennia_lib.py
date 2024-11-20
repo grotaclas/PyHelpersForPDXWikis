@@ -1745,6 +1745,8 @@ class CardBaseClass(NamedAttributeEntity):
                         return ''  # the rewards are specified and described elsewhere
                     case ['BORDEREXPAND', value]:
                         return self._prefix_target(target, f'Gain {ResourceValue.parse("ResCityExpansionPoints," + value)}')
+                    case ['CHECKINTEGRATION', 'SUCCESS']:
+                        return self._prefix_target(target, parser.formatter.convert_to_wikitext(parser.localize('Game-Misc-VassalizeMinor')))
                     case ['EXPEDITIONCOMPLETE'] if target == 'LOC,EXPEDITION':
                         return f'Complete expedition'
                     case ['EXPEDITIONRESET'] if target == 'ENT,EXEC':
