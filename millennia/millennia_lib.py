@@ -328,6 +328,45 @@ class Data(Storage):
                 ]
 
 
+def localize_combat_mod(entry: list[str]) -> str | None:
+    parser = millenniagame.parser
+    formatter = parser.formatter
+    full_key = '-'.join(['CombatMod'] + entry)
+    if full_key in parser.misc_game_data:
+        modifier_loc = parser.misc_game_data[full_key]
+    else:
+        attack_or_defense = entry[0]
+        if attack_or_defense == 'StatDefense':
+            attack_or_defense = 'Defense'
+        elif attack_or_defense == 'StatAttack':
+            attack_or_defense = 'Attack'
+        else:
+            return None
+        preposition, _sep, obj = entry[1].partition(':')
+        if preposition == 'Target':
+            preposition = 'vs'
+            obj = parser.localize(obj.removeprefix('+'), 'Game-Tag')
+        elif preposition == 'Terrain':
+            preposition = 'in'
+            obj = parser.terrains[obj].display_name
+        elif preposition == 'UnitFriendly':
+            preposition = 'with'
+            obj = parser.units[obj].display_name
+        elif preposition == 'Alone':
+            preposition = 'when'
+            obj = 'alone'
+        elif preposition == 'Role':
+            preposition = 'as'
+            obj = parser.localize(obj, 'Game-GameData-Misc-CombatRole')
+        elif preposition == 'VsSpecial':
+            preposition = ''
+            obj = formatter.strip_formatting(parser.localize(obj, 'UI-Tooltip-Block').strip())
+        else:
+            return None
+        modifier_loc = f'{attack_or_defense} {preposition} {obj}'
+    return modifier_loc
+
+
 class MillenniaEntity(NamedAttributeEntity):
     import_entity: str
     tags: Tags
@@ -584,39 +623,11 @@ class MillenniaEntity(NamedAttributeEntity):
             return '{{icon|population}} Population cost: ' + value
         elif tag == 'CombatMod':
             value = f'{Decimal(value):%}'
-            full_key = '-'.join([tag] + entry)
-            if full_key in parser.misc_game_data:
-                return f'{parser.misc_game_data[full_key]}: {value}'
+            modifier_loc = localize_combat_mod(entry)
+            if modifier_loc:
+                return f'{modifier_loc}: {value}'
             else:
-                attack_or_defense = entry[0]
-                if attack_or_defense == 'StatDefense':
-                    attack_or_defense = 'Defense'
-                elif attack_or_defense == 'StatAttack':
-                    attack_or_defense = 'Attack'
-                else:
-                    return None
-                preposition, _sep, obj = entry[1].partition(':')
-                if preposition == 'Target':
-                    preposition = 'vs'
-                    obj = parser.localize(obj.removeprefix('+'), 'Game-Tag')
-                elif preposition == 'Terrain':
-                    preposition = 'in'
-                    obj = parser.terrains[obj].display_name
-                elif preposition == 'UnitFriendly':
-                    preposition = 'with'
-                    obj = parser.units[obj].display_name
-                elif preposition == 'Alone':
-                    preposition = 'when'
-                    obj = 'alone'
-                elif preposition == 'Role':
-                    preposition = 'as'
-                    obj = parser.localize(obj, 'Game-GameData-Misc-CombatRole')
-                elif preposition == 'VsSpecial':
-                    preposition = ''
-                    obj = formatter.strip_formatting(parser.localize(obj, 'UI-Tooltip-Block').strip())
-                else:
-                    return None
-                return f'{attack_or_defense} {preposition} {obj}: {value}'
+                return None
         elif tag == 'TriggerOnSelfBuild':
             return self.get_notes_for_card_play(value)
         elif tag == 'TriggerOnUnitBuilt':
@@ -1545,6 +1556,9 @@ class CardBaseClass(NamedAttributeEntity):
                 elif name == 'TileExpeditionChance-{CurrentPlayer}':
                     name = 'success chance'
                     value = f'{Decimal(value):%}'
+                elif name.startswith('CombatMod-'):
+                    value = f'{Decimal(value):%}'
+                    name = localize_combat_mod(name.split('-')[1:])
                 elif name == 'DataVersion':
                     return ''  # seems to be used to track save game versions
                 else:
