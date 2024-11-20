@@ -345,7 +345,9 @@ def localize_combat_mod(entry: list[str]) -> str | None:
         preposition, _sep, obj = entry[1].partition(':')
         if preposition == 'Target':
             preposition = 'vs'
-            obj = parser.localize(obj.removeprefix('+'), 'Game-Tag')
+            tag = obj.removeprefix('+')
+            localized_tag = re.sub(r'Unit Type:\s*(.*)$', r'\1 units', parser.localize(tag, 'Game-Tag'))
+            obj = f'{{{{hover box|{localized_tag}|{", ".join(unit.display_name for unit in parser.units.values() if unit.tags.has(tag))}}}}}'
         elif preposition == 'Terrain':
             preposition = 'in'
             obj = parser.terrains[obj].display_name
