@@ -1751,8 +1751,14 @@ class CardBaseClass(NamedAttributeEntity):
                         return f'Reset expedition'
                     case ['EXPEDITIONRESOLVE'] if target == 'ENT,EXEC':
                         return f'Determine if the expedition was successful'
-                    case ['REFRESHECON']:
-                        return ''  # recalculates economy data
+                    case [
+                            'REFRESHECON'  # recalculates economy data
+                         ] | [
+                            'CHECKDEFCONALERT', _  # shows or hides an alert
+                         ] | [
+                            'RELEASESUPPRESSEDHELPALERTS'
+                         ]:
+                        return ''
             case 'CE_UnlockContent':
                 return self._handle_unlock_effect(Unlock(self._get_entity_by_name(payload)), include_unlocks, collected_unlocks)
             case 'CE_ResearchTech':
@@ -1839,7 +1845,7 @@ class CardBaseClass(NamedAttributeEntity):
             case 'CE_ClearAlert':
                 pass
             case 'CE_CreateAlert':
-                pass
+                return ''  # just shows an alert
             case 'CE_DataAlert':
                 return ''  # counter to show crisis charges in the UI
             case 'CE_UnitDeploy':
@@ -1869,6 +1875,8 @@ class CardBaseClass(NamedAttributeEntity):
                 return ''  # just adds it to the infopedia
             case 'CE_UnlockInfopedia':
                 return ''  # just adds it to the infopedia
+            case 'CE_BulkPlayerUpdate':
+                return ''  # used to temporary halt updating player data and resume it later
 
     @cached_property
     def requirements(self) -> list[str]:
