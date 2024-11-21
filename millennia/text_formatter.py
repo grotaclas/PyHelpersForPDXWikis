@@ -150,3 +150,65 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
 
     def format_resource_without_value(self, resource: str, icon_only=False):
         return self.format_resource(resource, icon_only=icon_only)
+
+    def localize_combat_mod(self, entry: list[str]) -> str | None:
+        parser = millenniagame.parser
+        full_key = '-'.join(['CombatMod'] + entry)
+        if full_key in parser.misc_game_data:
+            modifier_loc = parser.misc_game_data[full_key]
+        else:
+            attack_or_defense = entry[0]
+            if attack_or_defense == 'StatDefense':
+                attack_or_defense = 'Defense'
+            elif attack_or_defense == 'StatAttack':
+                attack_or_defense = 'Attack'
+            else:
+                return None
+            preposition, _sep, obj = entry[1].partition(':')
+            if preposition == 'Target':
+                preposition = 'vs'
+                obj = self.format_tag(obj)
+            elif preposition == 'Terrain':
+                preposition = 'in'
+                obj = parser.terrains[obj].display_name
+            elif preposition == 'UnitFriendly':
+                preposition = 'with'
+                obj = parser.units[obj].display_name
+            elif preposition == 'Alone':
+                preposition = 'when'
+                obj = 'alone'
+            elif preposition == 'Role':
+                preposition = 'as'
+                obj = parser.localize(obj, 'Game-GameData-Misc-CombatRole')
+            elif preposition == 'VsSpecial':
+                preposition = ''
+                obj = self.strip_formatting(parser.localize(obj, 'UI-Tooltip-Block').strip())
+            else:
+                return None
+            modifier_loc = f'{attack_or_defense} {preposition} {obj}'
+        return modifier_loc
+
+    def format_tag(self, tag):
+        parser = millenniagame.parser
+        suffix = ''
+        if tag.startswith('ALLPLAYERS-'):
+            tag = tag.removeprefix('ALLPLAYERS-')
+            suffix = ' of all players'
+        tag = tag.removeprefix('+')
+        localized_tag = parser.localize(tag, 'Game-Tag', return_none_instead_of_default=True) #.removesuffix('s')
+        if localized_tag is None:
+            localized_tag = ', '.join(sorted({entity.get_wiki_link_with_icon() for entity in parser.all_entities.values() if hasattr(entity, 'tags') and entity.tags.has(tag)}))
+        else:
+            localized_tag = parser.formatter.convert_to_wikitext(localized_tag)
+            localized_tag = re.sub(r'Unit Type:\s*(.*)$', r'\1 units', localized_tag)
+            if tag not in [  # these tags are listed with the entity and there are usually too many entities to make this tooltip useful
+                'Improvement',
+                'Combatant',
+                'WaterMovement',  # also a kind of type
+                'CityCenter',  # localisation is ok here and the entities are not really shown ingame
+                'TypeLine', 'WaterMovement', 'NavalTarget',
+            ]:
+                entities = sorted({entity.display_name for entity in parser.all_entities.values() if entity.has_localized_display_name and hasattr(entity, 'tags') and entity.tags.has(tag)})
+                if len(entities) > 1:  #len(entities) < 20:
+                    localized_tag = f'{{{{hover box|{localized_tag}|{", ".join(entities)}}}}}'
+        return localized_tag + suffix

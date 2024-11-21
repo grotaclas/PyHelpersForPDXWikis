@@ -39,6 +39,7 @@ class MillenniaParser:
         'UNITACTIONS-MERCHANT_DEPLOY_FOREIGN-CardTitle': 'Deploy Wealth',
         'UNITACTIONS-ALCHEMIST_GATHERARCANA-CardTitle': 'Gather Arcana',
         'Goods-Special-TileProduction-ANYBONUS-DisplayName': 'Gather (any bonus goods)',
+        'Game-Tag-Town': 'Towns',
     }
 
     def __init__(self):

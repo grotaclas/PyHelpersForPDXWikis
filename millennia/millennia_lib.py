@@ -328,47 +328,6 @@ class Data(Storage):
                 ]
 
 
-def localize_combat_mod(entry: list[str]) -> str | None:
-    parser = millenniagame.parser
-    formatter = parser.formatter
-    full_key = '-'.join(['CombatMod'] + entry)
-    if full_key in parser.misc_game_data:
-        modifier_loc = parser.misc_game_data[full_key]
-    else:
-        attack_or_defense = entry[0]
-        if attack_or_defense == 'StatDefense':
-            attack_or_defense = 'Defense'
-        elif attack_or_defense == 'StatAttack':
-            attack_or_defense = 'Attack'
-        else:
-            return None
-        preposition, _sep, obj = entry[1].partition(':')
-        if preposition == 'Target':
-            preposition = 'vs'
-            tag = obj.removeprefix('+')
-            localized_tag = re.sub(r'Unit Type:\s*(.*)$', r'\1 units', parser.localize(tag, 'Game-Tag'))
-            obj = f'{{{{hover box|{localized_tag}|{", ".join(unit.display_name for unit in parser.units.values() if unit.tags.has(tag) and unit.has_localized_display_name)}}}}}'
-        elif preposition == 'Terrain':
-            preposition = 'in'
-            obj = parser.terrains[obj].display_name
-        elif preposition == 'UnitFriendly':
-            preposition = 'with'
-            obj = parser.units[obj].display_name
-        elif preposition == 'Alone':
-            preposition = 'when'
-            obj = 'alone'
-        elif preposition == 'Role':
-            preposition = 'as'
-            obj = parser.localize(obj, 'Game-GameData-Misc-CombatRole')
-        elif preposition == 'VsSpecial':
-            preposition = ''
-            obj = formatter.strip_formatting(parser.localize(obj, 'UI-Tooltip-Block').strip())
-        else:
-            return None
-        modifier_loc = f'{attack_or_defense} {preposition} {obj}'
-    return modifier_loc
-
-
 class MillenniaEntity(NamedAttributeEntity):
     import_entity: str
     tags: Tags
@@ -625,7 +584,7 @@ class MillenniaEntity(NamedAttributeEntity):
             return '{{icon|population}} Population cost: ' + value
         elif tag == 'CombatMod':
             value = f'{Decimal(value):%}'
-            modifier_loc = localize_combat_mod(entry)
+            modifier_loc = formatter.localize_combat_mod(entry)
             if modifier_loc:
                 return f'{modifier_loc}: {value}'
             else:
@@ -1418,30 +1377,10 @@ class CardBaseClass(NamedAttributeEntity):
             entity = parser.all_entities[target.removeprefix('ENTTYPE,')]
             target_text = entity.get_wiki_link_with_icon()
         elif target.startswith('ENTTAG,'):
-            if target.startswith('ENTTAG,ALLPLAYERS-'):
-                tag = target.removeprefix('ENTTAG,ALLPLAYERS-').removeprefix('+')
-                suffix = ' of all players'
-            else:
-                tag = target.removeprefix('ENTTAG,').removeprefix('+')
-                suffix = ''
-            target_text = parser.localize(tag, 'Game-Tag', return_none_instead_of_default=True)
-            if target_text is None:
-                target_text = ', '.join(sorted({entity.get_wiki_link_with_icon() for entity in parser.all_entities.values() if hasattr(entity, 'tags') and entity.tags.has(tag)}))
-            else:
-                target_text = parser.formatter.convert_to_wikitext(target_text)
-                if not tag.startswith('Type') and tag not in [  # these tags are listed with the entity and there are usually too many entities to make this tooltip useful
-                    'Improvement',
-                    'Combatant',
-                    'WaterMovement',  # also a kind of type
-                    'CityCenter',  # localisation is ok here and the entities are not really shown ingame
-                ]:
-                    entities = sorted({entity.display_name for entity in parser.all_entities.values() if entity.has_localized_display_name and hasattr(entity, 'tags') and entity.tags.has(tag)})
-                    if len(entities) > 1:  #len(entities) < 20:
-                        target_text = f'{{{{hover box|{target_text}|{", ".join(entities)}}}}}'
+            tag = target.removeprefix('ENTTAG,')
+            target_text = parser.formatter.format_tag(tag)
             if target_text == '':
                 target_text = f'<tt>{target}</tt>'
-            else:
-                target_text += suffix
         elif target.startswith('LOC,TILERADIUS,'):
             radius = target.removeprefix('LOC,TILERADIUS,')
             target_text = f'tiles within a radius of {radius}'
@@ -1560,7 +1499,7 @@ class CardBaseClass(NamedAttributeEntity):
                     value = f'{Decimal(value):%}'
                 elif name.startswith('CombatMod-'):
                     value = f'{Decimal(value):%}'
-                    name = localize_combat_mod(name.split('-')[1:])
+                    name = parser.formatter.localize_combat_mod(name.split('-')[1:])
                 elif name == 'DataVersion':
                     return ''  # seems to be used to track save game versions
                 else:
