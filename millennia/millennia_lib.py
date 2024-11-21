@@ -1390,6 +1390,21 @@ class CardBaseClass(NamedAttributeEntity):
             target_text = 'this expedition'
         elif target == 'ENT,REQTARGET':
             target_text = 'remembered entity'
+        elif target.startswith('ENT,FINDTAGLOCRAD'):
+            _, _, tag, location, radius = target.split(',')
+            if location == 'EXECLOC':
+                location = 'this location'
+            elif location == 'STARTINGLOC':
+                location = 'starting location'
+            elif location == 'EXTERNALTARGET':
+                location = 'selected target'
+            if radius == '0':
+                radius = 'at'
+            elif radius == '1':
+                radius = 'next to'
+            else:
+                radius = f'within {radius} tiles of'
+            target_text = f'{parser.formatter.format_tag(tag)} {radius} {location}'
         elif target == 'REGION':
             target_text = 'region'
         elif target == 'PLAYER,ALLPLAYERS':

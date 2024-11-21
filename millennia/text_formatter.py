@@ -206,7 +206,7 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
                 'Combatant',
                 'WaterMovement',  # also a kind of type
                 'CityCenter',  # localisation is ok here and the entities are not really shown ingame
-                'TypeLine', 'WaterMovement', 'NavalTarget',
+                'TypeLine', 'WaterMovement', 'NavalTarget', 'Unit'
             ]:
                 entities = sorted({entity.display_name for entity in parser.all_entities.values() if entity.has_localized_display_name and hasattr(entity, 'tags') and entity.tags.has(tag)})
                 if len(entities) > 1:  #len(entities) < 20:
