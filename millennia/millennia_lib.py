@@ -1395,9 +1395,9 @@ class CardBaseClass(NamedAttributeEntity):
             if location == 'EXECLOC':
                 location = 'this location'
             elif location == 'STARTINGLOC':
-                location = 'starting location'
+                location = 'the starting location'
             elif location == 'EXTERNALTARGET':
-                location = 'selected target'
+                location = 'the selected target'
             if radius == '0':
                 radius = 'at'
             elif radius == '1':
