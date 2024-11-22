@@ -1036,6 +1036,7 @@ class Unit(MillenniaEntity):
             'GameDataKillAtZero-ActionCharges': 'Disbands after using up action charges',
             'JaguarBuff': f'Can be promoted to {parser.units["UNIT_JAGUAR"].get_wiki_link_with_icon()} when having {parser.domain_technologies["WARRIORPRIESTS-JAGUAR"].get_wiki_link_with_icon()}',
             'NeutralCampSpawnPlacer': 'Spawns barbarian camps',
+            'CombatTargetingRandom': 'Chooses targets randomly during combat',
         }
         if tag in fixed_texts:
             return fixed_texts[tag]
