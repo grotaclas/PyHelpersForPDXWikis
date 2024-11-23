@@ -76,7 +76,7 @@ class ModifierType(NameableEntity):
             elif value_for_coloring < 0:
                 return 'red'
 
-        return 'black'
+        return '#000'
 
     def format_value(self, value):
         try:
