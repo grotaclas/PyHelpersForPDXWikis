@@ -444,13 +444,14 @@ class Vic3Parser(JominiParser):
             'group': lambda group_name: law_groups[group_name]})
 
     def _get_monument_location(self, name, data):
-        if 'possible' not in data:
+        if 'potential' not in data:
             return None
         try:
-            conditions = data['possible']['error_check']['this']
-        except KeyError:  # new format?
-            conditions = data['possible']
+            conditions = data['potential']['error_check']['this']
+        except (KeyError, TypeError):  # new format?
+            conditions = data['potential']
         try:
+            state_name = None
             if isinstance(conditions, list):
                 for condition in conditions:
                     if 'state_region' in condition:
