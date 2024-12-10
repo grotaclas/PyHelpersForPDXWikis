@@ -2031,6 +2031,8 @@ class CardBaseClass(NamedAttributeEntity):
                     return self._prefix_target(target, f"Has ''not'' reached age {age_number} yet")
                 elif condition == 'ANY':
                     return self._prefix_target(target, f"Has reached at least age {age_number}")
+                elif condition.removesuffix('-BASE') in parser.ages:
+                    return self._prefix_target(target, f"Is or was in the {parser.ages[condition.removesuffix('-BASE')].display_name}")
             case 'CR_Player':
                 if req == 'HasReligion,ANY:TRUE':
                     return self._prefix_target(target, 'Has a state religion')
