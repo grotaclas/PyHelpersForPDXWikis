@@ -310,7 +310,7 @@ class TableGenerator(MillenniaFileGenerator):
     def get_tech_table(self, technologies, include_age=True, include_requirements=False):
         data = [{
             'id': tech.display_name,
-            'Technology': f'{{{{iconbox|{tech.display_name}| |image={tech.get_wiki_filename()}}}}}',
+            'Technology': f'{{{{iconbox|{"Advance" if tech.is_age_advance and not tech.has_localized_display_name else tech.display_name}| |image={tech.get_wiki_filename()}}}}}',
             'Cost': tech.cost,
             'Requirements': self.create_wiki_list(tech.requirements) if include_requirements else '',
             'Age': self.create_wiki_list([age.get_wiki_link() for age in tech.ages]) if include_age else '',
