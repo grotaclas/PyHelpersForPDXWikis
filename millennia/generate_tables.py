@@ -90,11 +90,15 @@ class TableGenerator(MillenniaFileGenerator):
 
         return result
 
-    def improvement_sort_key(self, improvement):
-        if improvement.upgrade_line:
-            return improvement.upgrade_line_loc, improvement.upgrade_tier, improvement.display_name
+    def entity_sort_key(self, entity: MillenniaEntity, add_display_name=True) -> str:
+        if entity.upgrade_line_tiers:
+            result = ','.join(f'{self.parser.localize_upgrade_line(line)},{tier}' for line, tier in entity.upgrade_line_tiers.items())
         else:
-            return 'zzzzzzzzzz', 0, improvement.display_name
+            result = f'zzzzzzzzzz,0'
+
+        if add_display_name:
+            result += f',{entity.display_name}'
+        return result
 
     @staticmethod
     def _requirements_to_strings(improvement: Improvement) -> list[str]:
@@ -132,7 +136,7 @@ class TableGenerator(MillenniaFileGenerator):
                 sections[improvement.display_name.lower().replace(' ', '_')] = [improvement]
         results = {}
         for title, improvements in sections.items():
-            improvements = sorted(improvements, key=self.improvement_sort_key)
+            improvements = sorted(improvements, key=self.entity_sort_key)
             if title == 'outpost_improvements':
                 name_column = 'style="width:20%;" | Improvement'
                 build_on_column = 'style="width:25%;" | Build on'
@@ -161,7 +165,7 @@ class TableGenerator(MillenniaFileGenerator):
 
     def generate_building_table(self):
         result = []
-        buildings = sorted([building for building in self.parser.buildings.values() if building.has_localized_display_name], key=self.improvement_sort_key)
+        buildings = sorted([building for building in self.parser.buildings.values() if building.has_localized_display_name], key=self.entity_sort_key)
         data = [{
             'id': building.display_name,
             # 'class="unsortable" | ': building.get_wiki_file_tag('64px'),
@@ -183,7 +187,7 @@ class TableGenerator(MillenniaFileGenerator):
         return result
 
     def _get_upgrades_column(self, entity: MillenniaEntity):
-        return ((f'data-sort-value="{entity.upgrade_line_loc},{entity.upgrade_tier}" | ' if entity.upgrade_line else '') +
+        return ((f'data-sort-value="{self.entity_sort_key(entity, add_display_name=False)}" | ' if entity.upgrade_line_tiers else '') +
                 self.create_wiki_list(entity.upgrades, format_with_icon=True))
 
     def generate_unit_table(self):
@@ -201,7 +205,7 @@ class TableGenerator(MillenniaFileGenerator):
 
     def get_unit_sections(self):
         result = {}
-        all_units = sorted([unit for unit in self.parser.units.values() if unit.has_localized_display_name], key=self.improvement_sort_key)
+        all_units = sorted([unit for unit in self.parser.units.values() if unit.has_localized_display_name], key=self.entity_sort_key)
         self.secondary_types = {
                  'WaterTransport': 'Transports',
                  'TypeMobileRecon': 'Recon units',
@@ -224,9 +228,13 @@ class TableGenerator(MillenniaFileGenerator):
             if unit_type.tag in ['SETTLER', 'TILEHARVEST']:
                 units_by_secondary_type['ALL'] = [unit for unit in all_units if unit.primary_type == unit_type]
             else:
+                secondary_types = list(self.secondary_types.keys())
+                if unit_type.tag != 'AirUnit':
+                    secondary_types.remove('ActInAirCombatRounds')
+                    secondary_types.remove('ActInBombingRound')
                 for unit in all_units:
                     if unit.primary_type == unit_type:
-                        units_by_secondary_type[unit.get_first_matching_tag(list(self.secondary_types.keys()))].append(unit)
+                        units_by_secondary_type[unit.get_first_matching_tag(secondary_types)].append(unit)
             for secondary_type_tag, secondary_type_heading in self.secondary_types.items():
                 units = units_by_secondary_type[secondary_type_tag]
                 if units:

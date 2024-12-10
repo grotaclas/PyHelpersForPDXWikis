@@ -76,6 +76,11 @@ class MillenniaParser:
             else:
                 return self.unity_reader.localizations.get(key, default)
 
+    def localize_upgrade_line(self, upgrade_line: str) -> str:
+        loc = self.localize(upgrade_line, 'Game-UpgradeLine-UpgradeLine')
+        loc = self.formatter.strip_formatting(loc)
+        return loc.removeprefix('Upgrade Line: ')
+
     @cached_property
     def formatter(self):
         from millennia.text_formatter import MillenniaWikiTextFormatter

@@ -371,51 +371,31 @@ class MillenniaEntity(NamedAttributeEntity):
         return Cost(res, value)
 
     @cached_property
-    def upgrade_line_tier(self) -> tuple[str|None, int|None]:
+    def upgrade_line_tiers(self) -> dict[str, int]:
         upgrade_lines = self.startingData.get_as_list('UpgradeLine')
-        match len(upgrade_lines):
-            case 0:
-                return None, None
-            case 1:
-                return upgrade_lines[0][0], int(upgrade_lines[0][1])
-            case _:
-                raise Exception(f'Multiple upgrade lines not supported in {self.name}')
-
-    @cached_property
-    def upgrade_line(self) -> str | None:
-        return self.upgrade_line_tier[0]
-
-    @cached_property
-    def upgrade_line_loc(self) -> str | None:
-        if self.upgrade_line:
-            loc = millenniagame.parser.localize(self.upgrade_line, 'Game-UpgradeLine-UpgradeLine')
-            loc = millenniagame.parser.formatter.strip_formatting(loc)
-            return loc.removeprefix('Upgrade Line: ')
-        else:
-            return None
-
-    @cached_property
-    def upgrade_tier(self) -> int | None:
-        return self.upgrade_line_tier[1]
+        return {line[0]: int(line[1]) for line in upgrade_lines}
 
     @cached_property
     def upgrades(self):
-        if self.upgrade_line:
+        upgrades = set()
+        for line in self.upgrade_line_tiers:
+            tier = self.upgrade_line_tiers[line]
             possible_upgrades = [entity for entity in millenniagame.parser.entities.values() if
-                                 entity.upgrade_line == self.upgrade_line
-                                 and entity.upgrade_tier >= self.upgrade_tier + 1
+                                 line in entity.upgrade_line_tiers
+                                 and entity.upgrade_line_tiers[line] >= tier + 1
                                  and entity.has_localized_display_name  # assume unlocalized units dont exist
                                  ]
-            tier = self.upgrade_tier
+
             while possible_upgrades:
-                next_tier_upgrades = [upgrade for upgrade in possible_upgrades if upgrade.upgrade_tier == tier + 1]
+                next_tier_upgrades = {upgrade for upgrade in possible_upgrades if upgrade.upgrade_line_tiers[line] == tier + 1}
                 if len(next_tier_upgrades) > 0:
-                    return next_tier_upgrades
+                    upgrades.update(next_tier_upgrades)
+                    break
                 else:
                     tier += 1
                 if tier > 20:
                     raise Exception(f'Reached tier 20 without finding upgrades from the same tier in "{self.display_name}"')
-        return []
+        return sorted(upgrades, key=lambda upgrade: upgrade.display_name)
 
     @cached_property
     def unlocked_by(self):
