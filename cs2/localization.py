@@ -1,6 +1,9 @@
 import pprint
+import zipfile
 from enum import Enum
 from io import BufferedReader
+from pathlib import Path
+
 from leb128 import u
 from PyHelpersForPDXWikis.localsettings import CS2DIR
 
@@ -29,6 +32,24 @@ class CS2Localization:
 
     def _load_data(self):
         path = CS2DIR / 'Cities2_Data' / 'StreamingAssets' / 'Data~' / (self.locale + '.loc')
+        if not path.exists():
+            # 1.2 and later
+            path = zipfile.Path(CS2DIR / 'Cities2_Data' / 'Content' / 'Game' / 'Locale.cok') / (self.locale + '.loc')
+        index_count_dict, localization_dict = self._load_file(path)
+
+        for dlc_folder in (CS2DIR / 'Cities2_Data' / 'Content').iterdir():
+            loc_path = dlc_folder / 'Locale.cok'
+            if loc_path.exists():
+                loc_file = zipfile.Path(loc_path) / (self.locale + '.loc')
+                dlc_index_count_dict, dlc_localization_dict = self._load_file(loc_file)
+                index_count_dict.update(dlc_index_count_dict)
+                localization_dict.update(dlc_localization_dict)
+
+        self._localization_dict = localization_dict
+        self._index_count_dict = index_count_dict
+        self._data_loaded = True
+
+    def _load_file(self, path: Path):
         with path.open('rb') as file:
 
             # I'm not sure what this is used for. It seems to always be one. Maybe it is a format type
@@ -55,10 +76,7 @@ class CS2Localization:
                 key = self._read_string(file)
                 value = self._read_int(file, 32)
                 index_count_dict[key] = value
-
-        self._localization_dict = localization_dict
-        self._index_count_dict = index_count_dict
-        self._data_loaded = True
+        return index_count_dict, localization_dict
 
     @staticmethod
     def _read_string(file: BufferedReader):
