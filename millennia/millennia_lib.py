@@ -808,6 +808,16 @@ class Improvement(BuildingBaseClass):
         return requirements
 
     @cached_property
+    def category(self) -> str|None:
+        categories = self.tags.get('ImprovementCategory')
+        if categories is None:
+            return None
+        elif len(categories) > 1:
+            raise Exception(f'Too many improvement categories for {self.name}')
+        else:
+            return categories[0]
+
+    @cached_property
     def work_production(self):
         return self._get_production_texts(include_non_workable=False)
 

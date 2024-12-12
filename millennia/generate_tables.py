@@ -123,14 +123,15 @@ class TableGenerator(MillenniaFileGenerator):
         return re.sub(r'^(Castle|Colony|Standard) Outpost Improvement\n?', '', improvement.description)
 
     def get_improvement_sections(self):
-        sections = {
-            'improvements': [improvement for improvement in self.parser.improvements.values()
+        grouped_improvements = unsorted_groupby([improvement for improvement in self.parser.improvements.values()
                              if improvement.has_localized_display_name
-                             and not improvement.is_outpost_improvement
                              and not improvement.tags.has('RebuildableTown')
                              and not improvement.is_outpost_specialization],
-            'outpost_improvements': [improvement for improvement in self.parser.improvements.values() if improvement.is_outpost_improvement],
-        }
+                                                key=lambda improvement:
+                                                'outpost_improvements' if improvement.is_outpost_improvement
+                                                else f'improvements_{improvement.category}' if improvement.category
+                                                else 'improvements_other')
+        sections = {k: list(v) for k,v in grouped_improvements}
         for improvement in self.parser.improvements.values():
             if improvement.is_outpost_specialization and improvement.display_name != 'Outpost':
                 sections[improvement.display_name.lower().replace(' ', '_')] = [improvement]
