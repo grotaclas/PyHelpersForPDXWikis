@@ -2166,6 +2166,9 @@ class DomainSpecialization(Deck):
         """Use the small image as the default icon"""
         return self.get_wiki_small_image_filename()
 
+    def get_wiki_icon(self, size: str = '24px', link='self') -> str:
+        return f'{{{{backedIcon|{self.display_name}}}}}'
+
     @cached_property
     def unlock_names(self) -> list[str]:
         return self.base_tech.unlock_names
