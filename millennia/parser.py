@@ -471,7 +471,9 @@ class MillenniaParser:
             'StateReligionPopulationFrac': 'fraction of the population follows the state religion',  # original talks about worldwide population, but that seems to be wrong if the target is a region
             'Population': 'population',  # originally says "A Capital's Population", but the A does not fit into sentences and capital is more misleading than useful
         }
-        result = {}
+        result = {
+            'AiWarehouseTownBonusValue': 'AI Warehouse Town Adjacency Bonus',  # no default localization
+        }
         for loc_key, loc_text in self.unity_reader.localizations.items():
             key = None
             if loc_key.startswith('Game-GameData-Misc-'):
