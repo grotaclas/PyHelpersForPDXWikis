@@ -531,7 +531,11 @@ class UIObject(CS2Asset):
             tmp_file = NamedTemporaryFile(delete=False, prefix='PyHelpersForPDXWiki_cs2', suffix='.png')
             filename = tmp_file.name
             tmp_file.close()
-            svg_file = cs2game.game_path / 'Cities2_Data/StreamingAssets/~UI~/GameUI' / self.icon
+            folder = cs2game.game_path / 'Cities2_Data/StreamingAssets/~UI~/GameUI'
+            svg_file = folder / self.icon
+            if not svg_file.parent.exists():
+                # 1.2 and later
+                svg_file = cs2game.game_path / 'Cities2_Data/Content/Game/~UI~' / self.icon
             # fix filenames with wrong capitalization on case-sensitive file system
             if not svg_file.is_file():
                 for file in svg_file.parent.iterdir():
