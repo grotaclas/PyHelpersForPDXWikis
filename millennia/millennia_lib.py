@@ -610,7 +610,12 @@ class MillenniaEntity(NamedAttributeEntity):
         elif tag.startswith('DataLinkAction:'):
             action = tag.split(',')[1]
             return f'{{{{DataLinkAction|{action}}}}}'
-        elif tag in ['LaserShield', 'HasAlignmentDecay']:
+        elif tag == 'HasAlignmentDecay':
+            if self.startingData.has('StatAlignmentDecayValue'):
+                return ''
+            else:
+                return 'In Age of the Singularity:\n** AI Alignment Decay: -2'
+        elif tag in ['LaserShield']:
             return f'<pre>{tag}</pre>'
         elif tag.startswith('TypeDLC'):
             dlc_name = tag.removeprefix('Type')
