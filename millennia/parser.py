@@ -290,7 +290,7 @@ class MillenniaParser:
         ages_cards = {card.name: card for age in self.ages.values() for card in (list(age.other_cards.values()) + [age.base_tech])}
         domain_cards = {card.name: card for domain_deck in self.domain_decks.values() for card in domain_deck.cards.values()}
         sim_decks = {card.name: card for deck in self.sim_decks.values() for card in deck.values()}
-        return dict(**sim_decks, **self.technologies, **ages_cards, **domain_cards, **self.player_actions, **self.unit_actions)
+        return dict(**sim_decks, **self.technologies, **ages_cards, **domain_cards, **self.player_actions, **self.unit_actions, **self.tile_actions)
 
     @cached_property
     def infopedia_topics(self) -> dict[str, InfopediaTopic]:
@@ -662,6 +662,21 @@ class MillenniaParser:
                     actions[link_card_name] = DataLinkAction(link_card_name, card, [entity], target, value_type)
 
         return actions
+
+    @cached_property
+    def action_cards(self) -> dict[str, CardUsage]:
+        actions = {}
+        for entity in self.all_entities.values():
+            if hasattr(entity, 'actionCards') and entity.actionCards:
+                for card_name in entity.actionCards.find_all('Card'):
+                    if card_name in actions:
+                        action = actions[card_name]
+                        action.entities.append(entity)
+                    else:
+                        card = self.all_cards[card_name]
+                        actions[card_name] = CardUsage(card_name, card, [entity])
+        return actions
+
 
 class LazyObject:
 

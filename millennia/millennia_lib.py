@@ -473,7 +473,13 @@ class MillenniaEntity(NamedAttributeEntity):
 
         if hasattr(self, 'actionCards') and self.actionCards:
             for card in self.actionCards.find_all('Card'):
-                notes.extend(self.get_notes_for_card_play(card))
+                if card not in [
+                    'UNITACTIONS-STANDARD_TOWNBUILDINGWORK',  # I think this is just the setup that workers can work on improvements
+                    # STANDARD_RESOURCEGENERATOR is only used for capital, homeland and religious birthplace. I'm not sure what it does. Maybe it allows
+                    # gathering goods from the tile of the capital, but I have never seen a resource on that tile
+                    'UNITACTIONS-STANDARD_RESOURCEGENERATOR',
+                ]:
+                    notes.append(f'{{{{Card|{card}}}}}')
 
         # TODO: parse tags (e.g. RequireReligion )
         for tag in self.tags.unparsed_entries:
@@ -2863,13 +2869,18 @@ class DLC(NamedAttributeEntity):
             size = '|' + size
         return f'{{{{icon|{self.display_name.lower()}{size}}}}}'
 
+
 @dataclass
-class DataLinkAction:
+class CardUsage:
     name: str
     card: CardBaseClass
-    """this card applies the data link effect"""
+    """this card applies the effect"""
     entities: list[MillenniaEntity]
-    """entities which use this DataLinkAction"""
+    """entities which use this Card"""
+
+
+@dataclass
+class DataLinkAction(CardUsage):
     target: str
     """usually PLAYER"""
     value_type: str
