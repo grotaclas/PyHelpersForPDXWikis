@@ -771,9 +771,12 @@ class Improvement(BuildingBaseClass):
         tag_requirements = self.tags.get('BuildRequirementTag')
         if tag_requirements is not None:
             for tag_requirement in tag_requirements:
-                for location in locations:
-                    if location.tags.has(tag_requirement.removeprefix('+')):
-                        requirements.append(location)
+                if tag_requirement in ['OpenTerrain', 'CultivatedPlantationGood']:
+                    requirements.append(f'{{{{#lst:Improvements|{tag_requirement}}}}}')
+                else:
+                    for location in locations:
+                        if location.tags.has(tag_requirement.removeprefix('+')):
+                            requirements.append(location)
             # requirements.extend(tag_requirements)
 
         requirements.extend(self.terrains)
