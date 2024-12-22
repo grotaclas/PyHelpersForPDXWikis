@@ -490,7 +490,7 @@ class MillenniaParser:
                 if key in overrides:
                     final_text = overrides[key]
                 else:
-                    final_text = self.formatter.convert_to_wikitext(loc_text)
+                    final_text = self.formatter.convert_to_wikitext(loc_text).strip()
                 if key in result:
                     print(f'Warning overriding misc data text for "{key}"(from {loc_key}). Old text was "{result[key]}". New text is "{final_text}"')
                 result[key] = final_text
