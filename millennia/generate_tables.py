@@ -183,7 +183,7 @@ class TableGenerator(MillenniaFileGenerator):
         } for building in buildings if building.has_localized_display_name]
         # result.append(f'== {title} ==')
         result.append(self.get_SVersion_header(scope='table') + '\n'
-                      + self.make_wiki_table(data, table_classes=['mildtable'],
+                      + self.make_wiki_table(data, table_classes=['mildtable', 'plainlist'],
                                              one_line_per_cell=True, row_id_key='id'))
         return result
 
