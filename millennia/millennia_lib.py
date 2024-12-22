@@ -1498,9 +1498,9 @@ class CardBaseClass(NamedAttributeEntity):
                     power = parser.domain_powers[power_name]
                     if int(value) == 1 and operation in ['ADD', 'SET']:
                         if power.is_culture_power():
-                            return self._handle_unlock_effect(Unlock(power, type='the {{icon|culture}} culture power', target=self.format_effect_target(target, ignore_default_targets=True)), include_unlocks, collected_unlocks)
+                            return self._handle_unlock_effect(Unlock(power, type='the {{icon|culture}} power', target=self.format_effect_target(target, ignore_default_targets=True)), include_unlocks, collected_unlocks)
                         else:
-                            return self._handle_unlock_effect(Unlock(power, type=f'the {power.get_domain_name_and_icon()} domain power', target=self.format_effect_target(target, ignore_default_targets=True)), include_unlocks, collected_unlocks)
+                            return self._handle_unlock_effect(Unlock(power, type=f'the {power.get_domain_icon()} power', target=self.format_effect_target(target, ignore_default_targets=True)), include_unlocks, collected_unlocks)
                     elif (int(value) == 0 and operation == 'SET') or (int(value) == 1 and operation == 'SUB'):
                         return self._prefix_target(target, f'Disables the culture power {power.get_wiki_link_with_icon()}')
                 elif name == 'DiplomacyLocked' and operation in ['ADD', 'SET'] and value == '1':
@@ -2492,7 +2492,10 @@ class DomainPower(NamedAttributeEntity):
         return millenniagame.parser.formatter.convert_to_wikitext(description)
 
     def get_domain_icon(self):
-        return '{{icon|' + self.domain.removeprefix('Domain').lower() + '}}'
+        if self.domain == 'DomainSpecial':
+            return 'Special'  # I don't think there is an icon for them
+        else:
+            return '{{icon|' + self.domain.removeprefix('Domain').lower() + '}}'
 
     def get_domain_name_and_icon(self):
         return '{{icon|' + self.domain.removeprefix('Domain').lower() + '}} ' + self.domain.removeprefix('Domain')
