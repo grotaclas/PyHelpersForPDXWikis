@@ -17,9 +17,9 @@ class MillenniaParser:
     # allows the overriding of localization strings
     localizationOverrides = {
         # avoid duplicate names
-        'TECHAGE10_VICTORYCOLONYSHIP-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable) (Age of Departure)',
-        'TECHAGE10_VICTORYARCHANGEL-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable) (Age of Archangels)',
-        'TECHAGE10_VICTORYTRANSCENDENCE-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable) (Age of Transcendence)',
+        'TECHAGE10_VICTORYCOLONYSHIP-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable, Age of Departure)',
+        'TECHAGE10_VICTORYARCHANGEL-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable, Age of Archangels)',
+        'TECHAGE10_VICTORYTRANSCENDENCE-REPEATABLE-CardTitle': 'Technological Advancements (Repeatable, Age of Transcendence)',
 
         'Game-Culture-DiplomacyHireMercenaries-DisplayName': 'Hire Mercenaries (Age of Monuments)',
         'Game-Culture-WarfareMercenariesHireMercenaries-DisplayName': 'Hire Mercenaries (Mercenaries national spirit)',
