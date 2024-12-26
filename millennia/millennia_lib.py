@@ -1630,6 +1630,8 @@ class CardBaseClass(NamedAttributeEntity):
                     if payload_param and payload_param.startswith('TurnDelay'):
                         delay = payload_param.removeprefix('TurnDelay:')
                         when = f'After {delay} turns'
+                    elif payload in parser.played_cards_from_tech:
+                        return f'{{{{Card|{payload}}}}}'
                     return CardBaseClass.get_notes_for_card_play(payload, target_text, when, include_unlocks, collected_unlocks, target, parent_effect=self)
             case 'CE_DrawAndPlay':
                 pass
@@ -2904,9 +2906,13 @@ class CardUsage:
 
 
 @dataclass
-class DataLinkAction(CardUsage):
+class CardUsageWithTarget(CardUsage):
     target: str
     """usually PLAYER"""
+
+
+@dataclass
+class DataLinkAction(CardUsageWithTarget):
     value_type: str
     """if this value in the target changes, the data link gets recalculated"""
 

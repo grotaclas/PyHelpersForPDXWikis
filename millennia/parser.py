@@ -666,6 +666,20 @@ class MillenniaParser:
         return actions
 
     @cached_property
+    def played_cards_from_tech(self) -> dict[str, CardUsageWithTarget]:
+        actions = {}
+        for card in self.technologies.values():
+            for played_card, target in card.traverse_effects('CE_PlayCard', lambda effect: (effect.get('Payload'), effect.get('Target'))):
+                if played_card in actions:
+                    action = actions[played_card]
+                    assert action.target == target
+                    action.entities.append(card)
+                else:
+                    actions[played_card] = CardUsageWithTarget(played_card, self.all_cards[played_card], [card], target)
+
+        return actions
+
+    @cached_property
     def action_cards(self) -> dict[str, CardUsage]:
         actions = {}
         for entity in self.all_entities.values():

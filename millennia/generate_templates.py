@@ -122,7 +122,7 @@ local techs = p.techs
 
     def get_card_usage_sections(self) -> dict[str, str]:
         result = {}
-        for action in list(self.parser.data_link_actions.values()) + list(self.parser.action_cards.values()):
+        for action in list(self.parser.data_link_actions.values()) + list(self.parser.action_cards.values()) + list(self.parser.played_cards_from_tech.values()):
             result[action.name] = f'\n====Usage====\n{self.create_wiki_list(action.entities, format_with_icon=True)}\n====Effect====\n<section begin={action.name} />{self.create_wiki_list(action.card.get_notes_for_card_play(action.card, target_text=""))}<section end={action.name} />'
         return result
 
