@@ -2902,6 +2902,9 @@ class MegaProject(NamedAttributeEntity):
     _localization_category = 'UI-Megaprojects'
     stages: list[MegaProjectStage]
 
+    def get_wiki_page_name(self) -> str:
+        return 'Megaprojects'
+
 
 class DLC(NamedAttributeEntity):
 

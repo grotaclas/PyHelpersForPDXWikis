@@ -34,6 +34,7 @@ class MillenniaParser:
         'Entity-UNIT_BATTLESHIP_DEFENDER-DisplayName': 'Battleship (City Defender)',
 
         'TECHAGE7_CRISISOLDONES-REPEATABLE-CardTitle': 'Beckon The Old Ones (Repeatable)',  # original has linebreaks
+        'UI-Megaprojects-SPACERACE-Title': 'Space Race',  # the more common wording
 
         # originals have : and icons and html formatting
         'UNITACTIONS-MERCHANT_DEPLOY_FOREIGN-CardTitle': 'Deploy Wealth',
