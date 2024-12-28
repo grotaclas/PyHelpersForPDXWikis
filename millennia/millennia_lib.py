@@ -1641,21 +1641,36 @@ class CardBaseClass(NamedAttributeEntity):
                     case 'TransportEntityType':
                         return f'Set water transport type to {parser.units[value].get_wiki_link_with_icon()}'
                     case 'TransportLoadTerrainType':
-                        return f'Allow transports to move through: {" and ".join([entity.get_wiki_link_with_icon() for entity in parser.get_terrains_by_tag(value)])}'
+                        return f'Allow transports to move through: {{{{#lst:Research|{value.removeprefix("+")}}}}}'
                     case 'CurrentAge':
                         return ''  # only used in start effects of ages where it is obvious
+                    case 'LeaderPromotionType':
+                        if value == 'DELETE':
+                            return 'Disables promotion to leader'
+                        else:
+                            return f'{parser.misc_game_data[string]}: {parser.units[value]}'
                     case _:
+                        formatted_string = f'<tt>{string}</tt>'
                         if value in millenniagame.parser.all_entities:
                             value_text = millenniagame.parser.all_entities[value].get_wiki_link_with_icon()
                         elif string.startswith('AgeSunset-'):
                             return ''  # sunset effects are not executed at that moment and instead happen when the age ends
                         elif string.startswith('PrefabAppend:'):
                             return ''  # changes map graphics
+                        elif string.startswith('ProjectStage-'):
+                            return ''  # sets stages and attempts in stages
                         elif string.startswith('BuildHelperHintTag-') or string.startswith('BuildHelperHintType-'):
                             return ''  # used for categories in the build helper
+                        elif string.startswith('ActiveMegaproject'):
+                            return f'Activate the {parser.megaprojects[value].get_wiki_link()}'
                         else:
                             value_text = f'<tt>{value}</tt>'
-                        return f'Set <tt>{string}</tt> to {value_text}'
+
+                        if string in parser.misc_game_data:
+                            formatted_string = parser.misc_game_data[string]
+                            if formatted_string.startswith('replaces'):
+                                return f'{formatted_string.capitalize()} by {value_text}'
+                        return f'Set {formatted_string} to {value_text}'
                 pass
             case 'CE_Tooltip':
                 if not isinstance(payload, str):
@@ -2453,6 +2468,12 @@ class GoodsTag(Goods):
 
     def get_wiki_link(self) -> str:
         return '/'.join(goods.get_wiki_link() for goods in self.goods)
+
+    def get_wiki_link_with_icon(self) -> str:
+        if self.name == 'PlantationGood':
+            return '{{#lst:Research|plantationGood}}'  # TODO: generalize
+        else:
+            return super().get_wiki_link_with_icon()
 
     def is_same_or_matches_tag(self, other: 'Goods') -> bool:
         for goods in self.goods:
