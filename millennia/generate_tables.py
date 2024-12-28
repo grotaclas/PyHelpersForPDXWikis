@@ -338,7 +338,7 @@ class TableGenerator(MillenniaFileGenerator):
             # 'Unlocks': self.create_wiki_list([self.parser.all_entities[unlock].get_wiki_link_with_icon() for unlock in tech.unlocks]),
             'Unlocks': self.create_wiki_list(tech.get_unlock_list('')),
             'Effects': self.create_wiki_list(tech.other_effects),
-            'class="hidem" | Description': f'class="hidem" | {{{{desc|w=300px|{tech.description}}}}}',
+            'class="hidem" | Description': 'class="hidem" | ' + (f'{{{{desc|w=300px|{tech.description}}}}}' if tech.description else ''),
         } for tech in technologies]
         if len(data) == 0:
             return ''
