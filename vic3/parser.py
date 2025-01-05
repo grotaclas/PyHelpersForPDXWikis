@@ -429,9 +429,20 @@ class Vic3Parser(JominiParser):
 
     @cached_property
     def named_modifiers(self) -> dict[str, NamedModifier]:
-        return self.parse_advanced_entities('common/static_modifiers', NamedModifier, extra_data_functions={
+        # Parse the first file (common/static_modifiers)
+        static_modifiers = self.parse_advanced_entities('common/static_modifiers', NamedModifier, extra_data_functions={
             'modifiers': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'}))
         })
+        
+        # Parse the second file (common/modifier_type_definitions)
+        modifier_type_definitions = self.parse_advanced_entities('common/modifier_type_definitions', NamedModifier, extra_data_functions={
+            'modifiers': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'}))
+        })
+        
+        # Combine both parsed results into one dictionary
+        # Assuming both files return dictionaries of the same structure and can be merged
+        return {**static_modifiers, **modifier_type_definitions}
+
 
     @cached_property
     def laws(self) -> dict[str, Law]:
