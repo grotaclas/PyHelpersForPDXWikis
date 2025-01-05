@@ -135,6 +135,12 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                         'transportation': 'transportation',
                         'wine': 'wine',
                         'wood': 'wood',
+                        #new
+                        'acceptance_status_1': 'acceptance_status_1',
+                        'acceptance_status_2': 'acceptance_status_2',
+                        'acceptance_status_3': 'acceptance_status_3',
+                        'acceptance_status_4': 'acceptance_status_4',
+                        'acceptance_status_5': 'acceptance_status_5',
                         }
         if icon_key not in replacements:
             Vic3FileGenerator.warn('unknown icon {} in "{}"'.format(icon_key, match.group(0)))
