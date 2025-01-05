@@ -429,7 +429,7 @@ class Vic3Parser(JominiParser):
 
     @cached_property
     def named_modifiers(self) -> dict[str, NamedModifier]:
-        return self.parse_advanced_entities('common/modifiers', NamedModifier, extra_data_functions={
+        return self.parse_advanced_entities('common/static_modifiers', NamedModifier, extra_data_functions={
             'modifiers': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'}))
         })
 
