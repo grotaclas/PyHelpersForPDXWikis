@@ -9,6 +9,7 @@ RAKALY_CLI = 'rakaly'
 VIC3DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Victoria 3')            # windows
 # VIC3DIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Victoria 3') # cygwin
 # VIC3DIR = Path('~/.steam/steam/steamapps/common/Victoria 3').expanduser()           # linux
+# VIC3DIR = Path('~/Library/Application Support/Steam/steamapps/common/Victoria 3').expanduser() # macOS
 
 # the folder where Age of Wonders 4 is installed (currently only used for some minor localizations)
 AOW4DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4')            # windows
