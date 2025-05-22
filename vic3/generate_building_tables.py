@@ -347,6 +347,12 @@ class BuildingTableGenerator(Vic3FileGenerator):
                 0].get_wiki_link_with_icon())
         for religion in pm.unlocking_religions:
             requirements.append('State religion is ' + religion)
+        for principle in pm.unlocking_principles:
+            requirements.append(f'{{{{principle|{principle.group.display_name}|{self.parser.formatter.format_roman(principle.level)}|1|w=24px}}}}')
+        if pm.replacement_if_valid:
+            for principle in self.parser.production_methods[pm.replacement_if_valid].unlocking_principles:
+                requirements.append(f'Does not have {{{{principle|{principle.group.display_name}|{self.parser.formatter.format_roman(principle.level)}|1|w=24px}}}}')
+
         return self.parser.formatter.create_wiki_list(requirements)
 
     def generate_all_production_methods(self):

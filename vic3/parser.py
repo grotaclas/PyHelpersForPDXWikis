@@ -537,6 +537,7 @@ class Vic3Parser(JominiParser):
             'timed_modifiers': lambda modifier_list: [self.named_modifiers[modifier] for modifier in modifier_list],
             'disallowing_laws': lambda law_list: [self.laws[law] for law in law_list],
             'unlocking_laws': lambda law_list: [self.laws[law] for law in law_list],
+            'unlocking_principles': lambda principle_list: [self.principles[principle] for principle in principle_list]
         })
         del production_methods['pm_dummy']
         for pm in production_methods.values():
@@ -702,4 +703,24 @@ class Vic3Parser(JominiParser):
         return self.parse_advanced_entities('common/ideologies', Ideology, extra_data_functions={
             'law_approvals': lambda name, data: {law: approval for k, v in data if k.startswith('lawgroup_') for law, approval in v},
             'required_technologies': self._parse_technologies_from_ideology_data,
+        })
+
+    @cached_property
+    def principle_groups(self) -> dict[str, PrincipleGroup]:
+        return self.parse_advanced_entities('common/power_bloc_principle_groups', PrincipleGroup)
+
+    @cached_property
+    def _principle_name_to_group_map(self) -> dict[str, PrincipleGroup]:
+        return {principle: principle_group for principle_group in self.principle_groups.values() for principle in principle_group.levels}
+
+    @cached_property
+    def _principle_name_to_level_map(self) -> dict[str, int]:
+        return {principle: level for principle_group in self.principle_groups.values() for level, principle in enumerate(principle_group.levels, start=1)}
+
+    @cached_property
+    def principles(self) -> dict[str, Principle]:
+        return self.parse_advanced_entities('common/power_bloc_principles', Principle, extra_data_functions={
+            'display_name': lambda name, data: f'{self._principle_name_to_group_map[name].display_name}{self._principle_name_to_level_map[name]}',
+            'group': lambda name, data: self._principle_name_to_group_map[name],
+            'level': lambda name, data: self._principle_name_to_level_map[name],
         })

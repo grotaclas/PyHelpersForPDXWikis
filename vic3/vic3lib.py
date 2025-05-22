@@ -4,6 +4,7 @@ Most of them are subclasses of NameableEntity which provides a name and display 
 which adds a description, icon, modifiers and required technologies(not all subclasses use all of these)"""
 import inspect
 import re
+from decimal import Decimal
 from functools import cached_property
 from operator import attrgetter
 from typing import Any
@@ -83,6 +84,10 @@ class ModifierType(NameableEntity):
             formatted_value = self.format_value_without_color(value)
 
             color = self.get_color_for_value(value)
+            # if color == '#000':
+            #     prefix = "'''"
+            #     postfix = "'''"
+            # else:
             if color in ['red', 'green']:
                 prefix = f'{{{{{color}|'
             else:
@@ -125,7 +130,14 @@ class ModifierType(NameableEntity):
         if self.num_decimals is not None:
             try:
                 self.assert_number(value)
-                format_string = f'{{:.{self.num_decimals}f}}'
+                # test if the number has more significant digits than num_decimals
+                if formatted_value * 10**self.num_decimals - int(formatted_value * 10**self.num_decimals) == 0:
+                    # if it doesn't, we show num_decimals precision
+                    format_string = f'{{:.{self.num_decimals}f}}'
+                else:
+                    # otherwise we show the full precision, but use the g formatting to remove trailing zeros
+                    format_string = f'{{:g}}'
+
                 formatted_value = format_string.format(formatted_value)
             except:
                 pass
@@ -416,6 +428,8 @@ class ProductionMethod(AdvancedEntity):
     unlocking_laws: list[Law] = []
     unlocking_production_methods: list['ProductionMethod'] = []
     unlocking_religions: list[str] = []
+    unlocking_principles: list['Principle'] = []
+    replacement_if_valid: str = None
 
     @cached_property
     def groups(self) -> list[ProductionMethodGroup]:
@@ -553,3 +567,29 @@ class Character(NameableEntity):
         if self.end is not None:
             result = f'{result} - {self.end}'
         return result
+
+
+class PrincipleGroup(AdvancedEntity):
+    blocking_identity: str = None
+    primary_for_identity: str = None
+    unlocking_identity: str = None
+    levels: list[str]
+
+
+class Principle(AdvancedEntity):
+    ai_weight: Tree
+    allows_foreign_investment_in_lower_rank: bool
+    background: str
+    incompatible_with: str
+    institution: str
+    institution_modifier: Tree
+    leader_modifier: Tree
+    member_modifier: Tree
+    non_leader_modifier: Tree
+    possible: Tree
+    power_bloc_modifier: Tree
+    remainder: list
+    visible: Tree
+
+    group: PrincipleGroup
+    level: int
