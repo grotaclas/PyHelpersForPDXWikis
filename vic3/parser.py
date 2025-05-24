@@ -667,10 +667,29 @@ class Vic3Parser(JominiParser):
                                                                             'start': self._character_start,
                                                                             'end': self._character_end,
                                                                             })
+        class RandomListWorkaround(ParsingWorkaround):
+
+            def apply_to_string(self, file_contents: str):
+                next_random_list = file_contents.find('random_list')
+                while next_random_list != -1:
+                    opened_brackets = 0
+                    for i, c in enumerate(file_contents[next_random_list:]):
+                        if c == '{':
+                            opened_brackets += 1
+                        elif c== '}':
+                            opened_brackets -= 1
+                        if opened_brackets == 0 and i > 14:
+                            break
+                    old_file_contents = file_contents
+                    before = file_contents[:next_random_list]
+                    after = file_contents[next_random_list + i + 1:]
+                    file_contents = before + after
+                    next_random_list = file_contents.find('random_list')
+                return file_contents
 
         transform_value_functions['template'] = lambda template: template_chars[template]
         chars = self.parse_nameable_entities(f'common/history/characters/', Character,
-                                             parsing_workarounds=[QuestionmarkEqualsWorkaround()],
+                                             parsing_workarounds=[QuestionmarkEqualsWorkaround(), RandomListWorkaround()],
                                              entity_level=2, level_headings_keys={'country': 1},
                                              transform_value_functions=transform_value_functions,
                                              extra_data_functions={
