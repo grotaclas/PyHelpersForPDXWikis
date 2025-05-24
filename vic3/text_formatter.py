@@ -4,7 +4,7 @@ from functools import cached_property
 from common.paradox_parser import Tree
 from common.wiki import WikiTextFormatter
 from vic3.vic3_file_generator import vic3game, Vic3FileGenerator
-from vic3.vic3lib import AdvancedEntity
+from vic3.vic3lib import Vic3AdvancedEntity
 
 
 class Vic3WikiTextFormatter(WikiTextFormatter):
@@ -27,7 +27,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             # because it matches the [concept] formmating which comes afterwards
             text = text.replace('[Nbsp]', '&nbsp;')
             text = re.sub(
-                r"(?<!\[)\[\s*(Concept\s*\(\s*')?(?P<concept_name>[^]']*)('\s*,\s*'(?P<concept_display_string>[^']*)'\s*\))?\s*(?P<formatting>\|[l])?\s*](?!])",
+                r"(?<!\[)\[\s*(Concept\s*\(\s*')?(?P<concept_name>[^]|']*)('\s*,\s*'(?P<concept_display_string>[^']*)'\s*\))?\s*(?P<formatting>\|[leE])?\s*](?!])",
                 # r"\[\s*Concept\s*\(\s*'(?P<concept_name>[^]']*)('\s*,\s*'(?P<concept_display_string>[^']*)'\s*\))?\s*(?P<formatting>\|[l])?\s*]",
                 self.get_concept_link, text)
             text = self.resolve_nested_localizations(text)
@@ -43,11 +43,16 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         format_key = match.group(1).lower()
         text = match.group(2)
         replacements = {'p': '{{{{green|{}}}}}',
+                        'g': '{{{{green|{}}}}}',
                         'n': '{{{{red|{}}}}}',
+                        'r': '{{{{red|{}}}}}',
                         'bold': "'''{}'''",
                         'b': "'''{}'''",
                         'italic': "''{}''",
-                        'v': '{}'  # white
+                        'v': '{}',  # white
+                        'y': '{}',  # zero_value / white
+                        'z': '{}',  # zero_value / white
+                        'e': '{}',  # explanation_link in ck3 / TODO: this is normally blue, but we don't want to make it blue if it is a normal link, because they are already blue
                         }
         if format_key not in replacements:
             Vic3FileGenerator.warn('ignoring unknown formatting marker {} in "{}"'.format(format_key, match.group(0)))
@@ -223,7 +228,8 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         return new_text
 
     def get_concept_link(self, match: re.Match) -> str:
-        link = self.parser.localize(match.group('concept_name'))
+        concept_name = match.group('concept_name')
+        link = self.localize_concept_name(concept_name)
         display_str = match.group('concept_display_string')
         if display_str is None:
             display_str = link
@@ -238,6 +244,9 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         #     return f'[[{link}|{display_str}]]'
         # return f'[[#{link}|{display_str}]]'
         return f'[[{link}|{display_str}]]'
+
+    def localize_concept_name(self, concept_name):
+        return self.parser.localize(concept_name)
 
     def format_conditions(self, conditions: Tree, indent: int = 1):
         result = []
@@ -272,7 +281,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                 return mapping[key]
             else:
                 value = mapping[key][1][value]
-                if isinstance(value, AdvancedEntity):
+                if isinstance(value, Vic3AdvancedEntity):
                     value = value.get_wiki_link_with_icon()
                 return mapping[key][0].format(value=value)
         else:
@@ -284,7 +293,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             return self.format_key_for_compound_statement(key) + ':' + self.format_conditions(value, indent + 1)
         elif isinstance(value, list):
             return self.create_wiki_list([self.format_key_value_pair(key, inner_value, indent + 1) for inner_value in value], indent)
-        elif isinstance(value, AdvancedEntity):
+        elif isinstance(value, Vic3AdvancedEntity):
             return self.format_simple_statement(key, value.get_wiki_link_with_icon())
         # elif isinstance(value, (int, float, str)):
         else:

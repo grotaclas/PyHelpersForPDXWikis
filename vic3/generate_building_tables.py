@@ -5,7 +5,8 @@ import sys
 # add the parent folder to the path so that imports work even if this file gets executed directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from vic3.vic3_file_generator import Vic3FileGenerator
-from vic3.vic3lib import ProductionMethod, NamedModifier, Building, Modifier, BuildingGroup
+from vic3.vic3lib import ProductionMethod, NamedModifier, Building, BuildingGroup
+from common.paradox_lib import Modifier
 
 
 class BuildingTableGenerator(Vic3FileGenerator):

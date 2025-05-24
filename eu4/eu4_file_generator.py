@@ -10,7 +10,6 @@ except: # when used by ck2utils
     EU4DIR = eu4dir
 from common.paradox_lib import Game
 from common.file_generator import FileGenerator
-from eu4.parser import Eu4Parser
 
 
 class EuropaUniversalisIV(Game):
@@ -37,7 +36,7 @@ eu4game = EuropaUniversalisIV()
 
 class Eu4FileGenerator(FileGenerator):
 
-    parser: Eu4Parser
+    parser: 'Eu4Parser'
 
     def __init__(self):
         super().__init__(eu4game)

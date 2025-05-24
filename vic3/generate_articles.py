@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from operator import attrgetter
 import os
 import sys
@@ -6,15 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from vic3.text_formatter import Vic3WikiTextFormatter
 from vic3.vic3_file_generator import Vic3FileGenerator
-
-
-@dataclass
-class GameConcept:
-    name: str
-    display_name: str
-    description: str
-    icon: str
-    link: str
+from common.paradox_lib import GameConcept
 
 
 class ArticleGenerator(Vic3FileGenerator):
@@ -37,7 +28,7 @@ class ArticleGenerator(Vic3FileGenerator):
             self.concepts[concept_name] = GameConcept(concept_name,
                                                       # self.localize_concepts_in_text(self.parser.localize(concept_name)),
                                                       self.text_formatter.format_localization_text(self.parser.localize(concept_name), []),
-                                                      self.parser.localize(concept_name + '_desc'), icon,
+                                                      description=self.parser.localize(concept_name + '_desc'), icon=icon,
                                                       link=self.parser.localize(concept_name))
 
         self.format_descriptions()
