@@ -5,7 +5,7 @@ import sys
 from typing import Callable, TypeVar, Type
 
 from PyHelpersForPDXWikis.localsettings import EU5DIR
-from eu5.eu5lib import Eu5GameConcept
+from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import GameConcept
 from common.paradox_parser import ParadoxParser
@@ -39,6 +39,10 @@ class Eu5Parser(JominiParser):
                 aliases.append(alias_concept)
             concept.alias = aliases
         return concepts
+
+    @cached_property
+    def goods(self):
+        return self.parse_advanced_entities('in_game/common/goods', Good)
 
     def parse_dlc_from_conditions(self, conditions):
         pass

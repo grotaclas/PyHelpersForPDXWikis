@@ -11,7 +11,7 @@ class EuropaUniversalisV(Game):
     short_game_name = 'eu5'
     game_path = EU5DIR
     # launcher_settings = game_path / 'launcher-settings.json'
-    wiki_domain = 'eu5.paradoxwikis.com'
+    wiki_domain = 'tomato.paradoxwikis.com'
 
     @cached_property
     def parser(self):
