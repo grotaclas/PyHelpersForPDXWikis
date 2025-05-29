@@ -25,6 +25,10 @@ class Eu5Parser(JominiParser):
         return Eu5WikiTextFormatter()
 
     @cached_property
+    def modifier_types(self) -> dict[str, ModifierType]:
+        return self.parse_nameable_entities('main_menu/common/modifier_types', Eu5ModifierType, extra_data_functions={'parser': lambda name, data: self})
+
+    @cached_property
     def game_concepts(self):
         """Includes the aliases as well"""
         concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept, localization_prefix='game_concept_')
