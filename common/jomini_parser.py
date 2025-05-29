@@ -245,11 +245,3 @@ class JominiParser(metaclass=ABCMeta):
     @cached_property
     def modifier_types(self) -> dict[str, ModifierType]:
         return self.parse_nameable_entities('common/modifier_type_definitions', ModifierType, extra_data_functions={'parser': lambda name, data: self})
-
-    @cached_property
-    def modifier_types(self) -> dict[str, ModifierType]:
-        return self.parse_nameable_entities('common/modifier_type_definitions', ModifierType, extra_data_functions={'parser': lambda name, data: self})
-
-    @cached_property
-    def modifier_types(self) -> dict[str, ModifierType]:
-        return self.parse_nameable_entities('common/modifier_type_definitions', ModifierType, extra_data_functions={'parser': lambda name, data: self})
