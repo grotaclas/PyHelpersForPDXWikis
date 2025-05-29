@@ -1,3 +1,4 @@
+import enum
 import inspect
 import re
 from abc import ABCMeta, abstractmethod
@@ -167,7 +168,10 @@ class JominiParser(metaclass=ABCMeta):
             if k in transform_value_functions:
                 entity_values[k] = transform_value_functions[k](v)
             elif k in class_attributes and k not in entity_values:
-                entity_values[k] = v
+                if issubclass(class_attributes[k], enum.Enum):
+                    entity_values[k] = class_attributes[k](v)
+                else:
+                    entity_values[k] = v
         if conditions is not None:
             if 'conditions' in class_attributes:
                 entity_values['conditions'] = conditions
