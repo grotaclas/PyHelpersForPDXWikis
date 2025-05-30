@@ -29,7 +29,7 @@ class Helper:
                                         self._update_keys_from_data(d4, keys)
         print('==Examples==')
         for key, values in sorted(keys.items()):
-            print('{}: {}'.format(key, list(values)[:3]))
+            print('{}: {}'.format(key, list(values)[:4]))
         print('==Definitions==')
         for key, values in sorted(keys.items()):
             value_types = {v if isinstance(v, type) else type(v) for v in values}
