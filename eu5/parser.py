@@ -29,6 +29,14 @@ class Eu5Parser(JominiParser):
         return self.parse_nameable_entities('main_menu/common/modifier_types', Eu5ModifierType, extra_data_functions={'parser': lambda name, data: self})
 
     @cached_property
+    def buildings(self):
+        return self.parse_advanced_entities('in_game/common/building_types', Building,
+                                            transform_value_functions={
+                                                'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
+                                                'employment_size': lambda value: self.script_values[value] if isinstance(value, str) else value,
+                                            })
+
+    @cached_property
     def game_concepts(self):
         """Includes the aliases as well"""
         concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept, localization_prefix='game_concept_')
@@ -50,3 +58,10 @@ class Eu5Parser(JominiParser):
 
     def parse_dlc_from_conditions(self, conditions):
         pass
+
+    @cached_property
+    def script_values(self):
+        result = self.parser.parse_folder_as_one_file('main_menu/common/script_values')
+        result.update(self.parser.parse_folder_as_one_file('in_game/common/script_values'))
+        result.merge_duplicate_keys()
+        return result

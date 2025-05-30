@@ -15,6 +15,39 @@ class TableGenerator(Eu5FileGenerator):
     def localize(self, key: str, default: str = None) -> str:
         return self.parser.localize(key, default)
 
+    def format_modifier_section(self, section: str, entity):
+        if hasattr(entity, section):
+            return self.create_wiki_list([modifier.format_for_wiki() for modifier in getattr(entity, section)])
+        else:
+            return ''
+
+    def generate_building_tables(self):
+        sorted_buildings = sorted(
+            self.parser.buildings.values(),
+            #[good for good in self.parser.goods.values() if good.category == category and good.method == method]
+            key=attrgetter('display_name')
+            )
+        buildings = [{
+            'Name': f'{{{{iconbox|{building.display_name}|{building.description}|w=300px}}}}',
+            'Time': building.build_time,
+            'Price': building.price,
+            'category': building.category,
+            'foreign':  building.is_foreign,
+            'Pop': building.pop_type,
+            'employment_size': building.employment_size,
+            'Town': building.town,
+            'City': building.city,
+            'Max levels': building.max_levels,
+            'Modifiers': self.format_modifier_section('modifier', building),
+            'Modifiers if in capital': self.format_modifier_section('capital_modifier', building),
+            'Country modifiers if in capital': self.format_modifier_section('capital_country_modifier', building),
+
+        } for building in sorted_buildings]
+        return self.make_wiki_table(buildings, table_classes=['mildtable', 'plainlist'],
+                                     one_line_per_cell=True,
+                                     remove_empty_columns=True,
+                                     )
+
     def generate_concept_tables(self):
         concepts = sorted(self.parser.game_concepts.values(), key=attrgetter('family', 'display_name'))
         result = []
