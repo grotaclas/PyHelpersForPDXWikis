@@ -1,6 +1,7 @@
 import enum
 import inspect
 import re
+import typing
 from abc import ABCMeta, abstractmethod
 
 import sys
@@ -168,8 +169,13 @@ class JominiParser(metaclass=ABCMeta):
             if k in transform_value_functions:
                 entity_values[k] = transform_value_functions[k](v)
             elif k in class_attributes and k not in entity_values:
-                if issubclass(class_attributes[k], enum.Enum):
+                if inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], enum.Enum):
                     entity_values[k] = class_attributes[k](v)
+                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(typing.get_args(class_attributes[k])[0]) and issubclass(typing.get_args(class_attributes[k])[0], Modifier):
+                    if type(v) == list and len(v) > 0:
+                        print(f'Error: duplicate section "{k}" in "{name}"')
+                        continue
+                    entity_values[k] = self._parse_modifier_data(v, typing.get_args(class_attributes[k])[0])
                 else:
                     entity_values[k] = v
         if conditions is not None:
@@ -203,8 +209,6 @@ class JominiParser(metaclass=ABCMeta):
             extra_data_functions['icon'] = self.parse_icon
         if 'description' not in extra_data_functions:
             extra_data_functions['description'] = lambda name, data: self.localize(localization_prefix + name + '_desc')
-        if 'modifiers' not in extra_data_functions:
-            extra_data_functions['modifiers'] = self.parse_modifier_section
         return self.parse_nameable_entities(folder, entity_class, extra_data_functions=extra_data_functions,
                                             transform_value_functions=transform_value_functions,
                                             localization_prefix=localization_prefix)
@@ -232,15 +236,15 @@ class JominiParser(metaclass=ABCMeta):
                 return data[icon_key]
         return ''
 
-    def _parse_modifier_data(self, data: Tree):
-        return [Modifier(mod_name, modifier_type=self.get_modifier_type_or_default(mod_name), value=mod_value)
+    def _parse_modifier_data(self, data: Tree, modifier_class = Modifier):
+        return [modifier_class(mod_name, modifier_type=self.get_modifier_type_or_default(mod_name), value=mod_value)
                 for mod_name, mod_value in data]
 
-    def parse_modifier_section(self, name, data) -> list[Modifier]:
-        if 'modifier' not in data:
+    def parse_modifier_section(self, name, data, section_name='modifier', modifier_class = Modifier) -> list[Modifier]:
+        if section_name not in data:
             return []
         else:
-            return self._parse_modifier_data(data['modifier'])
+            return self._parse_modifier_data(data[section_name], modifier_class)
 
     @cached_property
     def modifier_types(self) -> dict[str, ModifierType]:

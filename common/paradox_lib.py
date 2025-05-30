@@ -285,12 +285,15 @@ class AttributeEntity:
 
 class ModifierType(NameableEntity):
     percent: bool = False
+    already_percent: bool = False  # used by ck3
     boolean: bool = False
     num_decimals: int = None
     good: bool = None
     neutral: bool = None
     prefix: str = None
     postfix: str = None
+
+    description: str
 
     # new format
     decimals: int = None
@@ -308,16 +311,17 @@ class ModifierType(NameableEntity):
             self.good = False
         if self.color == 'neutral':
             self.neutral = True
-        self.display_name = self._get_fully_localized_display_name()
+        self.display_name, self.description = self._get_fully_localized_display_name_and_desc()
 
-    def _get_fully_localized_display_name(self) -> str:
+    def _get_fully_localized_display_name_and_desc(self) -> (str, str):
         display_name = self.parser.localize(
             key='modifier_' + self.name,
             # version 1.7 removed the modifier_ prefix from the localisations, but I'm not sure if that's always the case, so this code allows both
             default=self.parser.localize(self.name))
         display_name = self.parser.formatter.format_localization_text(display_name, [])
-
-        return display_name
+        description = self.parser.localize(self.name + '_desc')
+        description = self.parser.formatter.format_localization_text(description, [])
+        return display_name, description
 
     @cached_property
     def icon(self):
