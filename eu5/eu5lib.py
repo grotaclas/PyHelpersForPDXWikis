@@ -160,6 +160,8 @@ class Good(Eu5AdvancedEntity):
     method: str = ''
     transport_cost: float = 1
 
+    icon_folder = 'trade_goods'
+
     def get_icon_filename(self) -> str:
         return f'icon_goods_{self.name}.dds'
 
