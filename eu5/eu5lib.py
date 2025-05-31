@@ -53,6 +53,7 @@ class Eu5Modifier(Modifier):
 class Eu5AdvancedEntity(AdvancedEntity):
 
     icon_folder: str = None
+    "either the name of the define in NGameIcons or the folder name relative to game/main_menu/gfx/interface/icons"
 
     def get_icon_filename(self) -> str:
         return f'{self.name}.dds'
@@ -69,7 +70,11 @@ class Eu5AdvancedEntity(AdvancedEntity):
                 if not path.exists():
                     raise Exception(f'No icon folder for class "{self.__class__.__name__}"')
         else:
-            icon_folder = self.icon_folder
+            if self.icon_folder in eu5game.parser.defines['NGameIcons']:
+                base_icon_folder = eu5game.game_path / 'game/main_menu'
+                icon_folder = eu5game.parser.defines['NGameIcons'][self.icon_folder]
+            else:
+                icon_folder = self.icon_folder
 
         return base_icon_folder / icon_folder / self.get_icon_filename()
 
@@ -129,6 +134,8 @@ class Building(Eu5AdvancedEntity):
     town: bool = False
     unique_production_methods: Tree  # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
 
+    icon_folder = 'BUILDINGS_ICON_PATH'
+
 
 class Eu5GameConcept(GameConcept):
     family: str = ''
@@ -139,6 +146,7 @@ class Eu5GameConcept(GameConcept):
         self.alias = []
         super().__init__(name, display_name, **kwargs)
 
+
 class GoodCategory(StrEnum):
     raw_material = 'raw_material'
     produced = 'produced'
@@ -147,6 +155,7 @@ class GoodCategory(StrEnum):
     def display_name(self) -> str:
         from eu5.game import eu5game
         return eu5game.parser.localize(self)
+
 
 class Good(Eu5AdvancedEntity):
     ai_rgo_size_importance: float = None
@@ -160,7 +169,7 @@ class Good(Eu5AdvancedEntity):
     method: str = ''
     transport_cost: float = 1
 
-    icon_folder = 'trade_goods'
+    icon_folder = 'TRADE_GOODS_ICON_PATH'
 
     def get_icon_filename(self) -> str:
         return f'icon_goods_{self.name}.dds'

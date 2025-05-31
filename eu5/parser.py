@@ -8,7 +8,7 @@ from PyHelpersForPDXWikis.localsettings import EU5DIR
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import GameConcept
-from common.paradox_parser import ParadoxParser
+from common.paradox_parser import ParadoxParser, ParsingWorkaround
 
 
 class Eu5Parser(JominiParser):
@@ -34,6 +34,28 @@ class Eu5Parser(JominiParser):
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                                 'employment_size': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                             })
+
+    @cached_property
+    def defines(self):
+        # TODO: add defines from jomini folder
+
+        class SemicolonLineEndWorkaround(ParsingWorkaround):
+            """replaces statements like
+                pattern = list "christian_emblems_list"
+            with
+                pattern = { list "christian_emblems_list" }
+            """
+            replacement_regexes = {r'(?m)^([^#]*?);(\s*(#.*)?)$': r'\1 \2'}
+
+
+        return self.parser.parse_folder_as_one_file('loading_screen/common/defines', workarounds=[SemicolonLineEndWorkaround()]).merge_duplicate_keys()
+
+    def get_define(self, define: str):
+        """get a define by its game syntax e.g. NGame.START_DATE"""
+        result = self.defines
+        for part in define.split('.'):
+            result = result[part]
+        return result
 
     @cached_property
     def game_concepts(self):
