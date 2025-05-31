@@ -9,7 +9,6 @@ from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import GameConcept
 from common.paradox_parser import ParadoxParser
-from stellaris.stellaris.specimen import description
 
 
 class Eu5Parser(JominiParser):

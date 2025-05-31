@@ -1,8 +1,11 @@
+import re
 from enum import StrEnum
 from functools import cached_property
+from pathlib import Path
 
 from common.paradox_lib import GameConcept, NameableEntity, AdvancedEntity, PdxColor, ModifierType, Modifier
 from common.paradox_parser import Tree
+from eu5.game import eu5game
 
 
 class Eu5ModifierType(ModifierType):
@@ -46,7 +49,42 @@ class Eu5ModifierType(ModifierType):
 class Eu5Modifier(Modifier):
     modifier_type: Eu5ModifierType
 
-class Building(AdvancedEntity):
+
+class Eu5AdvancedEntity(AdvancedEntity):
+
+    icon_folder: str = None
+
+    def get_icon_filename(self) -> str:
+        return f'{self.name}.dds'
+
+    def get_icon_path(self) -> Path:
+        base_icon_folder = eu5game.game_path / 'game/main_menu/gfx/interface/icons'
+        if self.icon_folder is None:
+            icon_folder = re.sub(r'(?<!^)(?=[A-Z])', '_', self.__class__.__name__).lower()
+            path = base_icon_folder / icon_folder
+            if not path.exists():
+                # try plural
+                icon_folder += 's'
+                path = base_icon_folder / icon_folder
+                if not path.exists():
+                    raise Exception(f'No icon folder for class "{self.__class__.__name__}"')
+        else:
+            icon_folder = self.icon_folder
+
+        return base_icon_folder / icon_folder / self.get_icon_filename()
+
+    def get_wiki_filename(self) -> str:
+        filename = self.get_icon_filename().replace('.dds', '.png')
+        prefix = self.get_wiki_filename_prefix()
+        filename = filename.removeprefix('icon_')
+        if not filename.lower().startswith(prefix.lower()):
+            filename = f'{prefix} {filename}'
+        filename = filename.replace(':', '')
+        filename = filename.replace('_', ' ')
+        return filename.capitalize()
+
+
+class Building(Eu5AdvancedEntity):
     AI_ignore_available_worker_flag: bool
     AI_optimization_flag_coastal: bool
     allow: Tree
@@ -110,7 +148,7 @@ class GoodCategory(StrEnum):
         from eu5.game import eu5game
         return eu5game.parser.localize(self)
 
-class Good(AdvancedEntity):
+class Good(Eu5AdvancedEntity):
     ai_rgo_size_importance: float = None
     base_production: float = 0
     category: GoodCategory
@@ -121,3 +159,16 @@ class Good(AdvancedEntity):
     is_slaves: bool = False
     method: str = ''
     transport_cost: float = 1
+
+    def get_icon_filename(self) -> str:
+        return f'icon_goods_{self.name}.dds'
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'Goods'
+
+    def get_wiki_filename(self) -> str:
+        wiki_filename = super().get_wiki_filename()
+        if wiki_filename.startswith('Goods goods'):
+            return 'Goods ' + wiki_filename.removeprefix('Goods goods ')
+        else:
+            return wiki_filename
