@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 import math
@@ -158,6 +159,21 @@ class WikiTextFormatter:
                 result += numeral
                 number -= integer
         return result
+
+    @staticmethod
+    def strip_formatting(text, strip_newlines=False):
+        """strip HTML formatting and some common wiki syntax. Replace links by their anchor texts"""
+        allowed_characters_in_final_output = r'-\w. '
+        stripped_text = re.sub(r'\[https?:[^] ]+ ([^]]+)]', r'\1', re.sub(r'\[\[([^]|]+\|)?([^]|]+)]]', r'\2', re.sub(r'<[^<]+?>', '', re.sub(r' <[^<]+?> ', ' ', text))))
+        if strip_newlines:
+            stripped_text = re.sub(r'\s*[\r\n]+\s*',' ', stripped_text)
+        else:
+            allowed_characters_in_final_output += r'\n\r'
+        if not re.fullmatch('^[' + allowed_characters_in_final_output + ']*$', stripped_text):
+            # raise Exception(f'Could not fully strip formatting from the following text "{text}". Partially stripped version: "{stripped_text}"')
+            print(f'Could not fully strip formatting from the following text "{text}". Partially stripped version: "{stripped_text}"')
+        # remove space from the beginning and end which might have been left over from the other stripping
+        return stripped_text.strip()
 
 
 # the rest of the file is an unfinished version of a better wiki-table generator
