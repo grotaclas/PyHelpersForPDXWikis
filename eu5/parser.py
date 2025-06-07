@@ -13,6 +13,11 @@ from common.paradox_parser import ParadoxParser, ParsingWorkaround
 
 class Eu5Parser(JominiParser):
 
+    # allows the overriding of localization strings
+    localizationOverrides = {
+        # the default is "Trade Embark/Disembark Cost" which is problematic for redirects and filenames, because of the slash
+        'local_trade_embark_disembark_cost_modifier': 'Trade Embark-Disembark Cost',
+    }
 
     def __init__(self, game_installation: Path = EU5DIR):
         super().__init__(game_installation / 'game' )
@@ -24,8 +29,25 @@ class Eu5Parser(JominiParser):
         return Eu5WikiTextFormatter()
 
     @cached_property
-    def modifier_types(self) -> dict[str, ModifierType]:
-        return self.parse_nameable_entities('main_menu/common/modifier_types', Eu5ModifierType, extra_data_functions={'parser': lambda name, data: self})
+    def modifier_icons(self) -> Tree:
+        return self.parser.parse_folder_as_one_file('main_menu/common/modifier_icons').merge_duplicate_keys()
+
+    @cached_property
+    def default_modifier_icon(self) -> str:
+        for name, data in self.modifier_icons:
+            if data.get_or_default('default', False):
+                return data['positive']
+        return ''
+
+    @cached_property
+    def modifier_types(self) -> dict[str, Eu5ModifierType]:
+        return self.parse_nameable_entities('main_menu/common/modifier_types', Eu5ModifierType,
+                                            allow_empty_entities=True,
+                                            extra_data_functions={
+            'parser': lambda name, data: self,
+            'icon_file': lambda name, data: self.modifier_icons.get_or_default(name, Tree({})).get_or_default('positive', None),
+            'negative_icon_file': lambda name, data: self.modifier_icons.get_or_default(name, Tree({})).get_or_default('negative', None),
+        })
 
     @cached_property
     def buildings(self):

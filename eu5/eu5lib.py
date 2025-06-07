@@ -26,6 +26,11 @@ class Eu5ModifierType(ModifierType):
     is_good: str = 'good'
     is_percent: bool = False
 
+    icon_file: str = None
+    "relative path to the icon file"
+    negative_icon_file: str = None
+    "relative path to the file for the negative icon(if any)"
+
     def __init__(self, name: str, display_name: str, **kwargs):
         super().__init__(name, display_name, **kwargs)
         if self.is_percent:
@@ -41,10 +46,26 @@ class Eu5ModifierType(ModifierType):
 
     def _get_fully_localized_display_name_and_desc(self) -> (str, str):
         display_name = self.parser.localize('MODIFIER_TYPE_NAME_' + self.name)
-        display_name = self.parser.formatter.format_localization_text(display_name, [])
+        if display_name != '(unused)':
+            display_name = self.parser.formatter.strip_formatting(display_name, strip_newlines=True)
         description = self.parser.localize('MODIFIER_TYPE_DESC_' + self.name)
         description = self.parser.formatter.format_localization_text(description, [])
         return display_name, description
+
+    def get_icon_path(self) -> Path|None:
+        base_icon_folder = eu5game.game_path / 'game/main_menu'
+        if self.icon_file:
+            return base_icon_folder / self.icon_file
+        else:
+            return None
+
+    def get_wiki_filename(self) -> str:
+        if not self.icon_file:
+            return ''
+        filename = self.get_icon_path().stem + '.png'
+        filename = filename.replace(':', '')
+        filename = filename.replace('_', ' ')
+        return filename.capitalize()
 
 class Eu5Modifier(Modifier):
     modifier_type: Eu5ModifierType

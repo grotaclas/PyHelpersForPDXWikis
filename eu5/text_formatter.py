@@ -16,4 +16,10 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         icon_key = match.group(1).lower().replace('_', ' ')
         return f'{{{{icon|{icon_key}}}}}'
 
-
+    def apply_localization_formatting(self, text: str) -> str:
+        text = super().apply_localization_formatting(text)
+        text = re.sub(r"\[\s*Show[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\)\s*]",
+                      lambda match: self.parser.localize(match.group('loc_key')), text)
+        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetNameWithNoTooltip\s*]",
+                      lambda match: self.parser.localize(match.group('loc_key')), text)
+        return text
