@@ -54,7 +54,8 @@ class JominiParser(metaclass=ABCMeta):
                                 entity_level: int = 0,
                                 level_headings_keys: dict[str, 0] = None,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
-                                localization_prefix: str = '') -> dict[str, NE]:
+                                localization_prefix: str = '',
+                                allow_empty_entities=False) -> dict[str, NE]:
         """parse a folder into objects which are subclasses of NameableEntity
 
         Args:
@@ -78,6 +79,7 @@ class JominiParser(metaclass=ABCMeta):
                                  the name comes from
             parsing_workarounds:
             localization_prefix: this prefix is added in front of the name to get the localization key for the display name
+            allow_empty_entities: parse empty sections as well
 
         Returns:
             a dict between the name of the entity(if not specified, the top level keys in the folder is used as the
@@ -103,13 +105,14 @@ class JominiParser(metaclass=ABCMeta):
                                                                                            overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys,
                                                                                            workarounds=parsing_workarounds),
                                                  entity_level=entity_level, current_level=0,
-                                                 level_headings_keys=level_headings_keys)
+                                                 level_headings_keys=level_headings_keys,
+                                                 allow_empty_entities=allow_empty_entities)
 
         return entities
 
     def _get_entities_from_level(self, class_attributes, entity_class, extra_data_functions, previous_headings,
                                  transform_value_functions, tree, entity_level, current_level, level_headings_keys,
-                                 conditions=None):
+                                 conditions=None, allow_empty_entities=False):
         entities = {}
         for heading, data in tree:
             if heading == 'if':
@@ -117,22 +120,23 @@ class JominiParser(metaclass=ABCMeta):
                                                               headings, transform_value_functions,
                                                               data.filter_elements(lambda k, v: k != 'limit'),
                                                               entity_level, current_level, level_headings_keys,
-                                                              conditions=data['limit']))
+                                                              conditions=data['limit'], allow_empty_entities=allow_empty_entities))
             elif heading == 'else':
                 entities.update(self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
                                                               headings, transform_value_functions,
                                                               data,
                                                               entity_level, current_level, level_headings_keys,
-                                                              conditions))
+                                                              conditions, allow_empty_entities))
             else:
                 headings = previous_headings.copy()
                 headings.append(heading)
                 if current_level < entity_level:
                     entities.update(self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
                                                                   headings, transform_value_functions, data, entity_level,
-                                                                  current_level + 1, level_headings_keys, conditions))
+                                                                  current_level + 1, level_headings_keys, conditions,
+                                                                  allow_empty_entities))
                 else:
-                    if isinstance(data, Tree):
+                    if isinstance(data, Tree) or (not data and allow_empty_entities):
                         name, entity = self._parse_entity(class_attributes, data, entity_class,
                                                           extra_data_functions, headings, level_headings_keys,
                                                           transform_value_functions, conditions)
