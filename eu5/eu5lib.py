@@ -162,6 +162,32 @@ class Building(Eu5AdvancedEntity):
     icon_folder = 'BUILDINGS_ICON_PATH'
 
 
+class EstatePrivilege(Eu5AdvancedEntity):
+    estate: str
+
+    potential: Tree  # Trigger
+    allow: Tree  # Trigger
+    can_revoke: Tree  # Trigger
+
+    on_activate: Tree  # Effect
+    on_fully_activated: Tree  # Effect
+    on_deactivate: Tree  # Effect
+
+    country_modifier: list[Eu5Modifier]
+    province_modifier: list[Eu5Modifier]
+    location_modifier: list[Eu5Modifier]
+
+    days: int
+    weeks: int
+    months: int
+    years: int
+
+    icon_folder = 'ESTATE_PRIVILEGE_ICON_PATH'
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'Privilege'
+
+
 class Eu5GameConcept(GameConcept):
     family: str = ''
     alias: list['Eu5GameConcept']

@@ -113,6 +113,10 @@ class Eu5Parser(JominiParser):
         return result
 
     @cached_property
+    def estate_privileges(self):
+        return self.parse_advanced_entities('in_game/common/estate_privileges', EstatePrivilege)
+
+    @cached_property
     def game_concepts(self):
         """Includes the aliases as well"""
         concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept, localization_prefix='game_concept_')
