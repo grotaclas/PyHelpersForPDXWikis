@@ -65,10 +65,14 @@ class Eu5ModifierType(ModifierType):
         filename = self.get_icon_path().stem + '.png'
         filename = filename.replace(':', '')
         filename = filename.replace('_', ' ')
-        return filename.capitalize()
+        return filename.strip().capitalize()
 
 class Eu5Modifier(Modifier):
     modifier_type: Eu5ModifierType
+
+    def format_for_wiki(self):
+        value_and_name = super().format_for_wiki()
+        return f'[[File:{self.modifier_type.get_wiki_filename()}|32px]] {value_and_name}'
 
 
 class Eu5AdvancedEntity(AdvancedEntity):

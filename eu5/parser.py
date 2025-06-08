@@ -49,6 +49,39 @@ class Eu5Parser(JominiParser):
             'negative_icon_file': lambda name, data: self.modifier_icons.get_or_default(name, Tree({})).get_or_default('negative', None),
         })
 
+    def parse_modifier_section_from_wiki_section_ame(self, wiki_section_name: str) -> list[Eu5Modifier]:
+        """
+        Can get the modifiers from an arbitrary section which is specified by a dot-separated string which can be used
+        as a section name on the wiki
+        Args:
+            wiki_section_name: dot separated string which specifies the file and section.
+            e.g. common.religions.christian.catholic.definition_modifier to get the modifiers
+            from the section definition_modifier in catholic in the file common/religions/christian.txt
+        """
+        if wiki_section_name.startswith('main_menu.'):
+            path = self.parser.base_folder
+        else:
+            path = self.parser.base_folder / 'in_game'
+        file_data = None
+        outer_section = None
+        for section_component in wiki_section_name.split('.'):
+            if file_data is None:
+                if (path / section_component).exists() and (path / section_component).is_dir():
+                    path = path / section_component
+                else:
+                    path = path / (section_component + '.txt')
+                    if not (path.exists() and path.is_file()):
+                        raise Exception(f'No file found for "{wiki_section_name}"')
+                    file_data = self.parser.parse_file(path.relative_to(self.parser.base_folder))
+            else:
+                if section_component in file_data:
+                    outer_section = file_data
+                    file_data = file_data[section_component]
+                else:
+                    raise Exception(f'Section "{section_component}" not found for "{wiki_section_name}"')
+
+        return self.parse_modifier_section('', outer_section, section_component, Eu5Modifier)
+
     @cached_property
     def buildings(self):
         return self.parse_advanced_entities('in_game/common/building_types', Building,
