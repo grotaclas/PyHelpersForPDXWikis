@@ -463,3 +463,4 @@ class GameConcept(AdvancedEntity):
 
 AE = TypeVar('AE', bound=AdvancedEntity)
 NE = TypeVar('NE', bound=NameableEntity)
+ME = TypeVar('ME', bound=Modifier)

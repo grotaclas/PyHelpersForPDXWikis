@@ -9,7 +9,7 @@ from functools import cached_property
 from typing import Iterator, Type, Callable
 
 from common.paradox_parser import ParadoxParser, Tree, ParsingWorkaround
-from common.paradox_lib import Modifier, AE, NE, ModifierType
+from common.paradox_lib import Modifier, AE, NE, ME, ModifierType
 
 
 class JominiParser(metaclass=ABCMeta):
@@ -240,11 +240,11 @@ class JominiParser(metaclass=ABCMeta):
                 return data[icon_key]
         return ''
 
-    def _parse_modifier_data(self, data: Tree, modifier_class = Modifier):
+    def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
         return [modifier_class(mod_name, modifier_type=self.get_modifier_type_or_default(mod_name), value=mod_value)
                 for mod_name, mod_value in data]
 
-    def parse_modifier_section(self, name, data, section_name='modifier', modifier_class = Modifier) -> list[Modifier]:
+    def parse_modifier_section(self, name, data, section_name='modifier', modifier_class: Type[ME] = Modifier) -> list[ME]:
         if section_name not in data:
             return []
         else:
