@@ -132,6 +132,10 @@ class Eu5Parser(JominiParser):
     def goods(self):
         return self.parse_advanced_entities('in_game/common/goods', Good)
 
+    @cached_property
+    def laws(self):
+        return self.parse_advanced_entities('in_game/common/laws', Law)
+
     def parse_dlc_from_conditions(self, conditions):
         pass
 

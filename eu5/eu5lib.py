@@ -208,3 +208,20 @@ class Good(Eu5AdvancedEntity):
             return 'Goods ' + wiki_filename.removeprefix('Goods goods ')
         else:
             return wiki_filename
+
+
+class Law(Eu5AdvancedEntity):
+    allow: Tree  # trigger
+    law_category: str
+    law_country_group: str
+    law_gov_group: str
+    law_religion_group: list
+    locked: Tree  # trigger
+    potential: Tree  # trigger
+    requires_vote: bool
+    type: str
+
+    icon_folder = 'LAW_ICON_PATH'
+
+    def get_wiki_filename_prefix(self) -> str:
+        return ''
