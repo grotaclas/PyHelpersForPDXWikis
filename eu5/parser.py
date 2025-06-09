@@ -7,7 +7,7 @@ from typing import Callable, TypeVar, Type
 from PyHelpersForPDXWikis.localsettings import EU5DIR
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
-from common.paradox_lib import GameConcept
+from common.paradox_lib import GameConcept, NE, AE
 from common.paradox_parser import ParadoxParser, ParsingWorkaround
 
 
@@ -17,16 +17,37 @@ class Eu5Parser(JominiParser):
     localizationOverrides = {
         # the default is "Trade Embark/Disembark Cost" which is problematic for redirects and filenames, because of the slash
         'local_trade_embark_disembark_cost_modifier': 'Trade Embark-Disembark Cost',
+        'hanseatic_town_hall_price': "$hanseatic_town_hall$ Price",  # avoid recursion TODO: remove workaround when the loc is fixed ingame
     }
 
-    def __init__(self, game_installation: Path = EU5DIR):
+    def __init__(self, game_installation: Path = EU5DIR, language: str = 'english'):
         super().__init__(game_installation / 'game' )
-        self.localization_folder_iterator = (game_installation / 'game' / 'main_menu' / 'localization' / 'english').glob('**/*_l_english.yml')
+        self.localization_folder_iterator = (game_installation / 'game' / 'main_menu' / 'localization' / language).glob(f'**/*_l_{language}.yml')
 
     @cached_property
     def formatter(self):
         from eu5.text_formatter import Eu5WikiTextFormatter
         return Eu5WikiTextFormatter()
+
+    def parse_nameable_entities(self, folder: str, entity_class: Type[NE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
+                                transform_value_functions: dict[str, Callable[[any], any]] = None, entity_level: int = 0,
+                                level_headings_keys: dict[str, 0] = None, parsing_workarounds: list[ParsingWorkaround] = None, localization_prefix: str = '',
+                                allow_empty_entities=False) -> dict[str, NE]:
+        if extra_data_functions is None:
+            extra_data_functions = {}
+        if 'display_name' not in extra_data_functions:
+            extra_data_functions['display_name'] = lambda entity_name, entity_data: self.formatter.strip_formatting(
+                self.localize(localization_prefix + entity_name), strip_newlines=True)
+        return super().parse_nameable_entities(folder, entity_class, extra_data_functions, transform_value_functions, entity_level, level_headings_keys,
+                                               parsing_workarounds, localization_prefix, allow_empty_entities)
+
+    def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
+                                transform_value_functions: dict[str, Callable[[any], any]] = None, localization_prefix: str = '') -> dict[str, AE]:
+        if extra_data_functions is None:
+            extra_data_functions = {}
+        if 'description' not in extra_data_functions:
+            extra_data_functions['description'] = lambda name, data: self.formatter.format_localization_text(self.localize(localization_prefix + name + '_desc'))
+        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix)
 
     @cached_property
     def modifier_icons(self) -> Tree:
