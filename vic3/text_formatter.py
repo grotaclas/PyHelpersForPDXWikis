@@ -1,4 +1,5 @@
 import re
+import sys
 from functools import cached_property
 
 from common.paradox_parser import Tree
@@ -12,12 +13,14 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
     def __init__(self):
         self.parser = vic3game.parser
 
-    def format_localization_text(self, text, concepts_in_same_article: list[str]):
+    def format_localization_text(self, text, concepts_in_same_article: list[str] = None):
         """
 
         @param text: the text which should be formatted
         @param concepts_in_same_article: these strings will use a link starting with #
         """
+        if concepts_in_same_article is None:
+            concepts_in_same_article = []
         previous_text = None
         # some concept localizations use other localizations themselves.
         # So we replace till nothing changes anymore (and hope that there is no loop)
@@ -218,14 +221,23 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                       lambda match: self.parser.interest_groups[match.group('ig_key')].display_name, text)
         return text
 
-    def resolve_nested_localizations(self, text: str):
+    def resolve_nested_localizations(self, text: str, seen_keys = None):
+        if seen_keys is None:
+            seen_keys = set()
+        def resolve_replacement(match: re.Match):
+            key_to_replace = match.group(1)
+            if key_to_replace in seen_keys:
+                print(f'Recursive localisation "{key_to_replace}" when resolving "{text}"', file=sys.stderr)
+                return key_to_replace
+            # seen_keys.add(key_to_replace)
+            return  self.resolve_nested_localizations(self.parser.localize(key_to_replace), seen_keys | {key_to_replace})
         previous_text = None
         new_text = text
         # some localizations use other localizations themselves.
         # so we replace till nothing changes anymore (and hope that there is no loop)
         while previous_text != new_text:
             previous_text = new_text
-            new_text = re.sub(r'\$([^$]*)\$', lambda match: self.parser.localize(match.group(1)), previous_text)
+            new_text = re.sub(r'\$([^$]*)\$', resolve_replacement, previous_text)
 
         return new_text
 
