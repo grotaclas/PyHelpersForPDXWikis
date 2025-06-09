@@ -1,5 +1,7 @@
 import re
+from decimal import Decimal
 
+from eu5.eu5lib import Resource
 from eu5.game import eu5game
 from vic3.text_formatter import Vic3WikiTextFormatter
 
@@ -23,3 +25,29 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetNameWithNoTooltip\s*]",
                       lambda match: self.parser.localize(match.group('loc_key')), text)
         return text
+
+    def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False, add_plus=False):
+        if not isinstance(resource, Resource):
+            resource = Resource(resource)
+        if value is None:
+            value_str = ''
+        elif isinstance(value, str) and not self.is_number(value):
+            value_str = f' {value}'
+        else:
+            positive_is_good = resource.positive_is_good
+            if cost:
+                positive_is_good = not positive_is_good
+            value_str = f' {self.add_red_green(Decimal(value), positive_is_good=positive_is_good, add_plus=add_plus)}'
+
+        icon_str = f'{{{{icon|{resource.icon}}}}}'
+        if icon_only:
+            name_str = ''
+        else:
+            name_str = f' {resource.display_name}'
+        return f'{icon_str}{value_str}{name_str}'
+
+    def format_resource_without_value(self, resource: str, icon_only=False):
+        return self.format_resource(resource, icon_only=icon_only)
+
+    def format_cost(self, resource: str, value: int, icon_only=False):
+        return self.format_resource(resource, value, cost=True, icon_only=icon_only)

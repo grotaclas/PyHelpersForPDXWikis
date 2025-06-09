@@ -88,6 +88,8 @@ class Eu5Parser(JominiParser):
                                             transform_value_functions={
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                                 'employment_size': lambda value: self.script_values[value] if isinstance(value, str) else value,
+                                                'destroy_price': lambda value: self.prices[value] if isinstance(value, str) else value,
+                                                'price': lambda value: self.prices[value] if isinstance(value, str) else value,
                                             })
 
     @cached_property
@@ -142,6 +144,12 @@ class Eu5Parser(JominiParser):
 
     def parse_dlc_from_conditions(self, conditions):
         pass
+
+    @cached_property
+    def prices(self):
+        return self.parse_nameable_entities('in_game/common/prices', Price, extra_data_functions={
+            'costs': lambda name, data: [Cost.create(key, value) for key, value in data if key in Resource]
+        })
 
     @cached_property
     def script_values(self):

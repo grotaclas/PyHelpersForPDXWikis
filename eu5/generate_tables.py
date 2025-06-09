@@ -2,7 +2,7 @@ from functools import cached_property
 from operator import attrgetter
 
 from eu5.eu5_file_generator import Eu5FileGenerator
-from eu5.eu5lib import GoodCategory, Eu5GameConcept
+from eu5.eu5lib import GoodCategory, Eu5GameConcept, Price
 from eu5.text_formatter import Eu5WikiTextFormatter
 
 
@@ -30,7 +30,8 @@ class TableGenerator(Eu5FileGenerator):
         buildings = [{
             'Name': f'{{{{iconbox|{building.display_name}|{building.description}|w=300px|image={building.get_wiki_filename()}}}}}',
             'Time': building.build_time,
-            'Price': building.price,
+            'Price': building.price.format() if isinstance(building.price, Price) else building.price,
+            'Destroy Price': building.destroy_price.format() if building.destroy_price else '',
             'category': building.category,
             'foreign':  building.is_foreign,
             'Pop': building.pop_type,

@@ -114,6 +114,99 @@ class Eu5AdvancedEntity(AdvancedEntity):
         return filename.capitalize()
 
 
+class Resource(StrEnum):
+    army_tradition = 'army_tradition'
+    doom = 'doom'
+    favors = 'favors'
+    gold = 'gold'
+    gold_per_pop = 'gold_per_pop'
+    government_power = 'government_power'
+    harmony = 'harmony'
+    honor = 'honor'
+    inflation = 'inflation'
+    karma = 'karma'
+    manpower = 'manpower'
+    navy_tradition = 'navy_tradition'
+    piety = 'piety'
+    prestige = 'prestige'
+    purity = 'purity'
+    religious_influence = 'religious_influence'
+    righteousness = 'righteousness'
+    rite_power = 'rite_power'
+    sailors = 'sailors'
+    self_control = 'self_control'
+    scaled_gold = 'scaled_gold'
+    scaled_manpower = 'scaled_manpower'
+    scaled_recipient_gold = 'scaled_recipient_gold'
+    scaled_sailors = 'scaled_sailors'
+    spy_network = 'spy_network'
+    stability = 'stability'
+    trust = 'trust'
+    war_exhaustion = 'war_exhaustion'
+    yanantin = 'yanantin'
+
+    # specific gov powers
+    legitimacy = 'legitimacy'
+    republican_tradition = 'republican_tradition'
+    devotion = 'devotion'
+    horde_unity = 'horde_unity'
+    tribal_cohesion = 'tribal_cohesion'
+
+    @cached_property
+    def display_name(self) -> str:
+        return eu5game.parser.localize(self)
+
+    @cached_property
+    def positive_is_good(self):
+        change_loc = eu5game.parser.localize(f'FORMAT_CURRENCY_{self.name}_change')
+        if '|-=' in change_loc:
+            return False
+        elif '|+=' in change_loc:
+            return True
+        # default
+        return True
+
+    @cached_property
+    def icon(self):
+        return self.name.replace('_', ' ')
+
+
+
+class ResourceValue:
+    value: int|float
+    resource: Resource
+
+    def __init__(self, resource: Resource | None, value: int|float):
+        self.resource = resource
+        self.value = value
+
+    @classmethod
+    def create(cls, resource_name: str, resource_value: int|float) -> 'ResourceValue':
+        return cls(Resource(resource_name), resource_value)
+
+    def format(self, icon_only=False):
+        if self.resource is None:
+            return ''
+        return eu5game.parser.formatter.format_resource(self.resource, self.value, icon_only)
+
+    def __str__(self):
+        return self.format()
+
+
+class Cost(ResourceValue):
+    def format(self, icon_only=False):
+        return eu5game.parser.formatter.format_cost(self.resource, self.value, icon_only)
+
+
+class Price(NameableEntity):
+    min: float  # unused
+    cap_scale: int # max
+    costs: list[Cost]
+
+    def format(self, icon_only=False):
+        return eu5game.parser.formatter.create_wiki_list([cost.format(icon_only) for cost in self.costs])
+
+
 class Building(Eu5AdvancedEntity):
     AI_ignore_available_worker_flag: bool
     AI_optimization_flag_coastal: bool
@@ -130,7 +223,7 @@ class Building(Eu5AdvancedEntity):
     construction_demand: str
     conversion_religion: str
     country_potential: Tree
-    destroy_price: str
+    destroy_price: Price = None
     employment_size: float # scripted value
     estate: str
     forbidden_for_estates: bool
@@ -151,7 +244,7 @@ class Building(Eu5AdvancedEntity):
     pop_size_created: str
     pop_type: str
     possible_production_methods: list
-    price: str
+    price: Price
     raw_modifier: list[Eu5Modifier]
     remove_if: Tree
     rural_settlement: bool
