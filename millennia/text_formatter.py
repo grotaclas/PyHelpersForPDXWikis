@@ -120,14 +120,6 @@ class MillenniaWikiTextFormatter(WikiTextFormatter):
     def format_cost(self, resource: str, value: int, icon_only=False):
         return self.format_resource(resource, value, cost=True, icon_only=icon_only)
 
-    @staticmethod
-    def is_number(s: str):
-        try:
-            float(s)
-            return True
-        except ValueError:
-            return False
-
     def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False, add_plus=False):
         if not isinstance(resource, Resource):
             resource = Resource(resource)

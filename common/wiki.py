@@ -175,6 +175,14 @@ class WikiTextFormatter:
         # remove space from the beginning and end which might have been left over from the other stripping
         return stripped_text.strip()
 
+    @staticmethod
+    def is_number(s: str):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+
 
 # the rest of the file is an unfinished version of a better wiki-table generator
 class Cell:
