@@ -87,10 +87,6 @@ class Vic3Parser(JominiParser):
         return self.parser.parse_folder_as_one_file('common/defines').merge_duplicate_keys()
 
     @cached_property
-    def script_values(self):
-        return self.parser.parse_folder_as_one_file('common/script_values').merge_duplicate_keys()
-
-    @cached_property
     def countries(self) -> dict[str, Country]:
         """returns a dictionary. keys are tags and values are Country objects."""
         countries = {}
@@ -256,7 +252,7 @@ class Vic3Parser(JominiParser):
     @cached_property
     def named_modifiers(self) -> dict[str, NamedModifier]:
         return self.parse_advanced_entities('common/static_modifiers', NamedModifier, extra_data_functions={
-            'modifiers': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'}))
+            'modifier': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'}))
         })
 
     @cached_property
@@ -391,7 +387,7 @@ class Vic3Parser(JominiParser):
                                         category=data['category'],
                                         required_technologies=[],  # filled later
                                         era=int(data['era'].replace('era_', '')),
-                                        modifiers=self.parse_modifier_section(name, data),
+                                        modifier=self.parse_modifier_section(name, data),
                                         )
 
         for name, required_techs in prerequisites.items():

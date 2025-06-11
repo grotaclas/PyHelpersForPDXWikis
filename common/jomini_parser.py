@@ -93,7 +93,7 @@ class JominiParser(metaclass=ABCMeta):
             level_headings_keys = {}
         if 'display_name' not in extra_data_functions:
             extra_data_functions['display_name'] = lambda entity_name, entity_data: self.localize(localization_prefix + entity_name)
-        class_attributes = inspect.get_annotations(entity_class)
+        class_attributes = entity_class.all_annotations()
         if entity_level == 0:
             overwrite_duplicate_toplevel_keys = True
         else:
@@ -240,9 +240,22 @@ class JominiParser(metaclass=ABCMeta):
                 return data[icon_key]
         return ''
 
+    def _parse_mod_value(self, mod_type: ModifierType, mod_value: any):
+        """Some post-processing for modifier values. Currently only implements resolving script values"""
+        if mod_type.display_name == 'Tax Collection':
+            pass
+        if isinstance(mod_value, str) and mod_value in self.script_values:
+            return self.script_values[mod_value]
+        else:
+            return mod_value
+
     def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
-        return [modifier_class(mod_name, modifier_type=self.get_modifier_type_or_default(mod_name), value=mod_value)
-                for mod_name, mod_value in data]
+        modifiers = []
+        for mod_name, mod_value in data:
+            mod_type = self.get_modifier_type_or_default(mod_name)
+            mod_value = self._parse_mod_value(mod_type, mod_value)
+            modifiers.append(modifier_class(mod_name, modifier_type=mod_type, value=mod_value))
+        return modifiers
 
     def parse_modifier_section(self, name, data, section_name='modifier', modifier_class: Type[ME] = Modifier) -> list[ME]:
         if section_name not in data:
@@ -253,3 +266,7 @@ class JominiParser(metaclass=ABCMeta):
     @cached_property
     def modifier_types(self) -> dict[str, ModifierType]:
         return self.parse_nameable_entities('common/modifier_type_definitions', ModifierType, extra_data_functions={'parser': lambda name, data: self})
+
+    @cached_property
+    def script_values(self):
+        return self.parser.parse_folder_as_one_file('common/script_values').merge_duplicate_keys()

@@ -154,6 +154,13 @@ class NameableEntity:
                 and not isinstance(value, cached_property)
                 }
 
+    @classmethod
+    @lru_cache(maxsize=1)
+    def all_annotations(cls) -> ChainMap:
+        """Returns a dictionary-like ChainMap that includes annotations for all
+           attributes defined in cls or inherited from superclasses."""
+        return ChainMap(*(get_type_hints(c) for c in cls.mro()))
+
 
 class IconMixin:
     icon: str = ''
@@ -299,7 +306,8 @@ class ModifierType(NameableEntity):
     decimals: int = None
     color: str = None
 
-    parser: 'JominiParser' = None
+    # parser: 'JominiParser' = None  # breaks all_annotations
+    parser: any
 
     def __init__(self, name: str, display_name: str, **kwargs):
         super().__init__(name, display_name, **kwargs)
@@ -448,7 +456,7 @@ class AdvancedEntity(IconEntity):
     """Adds various extra fields. Not all of them are used by all subclasses"""
 
     description: str = ''
-    modifiers: list[Modifier] = []
+    modifier: list[Modifier] = []
 
     def str_with_type(self) -> str:
         return f'{self.display_name} ({self.__class__.__name__})'

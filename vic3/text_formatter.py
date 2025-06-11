@@ -157,7 +157,13 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             return '{{icon|' + replacements[icon_key] + '}}'
 
     def _replace_defines(self, match: re.Match) -> str:
-        value = self.parser.defines[match.group('category')][match.group('define')]
+        category = match.group('category')
+        define = match.group('define')
+        if category in self.parser.defines and define in self.parser.defines[category]:
+            value = self.parser.defines[category][define]
+        else:
+            Vic3FileGenerator.warn(f'unknown define "{category}.{define}" in "{match.group(0)}"')
+            return match.group(0)
         prefix = ''
         suffix = ''
         formatting = match.group('formatting')

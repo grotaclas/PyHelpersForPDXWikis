@@ -29,7 +29,7 @@ class NamedModifier(Vic3AdvancedEntity):
         return "Modifier ''“{}”''{} giving:\n* {}".format(
                                                        self.display_name,
                                                        ' for {} weeks'.format(time_limit_weeks) if time_limit_weeks is not None else '',
-                                                       '\n* '.join([modifier.format_for_wiki() for modifier in self.modifiers]))
+                                                       '\n* '.join([modifier.format_for_wiki() for modifier in self.modifier]))
 
 
 class StateResource:

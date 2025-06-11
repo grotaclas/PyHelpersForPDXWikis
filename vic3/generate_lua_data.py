@@ -24,7 +24,7 @@ class LuaDataGenerator(Vic3FileGenerator):
                 'category': self.parser.localize(tech.category),
                 'reqs': [req.name for req in tech.required_technologies],
                 'unlocks': self._get_unlock_lists(tech),
-                'modifiers': [modifier.format_for_lua() for modifier in tech.modifiers],
+                'modifiers': [modifier.format_for_lua() for modifier in tech.modifier],
             }
             for tech in self.parser.technologies.values()
         }
