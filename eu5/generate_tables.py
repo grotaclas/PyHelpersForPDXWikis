@@ -1,6 +1,8 @@
 from functools import cached_property
 from operator import attrgetter
 
+import sys
+
 from eu5.eu5_file_generator import Eu5FileGenerator
 from eu5.eu5lib import GoodCategory, Eu5GameConcept, Price
 from eu5.text_formatter import Eu5WikiTextFormatter
@@ -106,3 +108,7 @@ class TableGenerator(Eu5FileGenerator):
                                      one_line_per_cell=True,
                                      remove_empty_columns=True,
                                      )
+
+
+if __name__ == '__main__':
+    TableGenerator().run(sys.argv)
