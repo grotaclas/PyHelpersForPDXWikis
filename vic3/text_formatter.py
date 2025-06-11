@@ -235,7 +235,6 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             if key_to_replace in seen_keys:
                 print(f'Recursive localisation "{key_to_replace}" when resolving "{text}"', file=sys.stderr)
                 return key_to_replace
-            # seen_keys.add(key_to_replace)
             return  self.resolve_nested_localizations(self.parser.localize(key_to_replace), seen_keys | {key_to_replace})
         previous_text = None
         new_text = text
