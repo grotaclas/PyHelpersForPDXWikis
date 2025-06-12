@@ -286,3 +286,7 @@ class Tree(MutableMapping):
 
     def __setstate__(self, state):
         self.dictionary = state
+
+    def to_dict(self) -> dict:
+        """recursively convert the tree into a dict"""
+        return {k: v.to_dict() if isinstance(v, Tree) else v for k, v in self}
