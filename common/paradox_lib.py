@@ -335,7 +335,7 @@ class ModifierType(NameableEntity):
     def icon(self):
         icon = self.display_name
         # remove links
-        icon = re.sub(r'\[\[[^|]*\|([^]]*)]]', r'\1', icon)
+        icon = re.sub(r'\[\[([^|]*\|)?([^]|]+)[^]]*]]', r'\2', icon)
         # remove icon tags
         icon = re.sub(r'\{\{icon\|[^}]*}}(&nbsp;)?\s*', '', icon)
 

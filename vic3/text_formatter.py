@@ -35,10 +35,20 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                 self.get_concept_link, text)
             text = self.resolve_nested_localizations(text)
             text = self.apply_localization_formatting(text)
-        text = re.sub(r'\[\[([^]|]+)(\|[^]]+)?]]',
-                      lambda match: '[[#{}]]'.format(match.group(1) + match.group(2))
-                      if match.group(1) in concepts_in_same_article
-                      else '[[{}]]'.format(match.group(1) + match.group(2)),
+        def make_relative_links(match: re.Match):
+            target = match.group(1)
+            if match.group(2) is not None:
+                link_name = match.group(2).removeprefix('|')
+            else:
+                link_name = target
+            if target in concepts_in_same_article:
+                return f'[[#{target}|{link_name}]]'
+            elif target == link_name:
+                return f'[[{link_name}]]'
+            else:
+                return f'[[{target}|{link_name}]]'
+
+        text = re.sub(r'\[\[([^]|]+)(\|[^]]+)?]]', make_relative_links,
                       text)
         return text
 
