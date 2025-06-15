@@ -17,7 +17,7 @@ class Eu5Parser(JominiParser):
     # allows the overriding of localization strings
     localizationOverrides = {
         # the default is "Trade Embark/Disembark Cost" which is problematic for redirects and filenames, because of the slash
-        'local_trade_embark_disembark_cost_modifier': 'Trade Embark-Disembark Cost',
+        'MODIFIER_TYPE_NAME_local_trade_embark_disembark_cost_modifier': 'Trade Embark-Disembark Cost',
         'hanseatic_town_hall_price': "$hanseatic_town_hall$ Price",  # avoid recursion TODO: remove workaround when the loc is fixed ingame
     }
 
