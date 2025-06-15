@@ -1,7 +1,7 @@
 import re
 from decimal import Decimal
 
-from eu5.eu5lib import HardcodedResource, GoodsResource
+from eu5.eu5lib import Resource, HardcodedResource
 from eu5.game import eu5game
 from vic3.text_formatter import Vic3WikiTextFormatter
 
@@ -26,7 +26,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                       lambda match: self.parser.localize(match.group('loc_key')), text)
         return text
 
-    def format_resource(self, resource: str | HardcodedResource | GoodsResource, value=None, cost=False, icon_only=False, add_plus=False):
+    def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False, add_plus=False):
         if  isinstance(resource, str):
             resource = HardcodedResource(resource)
         if value is None:

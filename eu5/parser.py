@@ -177,7 +177,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def goods_demand(self):
         return self.parse_nameable_entities('in_game/common/goods_demand', GoodsDemand, extra_data_functions={
-            'demands': lambda name, data: [Cost.create_with_goods_resource(key, value) for key, value in data if key in self.goods],
+            'demands': lambda name, data: [Cost.create_with_goods(key, value) for key, value in data if key in self.goods],
         })
 
     @cached_property
@@ -196,7 +196,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def production_methods(self):
         return self.parse_nameable_entities('in_game/common/production_methods', ProductionMethod, extra_data_functions={
-            'input': lambda name, data: [Cost.create_with_goods_resource(key, value) for key, value in data if key in self.goods],
+            'input': lambda name, data: [Cost.create_with_goods(key, value) for key, value in data if key in self.goods],
         })
 
     @cached_property

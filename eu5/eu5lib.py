@@ -116,8 +116,10 @@ class Eu5AdvancedEntity(AdvancedEntity):
     def get_wiki_icon(self, size: str = '32px') -> str:
         return self.get_wiki_file_tag(size, link='self')
 
+class Resource(IconMixin):
+    pass
 
-class HardcodedResource(IconMixin, StrEnum):
+class HardcodedResource(Resource, StrEnum):
     army_tradition = 'army_tradition'
     doom = 'doom'
     favors = 'favors'
@@ -184,7 +186,7 @@ class GoodCategory(StrEnum):
         return eu5game.parser.localize(self)
 
 
-class Good(Eu5AdvancedEntity):
+class Good(Eu5AdvancedEntity, Resource):
     ai_rgo_size_importance: float = None
     base_production: float = 0
     category: GoodCategory
@@ -197,6 +199,10 @@ class Good(Eu5AdvancedEntity):
     transport_cost: float = 1
 
     icon_folder = 'TRADE_GOODS_ICON_PATH'
+
+    @cached_property
+    def positive_is_good(self) -> bool:
+        return True
 
     def get_icon_filename(self) -> str:
         return f'icon_goods_{self.name}.dds'
@@ -212,25 +218,11 @@ class Good(Eu5AdvancedEntity):
             return wiki_filename
 
 
-class GoodsResource:
-    good: Good
-
-    def __init__(self, good: Good):
-        self.good = good
-
-    @cached_property
-    def positive_is_good(self) -> bool:
-        return True
-
-    def __getattr__(self, item):
-        return self.good.__getattribute__(item)
-
-
 class ResourceValue:
     value: int|float
-    resource: HardcodedResource|GoodsResource
+    resource: Resource
 
-    def __init__(self, resource: HardcodedResource | GoodsResource| None, value: int | float):
+    def __init__(self, resource: Resource | None, value: int | float):
         self.resource = resource
         self.value = value
 
@@ -239,8 +231,8 @@ class ResourceValue:
         return cls(HardcodedResource(resource_name), resource_value)
 
     @classmethod
-    def create_with_goods_resource(cls, resource_name: str, resource_value: int | float) -> 'ResourceValue':
-        return cls(GoodsResource(eu5game.parser.goods[resource_name]), resource_value)
+    def create_with_goods(cls, resource_name: str, resource_value: int | float) -> 'ResourceValue':
+        return cls(eu5game.parser.goods[resource_name], resource_value)
 
     def format(self, icon_only=False):
         if self.resource is None:
