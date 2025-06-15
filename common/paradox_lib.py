@@ -203,7 +203,7 @@ class IconMixin:
                 if link == 'self':
                     link = self.get_wiki_link_target()
                 link_param = f'|link={link}'
-            if size is None:
+            if size is None or size == '':
                 size_param = ''
             else:
                 size_param = f'|{size}'
