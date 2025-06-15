@@ -3,7 +3,7 @@ from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
 
-from common.paradox_lib import GameConcept, NameableEntity, AdvancedEntity, PdxColor, ModifierType, Modifier
+from common.paradox_lib import GameConcept, NameableEntity, AdvancedEntity, PdxColor, ModifierType, Modifier, IconMixin
 from common.paradox_parser import Tree
 from eu5.game import eu5game
 
@@ -113,8 +113,11 @@ class Eu5AdvancedEntity(AdvancedEntity):
         filename = filename.replace('_', ' ')
         return filename.capitalize()
 
+    def get_wiki_icon(self, size: str = '32px') -> str:
+        return self.get_wiki_file_tag(size, link='self')
 
-class Resource(StrEnum):
+
+class HardcodedResource(IconMixin, StrEnum):
     army_tradition = 'army_tradition'
     doom = 'doom'
     favors = 'favors'
@@ -171,18 +174,73 @@ class Resource(StrEnum):
         return self.name.replace('_', ' ')
 
 
+class GoodCategory(StrEnum):
+    raw_material = 'raw_material'
+    produced = 'produced'
+
+    @cached_property
+    def display_name(self) -> str:
+        from eu5.game import eu5game
+        return eu5game.parser.localize(self)
+
+
+class Good(Eu5AdvancedEntity):
+    ai_rgo_size_importance: float = None
+    base_production: float = 0
+    category: GoodCategory
+    color: PdxColor
+    default_market_price: float = 1
+    food: float = 0
+    inflation: bool = False
+    is_slaves: bool = False
+    method: str = ''
+    transport_cost: float = 1
+
+    icon_folder = 'TRADE_GOODS_ICON_PATH'
+
+    def get_icon_filename(self) -> str:
+        return f'icon_goods_{self.name}.dds'
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'Goods'
+
+    def get_wiki_filename(self) -> str:
+        wiki_filename = super().get_wiki_filename()
+        if wiki_filename.startswith('Goods goods'):
+            return 'Goods ' + wiki_filename.removeprefix('Goods goods ')
+        else:
+            return wiki_filename
+
+
+class GoodsResource:
+    good: Good
+
+    def __init__(self, good: Good):
+        self.good = good
+
+    @cached_property
+    def positive_is_good(self) -> bool:
+        return True
+
+    def __getattr__(self, item):
+        return self.good.__getattribute__(item)
+
 
 class ResourceValue:
     value: int|float
-    resource: Resource
+    resource: HardcodedResource|GoodsResource
 
-    def __init__(self, resource: Resource | None, value: int|float):
+    def __init__(self, resource: HardcodedResource | GoodsResource| None, value: int | float):
         self.resource = resource
         self.value = value
 
     @classmethod
-    def create(cls, resource_name: str, resource_value: int|float) -> 'ResourceValue':
-        return cls(Resource(resource_name), resource_value)
+    def create_with_hardcoded_resource(cls, resource_name: str, resource_value: int | float) -> 'ResourceValue':
+        return cls(HardcodedResource(resource_name), resource_value)
+
+    @classmethod
+    def create_with_goods_resource(cls, resource_name: str, resource_value: int | float) -> 'ResourceValue':
+        return cls(GoodsResource(eu5game.parser.goods[resource_name]), resource_value)
 
     def format(self, icon_only=False):
         if self.resource is None:
@@ -207,6 +265,36 @@ class Price(NameableEntity):
         return eu5game.parser.formatter.create_wiki_list([cost.format(icon_only) for cost in self.costs])
 
 
+class GoodsDemand(NameableEntity):
+    category: str
+    hidden: bool
+    demands: list[Cost]
+
+    def format(self, icon_only=False):
+        return eu5game.parser.formatter.create_wiki_list([cost.format(icon_only) for cost in self.demands])
+
+
+class NoPrice(Price):
+
+    def __init__(self):
+        super().__init__('', '')
+        self.costs = []
+
+    def __bool__(self):
+        return False
+
+    def format(self, icon_only=False):
+        return ''
+
+
+class ProductionMethod(NameableEntity):
+    category: str
+    input: list[Cost]
+    output: float
+    potential: Tree
+    produced: Good
+
+
 class Building(Eu5AdvancedEntity):
     AI_ignore_available_worker_flag: bool
     AI_optimization_flag_coastal: bool
@@ -220,10 +308,10 @@ class Building(Eu5AdvancedEntity):
     capital_modifier: list[Eu5Modifier]
     category: str
     city: bool = False
-    construction_demand: str
+    construction_demand: GoodsDemand = NoPrice()
     conversion_religion: str
     country_potential: Tree
-    destroy_price: Price = None
+    destroy_price: Price = NoPrice()
     employment_size: float # scripted value
     estate: str
     forbidden_for_estates: bool
@@ -289,44 +377,6 @@ class Eu5GameConcept(GameConcept):
     def __init__(self, name: str, display_name: str, **kwargs):
         self.alias = []
         super().__init__(name, display_name, **kwargs)
-
-
-class GoodCategory(StrEnum):
-    raw_material = 'raw_material'
-    produced = 'produced'
-
-    @cached_property
-    def display_name(self) -> str:
-        from eu5.game import eu5game
-        return eu5game.parser.localize(self)
-
-
-class Good(Eu5AdvancedEntity):
-    ai_rgo_size_importance: float = None
-    base_production: float = 0
-    category: GoodCategory
-    color: PdxColor
-    default_market_price: float = 1
-    food: float = 0
-    inflation: bool = False
-    is_slaves: bool = False
-    method: str = ''
-    transport_cost: float = 1
-
-    icon_folder = 'TRADE_GOODS_ICON_PATH'
-
-    def get_icon_filename(self) -> str:
-        return f'icon_goods_{self.name}.dds'
-
-    def get_wiki_filename_prefix(self) -> str:
-        return 'Goods'
-
-    def get_wiki_filename(self) -> str:
-        wiki_filename = super().get_wiki_filename()
-        if wiki_filename.startswith('Goods goods'):
-            return 'Goods ' + wiki_filename.removeprefix('Goods goods ')
-        else:
-            return wiki_filename
 
 
 class Law(Eu5AdvancedEntity):

@@ -5,6 +5,7 @@ import sys
 from typing import Callable, TypeVar, Type
 
 from PyHelpersForPDXWikis.localsettings import EU5DIR
+from common.file_generator import FileGenerator
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import GameConcept, NE, AE
@@ -103,11 +104,25 @@ class Eu5Parser(JominiParser):
 
         return self.parse_modifier_section('', outer_section, section_component, Eu5Modifier)
 
+    def _parse_goods_demand(self, value):
+        if isinstance(value, str):
+            if value in self.goods_demand:
+                return self.goods_demand[value]
+            elif value in self.production_methods:
+                FileGenerator.warn(f'Expected goods demand, but got production method "{value}"')
+                return self.production_methods[value]
+        elif isinstance(value, list):
+            FileGenerator.warn(f'Expected goods demand, but got multiple entries "{",".join(value)}"')
+            return self._parse_goods_demand(value[0])
+        FileGenerator.warn(f'Expected goods demand, but got type "{type(value)}"')
+        return value
+
     @cached_property
     def buildings(self):
         return self.parse_advanced_entities('in_game/common/building_types', Building,
                                             transform_value_functions={
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
+                                                'construction_demand': self._parse_goods_demand,
                                                 'employment_size': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                                 'destroy_price': lambda value: self.prices[value] if isinstance(value, str) else value,
                                                 'price': lambda value: self.prices[value] if isinstance(value, str) else value,
@@ -160,6 +175,12 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/goods', Good)
 
     @cached_property
+    def goods_demand(self):
+        return self.parse_nameable_entities('in_game/common/goods_demand', GoodsDemand, extra_data_functions={
+            'demands': lambda name, data: [Cost.create_with_goods_resource(key, value) for key, value in data if key in self.goods],
+        })
+
+    @cached_property
     def laws(self):
         return self.parse_advanced_entities('in_game/common/laws', Law)
 
@@ -169,7 +190,13 @@ class Eu5Parser(JominiParser):
     @cached_property
     def prices(self):
         return self.parse_nameable_entities('in_game/common/prices', Price, extra_data_functions={
-            'costs': lambda name, data: [Cost.create(key, value) for key, value in data if key in Resource]
+            'costs': lambda name, data: [Cost.create_with_hardcoded_resource(key, value) for key, value in data if key in HardcodedResource]
+        })
+
+    @cached_property
+    def production_methods(self):
+        return self.parse_nameable_entities('in_game/common/production_methods', ProductionMethod, extra_data_functions={
+            'input': lambda name, data: [Cost.create_with_goods_resource(key, value) for key, value in data if key in self.goods],
         })
 
     @cached_property

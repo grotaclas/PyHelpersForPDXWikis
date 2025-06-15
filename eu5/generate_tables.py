@@ -34,6 +34,7 @@ class TableGenerator(Eu5FileGenerator):
             'Time': building.build_time,
             'Price': building.price.format() if isinstance(building.price, Price) else building.price,
             'Destroy Price': building.destroy_price.format() if building.destroy_price else '',
+            'Construction demand': building.construction_demand.format() if hasattr(building.construction_demand, 'format') else building.construction_demand,
             'category': building.category,
             'foreign':  building.is_foreign,
             'Pop': building.pop_type,
