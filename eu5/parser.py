@@ -123,7 +123,7 @@ class Eu5Parser(JominiParser):
                                             transform_value_functions={
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                                 'construction_demand': self._parse_goods_demand,
-                                                'employment_size': lambda value: self.script_values[value] if isinstance(value, str) else value,
+                                                'employment_size': lambda value: (self.script_values[value] if isinstance(value, str) else value) * 1000,
                                                 'destroy_price': lambda value: self.prices[value] if isinstance(value, str) else value,
                                                 'price': lambda value: self.prices[value] if isinstance(value, str) else value,
                                             })

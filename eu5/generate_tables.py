@@ -38,7 +38,7 @@ class TableGenerator(Eu5FileGenerator):
             'category': building.category,
             'foreign':  building.is_foreign,
             'Pop': building.pop_type,
-            'employment_size': building.employment_size,
+            'Employees': round(building.employment_size),
             'Town': building.town,
             'City': building.city,
             'Max levels': building.max_levels,
