@@ -60,23 +60,30 @@ class WikiTextFormatter:
                     results.append(f'{line_prefix} {element}')
             return f'\n'.join(results)
 
-    @staticmethod
-    def add_red_green(number, positive_is_good: bool = True, add_plus: bool = False, add_percent: bool = False) -> str:
+    def add_red_green(self, number, positive_is_good: bool = True, add_plus: bool = False, add_percent: bool = False) -> str:
         if not isinstance(number, (int, float, Decimal)):
             return str(number)
 
         if number == 0:
+            if add_percent:
+                number = f'{number}%'
             return f"'''{number}'''"
+
         if number > 0:
             if positive_is_good:
                 color = 'green'
             else:
                 color = 'red'
+            if add_percent:
+                number = self.format_percent(number)
             if add_plus:
                 number = f'+{number}'
         else:
+            number = abs(number)
+            if add_percent:
+                number = self.format_percent(number)
             # add the unicode minus sign
-            number = f'−{abs(number)}'
+            number = f'−{number}'
             if positive_is_good:
                 color = 'red'
             else:
