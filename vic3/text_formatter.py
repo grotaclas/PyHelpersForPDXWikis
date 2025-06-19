@@ -137,6 +137,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                         'paper': 'paper',
                         'porcelain': 'porcelain',
                         'radios': 'radios',
+                        'radio': 'radios',
                         'rubber': 'rubber',
                         'services': 'services',
                         'silk': 'silk',
@@ -159,6 +160,8 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                         'acceptance_status_3': 'acceptance_status_3',
                         'acceptance_status_4': 'acceptance_status_4',
                         'acceptance_status_5': 'acceptance_status_5',
+                        'merchant_marine': 'merchant marine',
+                        'warning': 'warning',
                         }
         if icon_key not in replacements:
             Vic3FileGenerator.warn('unknown icon {} in "{}"'.format(icon_key, match.group(0)))

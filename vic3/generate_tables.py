@@ -247,6 +247,7 @@ local p = {};
         } for region in sorted(self.parser.strategic_regions.values(), key=attrgetter('display_name'))
             if not region.is_water]
         table = self.make_wiki_table(regions, table_classes=['wikitable', 'plainlist'],
+                                     table_style='float:left;',
                                      one_line_per_cell=True,
                                          )
 

@@ -203,6 +203,9 @@ class BuildingGroup(NameableEntity):
     min_productivity_to_hire: float = 0
     owns_other_buildings: bool = False
     always_self_owning: bool = False
+    has_trade_revenue: bool = False
+    company_headquarter: bool = False
+    regional_company_headquarter: bool = False
 
     def __init__(self, name: str, display_name: str, parent_group: 'BuildingGroup' = None, **kwargs):
         super().__init__(name, display_name)
