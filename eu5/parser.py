@@ -1,6 +1,6 @@
 import inspect
 from pathlib import Path
-from functools import cached_property
+from functools import cached_property, reduce
 import sys
 from typing import Callable, TypeVar, Type
 
@@ -119,14 +119,23 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def buildings(self):
-        return self.parse_advanced_entities('in_game/common/building_types', Building,
+        buildings = self.parse_advanced_entities('in_game/common/building_types', Building,
                                             transform_value_functions={
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                                 'construction_demand': self._parse_goods_demand,
                                                 'employment_size': lambda value: (self.script_values[value] if isinstance(value, str) else value) * 1000,
                                                 'destroy_price': lambda value: self.prices[value] if isinstance(value, str) else value,
+                                                'obsolete': lambda value: [value] if isinstance(value, str) else value,
                                                 'price': lambda value: self.prices[value] if isinstance(value, str) else value,
+                                                'pop_size_created': lambda value: (self.script_values[value] if isinstance(value, str) else value) * 1000,
+                                                'possible_production_methods': lambda value: [self.production_methods[pm] if isinstance(pm, str) else pm for pm in value],
+                                                'unique_production_methods': lambda value: [list(self._parse_production_methods(tree).values()) for tree in (value if isinstance(value, list) else [value])],
                                             })
+        # replace str references in obsolete by references to the building objects
+        for building in list(buildings.values()):
+            building.obsolete = [buildings[building_name] for building_name in building.obsolete]
+
+        return buildings
 
     @cached_property
     def defines(self):
@@ -195,9 +204,19 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def production_methods(self):
-        return self.parse_nameable_entities('in_game/common/production_methods', ProductionMethod, extra_data_functions={
-            'input': lambda name, data: [Cost.create_with_goods(key, value) for key, value in data if key in self.goods],
-        })
+        return self._parse_production_methods('in_game/common/production_methods')
+
+    def _parse_production_methods(self, data_source: str | Tree):
+        if isinstance(data_source, list):
+            FileGenerator.warn(f'Multiple production method sections:{[[name for name, data in tree] for tree in data_source]}')
+            data_source = reduce(lambda t1, t2: t1.update(t2), data_source)
+        return self.parse_nameable_entities(data_source, ProductionMethod,
+                                            extra_data_functions={
+                                                'input': lambda name, data: [Cost.create_with_goods(key, value) for key, value in data if key in self.goods],
+                                            },
+                                            transform_value_functions={
+                                                'produced': lambda value: self.goods[value]
+                                            })
 
     @cached_property
     def script_values(self):

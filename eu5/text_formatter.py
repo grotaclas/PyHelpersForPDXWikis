@@ -1,6 +1,7 @@
 import re
 from decimal import Decimal
 
+from common.paradox_parser import Tree
 from eu5.eu5lib import Resource, HardcodedResource
 from eu5.game import eu5game
 from vic3.text_formatter import Vic3WikiTextFormatter
@@ -51,3 +52,14 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
 
     def format_cost(self, resource: str, value: int, icon_only=False):
         return self.format_resource(resource, value, cost=True, icon_only=icon_only)
+
+    def format_trigger(self, trigger: Tree|None):
+        if not trigger:
+            return ''
+        return 'Not implemented yet'
+
+    def format_effect(self, effect: Tree|None):
+        if not effect:
+            return ''
+        return 'Not implemented yet'
+

@@ -116,8 +116,20 @@ class Eu5AdvancedEntity(AdvancedEntity):
     def get_wiki_icon(self, size: str = '32px') -> str:
         return self.get_wiki_file_tag(size, link='self')
 
+
+class Trigger(Tree):
+    """Placeholder"""
+    pass
+
+
+class Effect(Tree):
+    """Placeholder"""
+    pass
+
+
 class Resource(IconMixin):
     pass
+
 
 class HardcodedResource(Resource, StrEnum):
     army_tradition = 'army_tradition'
@@ -237,7 +249,7 @@ class ResourceValue:
     def format(self, icon_only=False):
         if self.resource is None:
             return ''
-        return eu5game.parser.formatter.format_resource(self.resource, self.value, icon_only)
+        return eu5game.parser.formatter.format_resource(self.resource, self.value, icon_only=icon_only)
 
     def __str__(self):
         return self.format()
@@ -282,55 +294,66 @@ class NoPrice(Price):
 class ProductionMethod(NameableEntity):
     category: str
     input: list[Cost]
-    output: float
+    output: float = 0
     potential: Tree
-    produced: Good
+    produced: Good = None
+
+    def format(self, icon_only=False):
+        data = [
+            'Input:',
+            [cost.format(icon_only) for cost in self.input] if self.input else 'None',
+        ]
+        if self.output and self.produced:
+            data.append('Output:')
+            data.append(ResourceValue(self.produced, self.output).format(icon_only))
+        # return eu5game.parser.formatter.create_wiki_list(data)
+        return [self.display_name, data]
 
 
 class Building(Eu5AdvancedEntity):
-    AI_ignore_available_worker_flag: bool
-    AI_optimization_flag_coastal: bool
-    allow: Tree
-    allow_wrong_startup: bool
-    always_add_demands: bool
+    AI_ignore_available_worker_flag: bool = False
+    AI_optimization_flag_coastal: bool = False
+    allow: Trigger = None
+    allow_wrong_startup: bool = False
+    always_add_demands: bool = False
     build_time: int = 0 # scripted value
-    can_close: bool
-    can_destroy: Tree
+    can_close: bool = True
+    can_destroy: Trigger = None
     capital_country_modifier: list[Eu5Modifier]
     capital_modifier: list[Eu5Modifier]
     category: str
     city: bool = False
     construction_demand: GoodsDemand = NoPrice()
-    conversion_religion: str
-    country_potential: Tree
+    conversion_religion: str = None
+    country_potential: Trigger = None
     destroy_price: Price = NoPrice()
-    employment_size: float # scripted value
-    estate: str
-    forbidden_for_estates: bool
-    foreign_country_modifier: Tree
-    graphical_tags: list
-    in_empty: str
-    increase_per_level_cost: float
+    employment_size: float = 0
+    estate: str = ''
+    forbidden_for_estates: bool = False
+    foreign_country_modifier: list[Eu5Modifier]
+    graphical_tags: list[str] = []
+    in_empty: str = 'owned'
+    increase_per_level_cost: float = 0
     is_foreign: bool = False
-    lifts_fog_of_war: bool
-    location_potential: Tree
+    lifts_fog_of_war: bool = False
+    location_potential: Trigger = None
     market_center_modifier: list[Eu5Modifier]
     max_levels: int|str  # TODO: scripted integer
     modifier: list[Eu5Modifier]  # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
-    need_good_relation: bool
-    obsolete: 'Building'
-    on_built: Tree
-    on_destroyed: Tree
-    pop_size_created: str
+    need_good_relation: bool = False
+    obsolete: list['Building'] = []
+    on_built: Effect = None
+    on_destroyed: Effect = None
+    pop_size_created: int = 0
     pop_type: str
-    possible_production_methods: list
+    possible_production_methods: list[list[ProductionMethod]] = []
     price: Price
     raw_modifier: list[Eu5Modifier]
-    remove_if: Tree
-    rural_settlement: bool
-    stronger_power_projection: bool
+    remove_if: Trigger = None
+    rural_settlement: bool = False
+    stronger_power_projection: bool = False
     town: bool = False
-    unique_production_methods: Tree  # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
+    unique_production_methods: list[ProductionMethod] = [] # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
 
     icon_folder = 'BUILDINGS_ICON_PATH'
 
