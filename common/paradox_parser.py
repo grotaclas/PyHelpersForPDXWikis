@@ -245,7 +245,7 @@ class Tree(MutableMapping):
         """create a new tree which only contains the elements for which filter_func returns True"""
         return Tree({k: v for k, v in self.dictionary.items() if filter_func(k, v)})
 
-    def update(self, other: 'Tree'):
+    def update(self, other: 'Tree') -> 'Tree':
         """Update the tree with the key/value pairs from other. Existing keys are handled depending on the type
         of the value:
 
@@ -279,6 +279,7 @@ class Tree(MutableMapping):
                     self.dictionary[key] = value
             else:
                 self.dictionary[key] = value
+        return self
 
     def __getstate__(self):
         return self.dictionary

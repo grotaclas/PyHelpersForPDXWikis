@@ -98,12 +98,15 @@ class JominiParser(metaclass=ABCMeta):
             overwrite_duplicate_toplevel_keys = True
         else:
             overwrite_duplicate_toplevel_keys = False
+        if isinstance(folder, Tree):
+            tree = folder
+        else:
+            tree = self.parser.parse_folder_as_one_file(folder, overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys,
+                                                    workarounds=parsing_workarounds)
         entities = self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
                                                  previous_headings=[],
                                                  transform_value_functions=transform_value_functions,
-                                                 tree=self.parser.parse_folder_as_one_file(folder,
-                                                                                           overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys,
-                                                                                           workarounds=parsing_workarounds),
+                                                 tree=tree,
                                                  entity_level=entity_level, current_level=0,
                                                  level_headings_keys=level_headings_keys,
                                                  allow_empty_entities=allow_empty_entities)
@@ -252,6 +255,8 @@ class JominiParser(metaclass=ABCMeta):
     def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
         modifiers = []
         for mod_name, mod_value in data:
+            if isinstance(mod_value, list):
+                mod_value = sum(mod_value)
             mod_type = self.get_modifier_type_or_default(mod_name)
             mod_value = self._parse_mod_value(mod_type, mod_value)
             modifiers.append(modifier_class(mod_name, modifier_type=mod_type, value=mod_value))
