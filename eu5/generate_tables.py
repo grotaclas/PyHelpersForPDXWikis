@@ -120,6 +120,67 @@ class TableGenerator(Eu5FileGenerator):
                                      one_line_per_cell=True,
                                      remove_empty_columns=True,
                                      )
+    def create_cargo_tenplate_calls(self, data: list[dict[str, any]], template_name: str):
+        lines = []
+        for item_data in data:
+            lines.append(f'=== {item_data["display_name"]} ===')
+            lines.append(f'{{{{{template_name}')
+            for column, value in item_data.items():
+                lines.append(f'|{column}={value}')
+            lines.append('}}')
+        return '\n'.join(lines)
+
+    def generate_building_table_cargo(self):
+        sorted_buildings = sorted(
+            self.parser.buildings.values(),
+            #[good for good in self.parser.goods.values() if good.category == category and good.method == method]
+            key=attrgetter('display_name')
+            )
+        buildings = [{
+            'name': building.name,
+            'display_name': building.display_name,
+            'description': building.description,
+            'icon': building.get_wiki_filename(),
+            'modifier': self.format_modifier_section('modifier', building),  # modifier: list[eu5.eu5lib.Eu5Modifier]
+            'allow': self.formatter.format_trigger(building.allow),  # allow: <class 'eu5.eu5lib.Trigger'>
+            'build_time': building.build_time,  # build_time: <class 'int'>
+            'can_destroy': self.formatter.format_trigger(building.can_destroy),  # can_destroy: <class 'eu5.eu5lib.Trigger'>
+            'capital_country_modifier': self.format_modifier_section('capital_country_modifier', building),
+            # capital_country_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'capital_modifier': self.format_modifier_section('capital_modifier', building),  # capital_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'category': building.category,  # category: <class 'str'>
+            'city': 1 if building.city else 0,  # city: <class 'bool'>
+            'construction_demand': building.construction_demand.format(icon_only=True) if hasattr(building.construction_demand,
+                                                                                                  'format') else building.construction_demand,
+            # construction_demand: <class 'eu5.eu5lib.GoodsDemand'>
+            'country_potential': self.formatter.format_trigger(building.country_potential),  # country_potential: <class 'eu5.eu5lib.Trigger'>
+            'destroy_price': building.destroy_price.format(icon_only=True) if hasattr(building.destroy_price, 'format') else building.destroy_price,
+            # destroy_price: <class 'eu5.eu5lib.Price'>
+            'employment_size': building.employment_size,  # employment_size: <class 'float'>
+            'estate': building.estate,  # estate: <class 'str'>
+            'foreign_country_modifier': self.format_modifier_section('foreign_country_modifier', building),
+            # foreign_country_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'graphical_tags': ';'.join([graphical_tags for graphical_tags in building.graphical_tags]),  # graphical_tags: list[str]
+            'location_potential': self.formatter.format_trigger(building.location_potential),  # location_potential: <class 'eu5.eu5lib.Trigger'>
+            'market_center_modifier': self.format_modifier_section('market_center_modifier', building),  # market_center_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'max_levels': building.max_levels,  # max_levels: int | str
+            'obsolete': ';'.join([obsolete.name if obsolete else '' for obsolete in building.obsolete]),  # obsolete: list[eu5.eu5lib.Building]
+            'on_built': self.formatter.format_effect(building.on_built),  # on_built: <class 'eu5.eu5lib.Effect'>
+            'on_destroyed': self.formatter.format_effect(building.on_destroyed),  # on_destroyed: <class 'eu5.eu5lib.Effect'>
+            'pop_type': building.pop_type,  # pop_type: <class 'str'>
+            'possible_production_methods': self.create_wiki_list(
+                [pm.format(icon_only=True) for pm in building.possible_production_methods]),  # possible_production_methods: list[eu5.eu5lib.ProductionMethod]
+            'price': building.price.format(icon_only=True) if hasattr(building.price, 'format') else building.price,  # price: <class 'eu5.eu5lib.Price'>
+            'raw_modifier': self.format_modifier_section('raw_modifier', building),  # raw_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'remove_if': self.formatter.format_trigger(building.remove_if),  # remove_if: <class 'eu5.eu5lib.Trigger'>
+            'rural_settlement': 1 if building.rural_settlement else 0,  # rural_settlement: <class 'bool'>
+            'town': 1 if building.town else 0,  # town: <class 'bool'>
+            'unique_production_methods': ';'.join([self.create_wiki_list(
+                [pm.format(icon_only=True) for pm in pms]) for pms in building.unique_production_methods]),
+            # unique_production_methods: list[list[eu5.eu5lib.ProductionMethod]]
+            'notes': self.get_building_notes(building),
+        } for building in sorted_buildings]
+        return self.create_cargo_tenplate_calls(buildings, 'Building')
 
     def generate_concept_tables(self):
         concepts = sorted(self.parser.game_concepts.values(), key=attrgetter('family', 'display_name'))

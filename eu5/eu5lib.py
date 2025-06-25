@@ -346,14 +346,14 @@ class Building(Eu5AdvancedEntity):
     on_destroyed: Effect = None
     pop_size_created: int = 0
     pop_type: str
-    possible_production_methods: list[list[ProductionMethod]] = []
+    possible_production_methods: list[ProductionMethod] = []
     price: Price
     raw_modifier: list[Eu5Modifier]
     remove_if: Trigger = None
     rural_settlement: bool = False
     stronger_power_projection: bool = False
     town: bool = False
-    unique_production_methods: list[ProductionMethod] = [] # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
+    unique_production_methods: list[list[ProductionMethod]] = [] # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
 
     icon_folder = 'BUILDINGS_ICON_PATH'
 
