@@ -250,6 +250,10 @@ class Vic3Parser(JominiParser):
         return [self.technologies[tech_name] for tech_name in section]
 
     @cached_property
+    def modifier_types(self) -> dict[str, Vic3ModifierType]:
+        return self.parse_nameable_entities('common/modifier_type_definitions', Vic3ModifierType, extra_data_functions={'parser': lambda name, data: self})
+
+    @cached_property
     def named_modifiers(self) -> dict[str, NamedModifier]:
         return self.parse_advanced_entities('common/static_modifiers', NamedModifier, extra_data_functions={
             'modifier': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'}))

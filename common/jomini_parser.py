@@ -245,8 +245,6 @@ class JominiParser(metaclass=ABCMeta):
 
     def _parse_mod_value(self, mod_type: ModifierType, mod_value: any):
         """Some post-processing for modifier values. Currently only implements resolving script values"""
-        if mod_type.display_name == 'Tax Collection':
-            pass
         if isinstance(mod_value, str) and mod_value in self.script_values:
             return self.script_values[mod_value]
         else:
