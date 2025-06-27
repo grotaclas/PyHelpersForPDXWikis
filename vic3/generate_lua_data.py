@@ -3,6 +3,8 @@
 Generates lua data modules
 
 """
+import re
+
 import luadata
 import sys
 
@@ -47,6 +49,37 @@ class LuaDataGenerator(Vic3FileGenerator):
 
         return result
 
+    def generate_modifier_data_lua(self):
+        """Desired format is:
+
+         modifier_script_name = {
+           loc = "Modifier localization",
+           percent=true, --if marked as percent=yes in files
+           boolean=true, --if marked as boolean=yes in files
+           positive="green", negative="red", --if marked color=good in files
+           positive="red", negative="green", --if marked color=bad in files
+           icon = icons.<icon>, --if an icon is associated with the loc/modifier
+         },"""
+        result = {}
+        for mod_type in self.parser.modifier_types.values():
+            mod_data = { 'loc': self.parser.formatter.strip_formatting(mod_type.display_name),}
+            if mod_type.percent:
+                mod_data['percent'] = True
+            if mod_type.boolean:
+                mod_data['boolean'] = True
+            if mod_type.good:
+                mod_data['positive'] = 'green'
+                mod_data['negative'] = 'red'
+            elif not mod_type.good and not mod_type.neutral:
+                mod_data['positive'] = 'red'
+                mod_data['negative'] = 'green'
+            match = re.match(r'\{\{icon\|([^|}]+)[|}]', mod_type.display_name)
+            if match:
+                mod_data['icon'] = match.group(1)
+
+            result[mod_type.name] = mod_data
+
+        return luadata.serialize(result, indent=' ')
 
     def generate_character_data_lua(self):
         """experimental unfinished"""
