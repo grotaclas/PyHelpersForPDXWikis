@@ -172,6 +172,7 @@ class WikiTextFormatter:
         """strip HTML formatting and some common wiki syntax. Replace links by their anchor texts"""
         allowed_characters_in_final_output = r'-—\w. \'&()!:'
         stripped_text = re.sub(r'\[https?:[^] ]+ ([^]]+)]', r'\1', re.sub(r'\[\[([^]|]+\|)?([^]|]+)]]', r'\2', re.sub(r'<[^<]+?>', '', re.sub(r' <[^<]+?> ', ' ', text))))
+        stripped_text = re.sub(r'\{\{icon\|[^}]+}}\s*(&nbsp;)?\s*', '', stripped_text, re.IGNORECASE)
         if strip_newlines:
             stripped_text = re.sub(r'\s*[\r\n]+\s*',' ', stripped_text)
         else:
