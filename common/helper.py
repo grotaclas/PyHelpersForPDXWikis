@@ -21,13 +21,19 @@ class Helper:
                 else:
                     for n2, d2 in data:
                         if depth == 1:
+                            if n2 in ignored_toplevel_keys:
+                                continue
                             self._update_keys_from_data(d2, keys, ignored_keys)
                         else:
                             for n3, d3 in d2:
                                 if depth == 2:
+                                    if n3 in ignored_toplevel_keys:
+                                        continue
                                     self._update_keys_from_data(d3, keys, ignored_keys)
                                 else:
                                     for n4, d4 in d3:
+                                        if n4 in ignored_toplevel_keys:
+                                            continue
                                         self._update_keys_from_data(d4, keys, ignored_keys)
         print('==Examples==')
         for key, values in sorted(keys.items()):
