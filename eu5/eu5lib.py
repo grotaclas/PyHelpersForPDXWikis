@@ -394,16 +394,58 @@ class Eu5GameConcept(GameConcept):
         super().__init__(name, display_name, **kwargs)
 
 
+class LawPolicy(Eu5AdvancedEntity):
+    allow: Trigger
+    country_modifier: list[Eu5Modifier]
+    estate_preferences: list[str] # estate
+    months: int = 0
+    years: int = 0
+    weeks: int = 0
+    days: int = 0
+    on_activate: Effect
+    on_deactivate: Effect
+    on_pay_price: Effect
+    on_fully_activated: Effect
+    potential: Trigger
+    price: Price = NoPrice()
+
+    # for IO laws, but not an IO attribute
+    diplomatic_capacity_cost: str
+    gold: bool # for HRE laws?
+    manpower: bool # for HRE laws?
+
+    # IO attributes TODO: handle in IOs
+    allow_member_annexation: bool
+    annexation_speed: any  # possible types: {<class 'int'>, <class 'float'>}
+    can_build_buildings_in_members: bool
+    can_build_rgos_in_members: bool
+    can_build_roads_in_members: bool
+    has_parliament: bool
+    international_organization_modifier: any  # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
+    leader_change_method: str
+    leader_change_trigger_type: str
+    leader_type: str
+    leadership_election_resolution: str
+    months_between_leader_changes: int
+    opinion_bonus: int
+    payments_implemented: list
+
+    trust_bonus: int
+    wants_this_policy_bias: any  # possible types: {<class 'list'>, <class 'int'>, <class 'common.paradox_parser.Tree'>}
+
 class Law(Eu5AdvancedEntity):
     allow: Tree  # trigger
     law_category: str
-    law_country_group: str
-    law_gov_group: str
-    law_religion_group: list
-    locked: Tree  # trigger
-    potential: Tree  # trigger
+    law_country_group: str # tag
+    law_gov_group: str # gov type
+    law_religion_group: list[str] # religions
+    locked: Trigger  # trigger
+    potential: Trigger  # trigger
     requires_vote: bool
     type: str
+    unique: bool # no Idea what this does
+
+    policies: dict[str, LawPolicy]
 
     icon_folder = 'LAW_ICON_PATH'
 
