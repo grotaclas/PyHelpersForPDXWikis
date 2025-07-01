@@ -4,11 +4,10 @@ from collections.abc import Iterator, Callable
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import cached_property
-from itertools import groupby
 from pprint import pprint, pformat
 
 from PIL import Image
-from common.paradox_lib import AttributeEntity, NameableEntity, IconMixin
+from common.paradox_lib import AttributeEntity, NameableEntity, IconMixin, unsorted_groupby
 from common.paradox_parser import Tree
 from millennia.game import millenniagame
 
@@ -16,20 +15,6 @@ from millennia.game import millenniagame
 def convert_xml_tag_to_python_attribute(s: str):
     """ lowercase the first letter"""
     return s[0].lower() + s[1:]
-
-
-def unsorted_groupby(iterable, key):
-    """
-    wrapper around itertools.groupby which works even if values with the same keys are non-consecutive
-
-      iterable
-        Elements to divide into groups according to the key function.
-      key
-        A function for computing the group category for each element.
-        If the key function is not specified or is None, the element itself
-        is used for grouping.
-    """
-    return groupby(sorted(iterable, key=key), key=key)
 
 
 class MillenniaIconMixin(IconMixin):

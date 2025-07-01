@@ -2,6 +2,7 @@ import json
 import re
 from collections import ChainMap
 from dataclasses import dataclass
+from itertools import groupby
 
 from colormath.color_conversions import convert_color
 from colormath.color_objects import sRGBColor, HSVColor
@@ -18,6 +19,20 @@ try:
 except:  # when used by ck2utils
     from localpaths import cachedir
     CACHEPATH = cachedir
+
+
+def unsorted_groupby(iterable, key):
+    """
+    wrapper around itertools.groupby which works even if values with the same keys are non-consecutive
+
+      iterable
+        Elements to divide into groups according to the key function.
+      key
+        A function for computing the group category for each element.
+        If the key function is not specified or is None, the element itself
+        is used for grouping.
+    """
+    return groupby(sorted(iterable, key=key), key=key)
 
 
 class Game:
