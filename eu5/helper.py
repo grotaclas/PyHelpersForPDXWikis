@@ -49,6 +49,11 @@ class Eu5Helper(Helper):
                     return f"';'.join([{self.get_value_formatting_code(None, attribute_name, type_args[0], attribute_loc, cargo)} for {attribute_name} in {attribute_access}])"
                 else:
                     return f"self.create_wiki_list([{self.get_value_formatting_code(None, attribute_name, type_args[0], attribute_loc, cargo)} for {attribute_name} in {attribute_access}])"
+        elif origin == dict:
+            if cargo:
+                return f"';'.join([{self.get_value_formatting_code(None, attribute_name, type_args[1], attribute_loc, cargo)} for {attribute_name} in {attribute_access}])"
+            else:
+                return f"self.create_wiki_list([{self.get_value_formatting_code(None, attribute_name, type_args[1], attribute_loc, cargo)} for {attribute_name} in {attribute_access}.values()])"
         if attribute_type in [int, str, float]:
             return attribute_access
         elif attribute_type == bool:
@@ -56,6 +61,8 @@ class Eu5Helper(Helper):
                 return f'1 if {attribute_access} else 0'
             else:
                 return f"'[[File:Yes.png|20px|{attribute_loc}]]' if {attribute_access} else '[[File:No.png|20px|Not {attribute_loc}]]'"
+        elif attribute_type == any:
+            return attribute_access
         elif issubclass(attribute_type, Trigger):
             return f'self.formatter.format_trigger({attribute_access})'
         elif issubclass(attribute_type, Effect):
@@ -105,9 +112,10 @@ class Eu5Helper(Helper):
                        'airPollution': 'Air pollution',
                        'noisePollution': 'Noise pollution'
                        }
-        sub_attributes = {}
+        default_values = entities[0].default_values
         main_class = entities[0].__class__.__name__
         columns = self.get_possible_table_columns(entities)
+        result_var_name = f'{var_name}_table_data'
         print('==table generator code==')
         if cargo:
             cargo_declare_lines = [
@@ -136,6 +144,7 @@ class Eu5Helper(Helper):
                 cargo_preview_lines.append('! icon || {{{icon|}}}')
                 print(f"'icon': {var_name}.get_wiki_filename(),")
         else:
+            print(f'{result_var_name} = [{{')
             if 'icon' in columns and 'description' in columns:
                 print(f"'Name': f'{{{{{{{{iconbox|{{{var_name}.display_name}}|{{{var_name}.description}}|w=300px|image={{{var_name}.get_wiki_filename()}}}}}}}}}}',")
             else:
@@ -160,7 +169,11 @@ class Eu5Helper(Helper):
                 loc = self.parser.localize(attribute)
             else:
                 loc = attribute.replace('_', ' ').title()
-            print(f"'{loc}': {self.get_value_formatting_code(var_name, attribute, typ, loc, cargo)},  # {attribute}: {typ}")
+            if attribute in default_values and default_values[attribute] is None and typ not in [Effect, Trigger]:
+                none_check = f"'' if {var_name}.{attribute} is None else "
+            else:
+                none_check = ''
+            print(f"'{loc}': {none_check}{self.get_value_formatting_code(var_name, attribute, typ, loc, cargo)},  # {attribute}: {typ}")
             # else:
             #     print(f"'{types}': {var_name}.{attribute},")
 
@@ -171,6 +184,13 @@ class Eu5Helper(Helper):
             print('\n ==Cargo preview table==\n')
             cargo_preview_lines.append('|}')
             print('\n'.join(cargo_preview_lines))
+        else:
+            source_var_name = f'{var_name}s'
+            print(f'}} for {var_name} in {source_var_name}]')
+            print(f"""return self.make_wiki_table({result_var_name}, table_classes=['mildtable', 'plainlist'],
+                                        one_line_per_cell=True,
+                                        remove_empty_columns=True,
+                                        )""")
         # for attribute, dic in sub_attributes.items():
         #     for sub_attribute, loc in dic.items():
         #         if attribute in extra_data and sub_attribute in extra_data[attribute]:
@@ -179,23 +199,23 @@ class Eu5Helper(Helper):
         #             print(f"'{loc}': {var_name}.{attribute}.{sub_attribute} if '{attribute}' in {var_name} else '',")
 
 if __name__ == '__main__':
-    Eu5Helper().find_all_keys_in_folder('in_game/common/laws',
-                                        depth=1,
-                                        ignored_toplevel_keys=[
-                                            'allow',
-                                            'law_category',
-                                            'law_country_group',
-                                            'law_gov_group',
-                                            'law_religion_group',
-                                            'locked',
-                                            'potential',
-                                            'requires_vote',
-                                            'type',
-                                            'unique',
-                                        ]
-                                        # , ignored_keys=list(eu5game.parser.goods.keys())
-                                        )
-    exit()
+    # Eu5Helper().find_all_keys_in_folder('in_game/common/laws',
+    #                                     depth=1,
+    #                                     ignored_toplevel_keys=[
+    #                                         'allow',
+    #                                         'law_category',
+    #                                         'law_country_group',
+    #                                         'law_gov_group',
+    #                                         'law_religion_group',
+    #                                         'locked',
+    #                                         'potential',
+    #                                         'requires_vote',
+    #                                         'type',
+    #                                         'unique',
+    #                                     ]
+    #                                     # , ignored_keys=list(eu5game.parser.goods.keys())
+    #                                     )
+    # exit()
     building = next(iter(eu5game.parser.buildings.values()))
     messages_for_non_default_values = {
         'always_add_demands': 'Demand does not scale with workers',
@@ -214,4 +234,8 @@ if __name__ == '__main__':
         'stronger_power_projection': 'Requires more power projection to construct in a foreign location',
     }
 
-    Eu5Helper().print_possible_table_columns(eu5game.parser.buildings, 'building', set(messages_for_non_default_values.keys()), cargo=True)
+    Eu5Helper().print_possible_table_columns(list(eu5game.parser.laws.values())[0].policies,
+                                             'policy',
+                                             # ignored_attributes = set(messages_for_non_default_values.keys()),
+                                             # cargo=True
+                                             )
