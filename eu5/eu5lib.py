@@ -71,6 +71,10 @@ class Eu5Modifier(Modifier):
     modifier_type: Eu5ModifierType
 
     def format_for_wiki(self):
+        if self.name == 'potential_trigger':
+            return 'generating of triggers not supported yet'  # @TODO
+        elif self.name == 'scale':
+            return 'generating of triggers not supported yet'  # @TODO
         value_and_name = super().format_for_wiki()
         return f'[[File:{self.modifier_type.get_wiki_filename()}|32px]] {value_and_name}'
 
@@ -395,55 +399,55 @@ class Eu5GameConcept(GameConcept):
 
 
 class LawPolicy(Eu5AdvancedEntity):
-    allow: Trigger
+    allow: Trigger = None
     country_modifier: list[Eu5Modifier]
-    estate_preferences: list[str] # estate
+    estate_preferences: list[str] = [] # estate
     months: int = 0
     years: int = 0
     weeks: int = 0
     days: int = 0
-    on_activate: Effect
-    on_deactivate: Effect
-    on_pay_price: Effect
-    on_fully_activated: Effect
-    potential: Trigger
+    on_activate: Effect = None
+    on_deactivate: Effect = None
+    on_pay_price: Effect = None
+    on_fully_activated: Effect = None
+    potential: Trigger = None
     price: Price = NoPrice()
+    wants_this_policy_bias: any = None  # scripted number
 
     # for IO laws, but not an IO attribute
-    diplomatic_capacity_cost: str
-    gold: bool # for HRE laws?
-    manpower: bool # for HRE laws?
+    diplomatic_capacity_cost: str = None
+    gold: bool = None # for HRE laws?
+    manpower: bool = None # for HRE laws?
 
     # IO attributes TODO: handle in IOs
-    allow_member_annexation: bool
-    annexation_speed: any  # possible types: {<class 'int'>, <class 'float'>}
-    can_build_buildings_in_members: bool
-    can_build_rgos_in_members: bool
-    can_build_roads_in_members: bool
-    has_parliament: bool
-    international_organization_modifier: any  # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
-    leader_change_method: str
-    leader_change_trigger_type: str
-    leader_type: str
-    leadership_election_resolution: str
-    months_between_leader_changes: int
-    opinion_bonus: int
-    payments_implemented: list
+    allow_member_annexation: bool = None
+    annexation_speed: float = None
+    can_build_buildings_in_members: bool = None
+    can_build_rgos_in_members: bool = None
+    can_build_roads_in_members: bool = None
+    has_parliament: bool = None
+    international_organization_modifier: list[Eu5Modifier]
+    leader_change_method: str = None
+    leader_change_trigger_type: str = None
+    leader_type: str = None
+    leadership_election_resolution: str = None
+    months_between_leader_changes: int = None
+    opinion_bonus: int = None
+    payments_implemented: list[str] = []
 
-    trust_bonus: int
-    wants_this_policy_bias: any  # possible types: {<class 'list'>, <class 'int'>, <class 'common.paradox_parser.Tree'>}
+    trust_bonus: int = None  # only used once in a PU law. Not sure if it is specific for policies or also for IOs
 
 class Law(Eu5AdvancedEntity):
-    allow: Tree  # trigger
-    law_category: str
-    law_country_group: str # tag
-    law_gov_group: str # gov type
-    law_religion_group: list[str] # religions
-    locked: Trigger  # trigger
-    potential: Trigger  # trigger
-    requires_vote: bool
-    type: str
-    unique: bool # no Idea what this does
+    allow: Trigger = None  # trigger
+    law_category: str = ''
+    law_country_group: str = None # tag
+    law_gov_group: str = None # gov type
+    law_religion_group: list[str] = [] # religions
+    locked: Trigger = None  # trigger
+    potential: Trigger = None  # trigger
+    requires_vote: bool = None
+    type: str = ''
+    unique: bool = None# no Idea what this does
 
     policies: dict[str, LawPolicy]
 
@@ -451,3 +455,27 @@ class Law(Eu5AdvancedEntity):
 
     def get_wiki_filename_prefix(self) -> str:
         return ''
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        super().__init__(name, display_name, **kwargs)
+        if isinstance(self.law_category, list):
+            self.law_category = self.law_category[0]
+
+    @cached_property
+    def io_types(self) -> list[str]:
+        if self.type != 'international_organization':
+            return []
+        return [typ.removeprefix('international_organization_type:') for typ in self.potential.find_all_recursively('international_organization_type')]
+
+    @cached_property
+    def io_type(self) -> str:
+        if len(self.io_types) == 0:
+            return ''
+        elif len(self.io_types) == 1:
+            return self.io_types[0]
+        else:
+            return 'multiple'
+
+    @cached_property
+    def law_category_loc(self):
+        return eu5game.parser.formatter.resolve_nested_localizations(eu5game.parser.localize(self.law_category.upper() + '_LAW_CATEGORY'))

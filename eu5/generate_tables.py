@@ -1,11 +1,14 @@
+from collections.abc import Iterable
+
 import itertools
 from functools import cached_property
 from operator import attrgetter
 
 import sys
 
+from common.paradox_lib import unsorted_groupby
 from eu5.eu5_file_generator import Eu5FileGenerator
-from eu5.eu5lib import GoodCategory, Eu5GameConcept, Price, Building, ProductionMethod
+from eu5.eu5lib import GoodCategory, Eu5GameConcept, Price, Building, ProductionMethod, Law, LawPolicy
 from eu5.text_formatter import Eu5WikiTextFormatter
 
 
@@ -240,6 +243,101 @@ class TableGenerator(Eu5FileGenerator):
                                      remove_empty_columns=True,
                                      )
 
+    def generate_law_tables(self):
+        laws_per_category = {cat: [l for l in self.parser.laws.values() if l.law_category == cat] for cat in sorted(set(law.law_category for law in self.parser.laws.values()))}
+        result = []
+        for category, laws in laws_per_category.items():
+            result.append(f'=== {category} ===')
+            result.append(self.get_law_table(sorted(laws, key=attrgetter('display_name'))))
+        return result
+
+    def get_law_tables(self):
+        result = {}
+        for (io_type, law_category), laws in unsorted_groupby(self.parser.laws.values(), key=attrgetter('io_type', 'law_category')):
+            if io_type == '':
+                io_type_section = ''
+            else:
+                io_type_section = f'io_{io_type}_'
+            result[f'laws_{io_type_section}{law_category}'] = self.get_law_table(laws)
+
+        return result
+
+    def get_law_table(self, laws: Iterable[Law]):
+        law_data = [{
+            'Name': f'{{{{iconbox|{law.display_name}|{law.description}|w=300px|image={law.get_wiki_filename()}}}}}',
+            'Allow': self.formatter.format_trigger(law.allow),  # allow: <class 'common.paradox_parser.Tree'>
+            # 'Law Category': law.law_category_loc,  # law_category: <class 'str'>
+            'Law Country Group': self.parser.localize(law.law_country_group) if law.law_country_group else '',  # law_country_group: <class 'str'>
+            'Law Gov Group': self.parser.localize(law.law_gov_group) if law.law_gov_group else '',  # law_gov_group: <class 'str'>
+            'Law Religion Group': self.create_wiki_list([self.parser.localize(law_religion_group) for law_religion_group in law.law_religion_group]),  # law_religion_group: list[str]
+            'Locked': self.formatter.format_trigger(law.locked),  # locked: <class 'eu5.eu5lib.Trigger'>
+            'Potential': self.formatter.format_trigger(law.potential),  # potential: <class 'eu5.eu5lib.Trigger'>
+            'Requires Vote': '' if law.requires_vote is None else ('[[File:Yes.png|20px|Requires Vote]]' if law.requires_vote else '[[File:No.png|20px|Not Requires Vote]]'),
+            # requires_vote: <class 'bool'>
+            # 'Type': law.type,  # type  'str'
+            'Unique': '' if law.unique is None else '[[File:Yes.png|20px|Unique]]' if law.unique else '[[File:No.png|20px|Not Unique]]',  # unique: <class 'bool'>
+            'Policies': self.get_law_policy_table(law.policies.values()),
+        } for law in laws]
+        return self.make_wiki_table(law_data, table_classes=['mildtable', 'plainlist'],
+                                    one_line_per_cell=True,
+                                    remove_empty_columns=True,
+                                    )
+
+    def get_law_policy_table(self, policies: Iterable[LawPolicy]):
+        policy_table_data = [{
+            'width=300px | Name': f"'''{policy.display_name}'''\n\n<div style=\"font-style: italic; font-size:smaller;\">{policy.description}</div>",
+            'Allow': self.formatter.format_trigger(policy.allow),  # allow: <class 'eu5.eu5lib.Trigger'>
+            'Country Modifier': self.format_modifier_section('country_modifier', policy),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Estate Preferences': self.create_wiki_list([estate_preferences for estate_preferences in policy.estate_preferences]),
+            # estate_preferences: list[str]
+            'Months': policy.months,  # months: <class 'int'>
+            'Years': policy.years,  # years: <class 'int'>
+            'Weeks': policy.weeks,  # weeks: <class 'int'>
+            'Days': policy.days,  # days: <class 'int'>
+            'On Activate': self.formatter.format_effect(policy.on_activate),  # on_activate: <class 'eu5.eu5lib.Effect'>
+            'On Deactivate': self.formatter.format_effect(policy.on_deactivate),  # on_deactivate: <class 'eu5.eu5lib.Effect'>
+            'On Pay Price': self.formatter.format_effect(policy.on_pay_price),  # on_pay_price: <class 'eu5.eu5lib.Effect'>
+            'On Fully Activated': self.formatter.format_effect(policy.on_fully_activated),  # on_fully_activated: <class 'eu5.eu5lib.Effect'>
+            'Potential': self.formatter.format_trigger(policy.potential),  # potential: <class 'eu5.eu5lib.Trigger'>
+            'Price': policy.price.format(icon_only=True) if hasattr(policy.price, 'format') else policy.price,  # price: <class 'eu5.eu5lib.Price'>
+            # TODO: AI preference wants_this_policy_bias should be included eventually
+            # 'Wants This Policy Bias': '' if policy.wants_this_policy_bias is None else policy.wants_this_policy_bias,
+            # wants_this_policy_bias: <built-in function any>
+            'Diplomatic Capacity Cost': '' if policy.diplomatic_capacity_cost is None else policy.diplomatic_capacity_cost,
+            # diplomatic_capacity_cost: <class 'str'>
+            'Gold': '' if policy.gold is None else '[[File:Yes.png|20px|Gold]]' if policy.gold else '[[File:No.png|20px|Not Gold]]',  # gold: <class 'bool'>
+            'Manpower': '' if policy.manpower is None else '[[File:Yes.png|20px|Manpower]]' if policy.manpower else '[[File:No.png|20px|Not Manpower]]',
+            # manpower: <class 'bool'>
+            'Allow Member Annexation': '' if policy.allow_member_annexation is None else '[[File:Yes.png|20px|Allow Member Annexation]]' if policy.allow_member_annexation else '[[File:No.png|20px|Not Allow Member Annexation]]',
+            # allow_member_annexation: <class 'bool'>
+            'Annexation Speed': '' if policy.annexation_speed is None else policy.annexation_speed,  # annexation_speed: <class 'float'>
+            'Can Build Buildings In Members': '' if policy.can_build_buildings_in_members is None else '[[File:Yes.png|20px|Can Build Buildings In Members]]' if policy.can_build_buildings_in_members else '[[File:No.png|20px|Not Can Build Buildings In Members]]',
+            # can_build_buildings_in_members: <class 'bool'>
+            'Can Build Rgos In Members': '' if policy.can_build_rgos_in_members is None else '[[File:Yes.png|20px|Can Build Rgos In Members]]' if policy.can_build_rgos_in_members else '[[File:No.png|20px|Not Can Build Rgos In Members]]',
+            # can_build_rgos_in_members: <class 'bool'>
+            'Can Build Roads In Members': '' if policy.can_build_roads_in_members is None else '[[File:Yes.png|20px|Can Build Roads In Members]]' if policy.can_build_roads_in_members else '[[File:No.png|20px|Not Can Build Roads In Members]]',
+            # can_build_roads_in_members: <class 'bool'>
+            'Has Parliament': '' if policy.has_parliament is None else '[[File:Yes.png|20px|Has Parliament]]' if policy.has_parliament else '[[File:No.png|20px|Not Has Parliament]]',
+            # has_parliament: <class 'bool'>
+            'International Organization Modifier': self.format_modifier_section('international_organization_modifier', policy),
+            # international_organization_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Leader Change Method': '' if policy.leader_change_method is None else policy.leader_change_method,  # leader_change_method: <class 'str'>
+            'Leader Change Trigger Type': '' if policy.leader_change_trigger_type is None else policy.leader_change_trigger_type,
+            # leader_change_trigger_type: <class 'str'>
+            'Leader Type': '' if policy.leader_type is None else policy.leader_type,  # leader_type: <class 'str'>
+            'Leadership Election Resolution': '' if policy.leadership_election_resolution is None else policy.leadership_election_resolution,
+            # leadership_election_resolution: <class 'str'>
+            'Months Between Leader Changes': '' if policy.months_between_leader_changes is None else policy.months_between_leader_changes,
+            # months_between_leader_changes: <class 'int'>
+            'Opinion Bonus': '' if policy.opinion_bonus is None else policy.opinion_bonus,  # opinion_bonus: <class 'int'>
+            'Payments Implemented': self.create_wiki_list(policy.payments_implemented),
+            # payments_implemented: list[str]
+            'Trust Bonus': '' if policy.trust_bonus is None else policy.trust_bonus,  # trust_bonus: <class 'int'>
+        } for policy in policies]
+        return "\n" + self.make_wiki_table(policy_table_data, table_classes=['mildtable', 'plainlist'],
+                                    one_line_per_cell=True,
+                                    remove_empty_columns=True,
+                                    )
 
 if __name__ == '__main__':
     TableGenerator().run(sys.argv)

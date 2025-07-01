@@ -191,7 +191,15 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def laws(self):
-        return self.parse_advanced_entities('in_game/common/laws', Law)
+        return self.parse_advanced_entities('in_game/common/laws', Law, extra_data_functions={
+            'policies': self._parse_law_policies,
+        })
+
+    def _parse_law_policies(self, name: str, data: Tree) -> list[LawPolicy]:
+        possible_law_attributes = Law.all_annotations().keys()
+        policy_data = data.filter_elements(lambda k, v: k not in possible_law_attributes)
+        return self.parse_advanced_entities(policy_data, LawPolicy)
+
 
     def parse_dlc_from_conditions(self, conditions):
         pass
