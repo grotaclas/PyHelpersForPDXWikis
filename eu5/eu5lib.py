@@ -85,7 +85,11 @@ class Eu5AdvancedEntity(AdvancedEntity):
     "either the name of the define in NGameIcons or the folder name relative to game/main_menu/gfx/interface/icons"
 
     def get_icon_filename(self) -> str:
-        return f'{self.name}.dds'
+        if self.icon:
+            name = self.icon
+        else:
+            name = self.name
+        return f'{name}.dds'
 
     def get_icon_path(self) -> Path:
         base_icon_folder = eu5game.game_path / 'game/main_menu/gfx/interface/icons'
@@ -129,6 +133,42 @@ class Trigger(Tree):
 class Effect(Tree):
     """Placeholder"""
     pass
+
+
+class Advance(Eu5AdvancedEntity):
+    age: str
+    ai_preference_tags: list = []
+    ai_weight: Tree = None
+    allow: Trigger = None
+    allow_children: bool = True
+    country_type: str = None
+    depth: int = None
+    age_specialization: str = None  # called "for" in the files, but that's a reserved word in python
+    government: str = None
+    in_tree_of: any  # possible types: {<class 'list'>, <class 'str'>}
+    modifier_while_progressing: Tree
+    potential: Trigger = None
+    requires: list['Advance'] = []
+    research_cost: float  # percentage?
+    starting_technology_level: int = 0
+    unlock_ability: list[str] = []
+    unlock_building: list[str] = []
+    unlock_cabinet_action: list[str] = []
+    unlock_casus_belli: list[str] = []
+    unlock_country_interaction: list[str] = []
+    unlock_diplomacy: list[str] = []
+    unlock_estate_privilege: list[str] = []
+    unlock_government_reform: list[str] = []
+    unlock_heir_selection: list[str] = []
+    unlock_law: list[str] = []
+    unlock_levy: list[str] = []
+    unlock_policy: list[str] = []
+    unlock_production_method: list[str] = []
+    unlock_road_type: list[str] = []
+    unlock_subject_type: list[str] = []
+    unlock_unit: list[str] = []
+
+    icon_folder = 'ADVANCE_ICON_PATH'
 
 
 class Resource(IconMixin):

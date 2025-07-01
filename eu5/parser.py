@@ -118,6 +118,14 @@ class Eu5Parser(JominiParser):
         return value
 
     @cached_property
+    def advances(self):
+        return self.parse_advanced_entities('in_game/common/advances', Advance,
+                                            extra_data_functions={
+                                                'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
+                                            },
+                                            )
+
+    @cached_property
     def buildings(self):
         buildings = self.parse_advanced_entities('in_game/common/building_types', Building,
                                             transform_value_functions={
