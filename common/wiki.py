@@ -133,6 +133,12 @@ class WikiTextFormatter:
         return f"''“{text}”''"
 
     @staticmethod
+    def create_section_heading(title: str, heading_level: int = 2) -> str:
+        """creates '== title ==' """
+        return '=' * heading_level + f' {title} ' + '=' * heading_level
+
+
+    @staticmethod
     def join_with_comma_and_or(elements: list, seperator=', ', conjunction=" ''or'' ") -> str:
         """joins a list with separator, but the last two elements are joined with the conjunction"""
         n = len(elements)
