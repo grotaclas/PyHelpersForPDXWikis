@@ -87,7 +87,7 @@ class TableGenerator(Eu5FileGenerator):
             # 'Modifiers': self.format_modifier_section('modifier', building),
             # 'Modifiers if in capital': self.format_modifier_section('capital_modifier', building),
             # 'Country modifiers if in capital': self.format_modifier_section('capital_country_modifier', building),
-            'Name': f'{{{{iconbox|{building.display_name}|{building.description}|w=300px|image={building.get_wiki_filename()}}}}}',
+            'Name': f'{{{{iconbox|{building.display_name}|{building.description}|w=300px|desc_class=hidem|image={building.get_wiki_filename()}}}}}',
 'Modifier': self.format_modifier_section('modifier', building),  # modifier: list[eu5.eu5lib.Eu5Modifier]
 'Allow': self.formatter.format_trigger(building.allow),  # allow: <class 'eu5.eu5lib.Trigger'>
 'Build Time': building.build_time,  # build_time: <class 'int'>
@@ -231,7 +231,7 @@ class TableGenerator(Eu5FileGenerator):
     def get_goods_table(self, category: GoodCategory, method: str):
         sorted_goods = sorted([good for good in self.parser.goods.values() if good.category == category and good.method == method], key=attrgetter('display_name'))
         goods = [{
-            'Name': f'{{{{iconbox|{good.display_name}|{good.description}|w=300px|image={good.get_wiki_filename()}}}}}',
+            'Name': f'{{{{iconbox|{good.display_name}|{good.description}|w=300px|desc_class=hidem|image={good.get_wiki_filename()}}}}}',
             'Base production': good.base_production,
             'Default price': good.default_market_price,
             'Inflation': 'yes' if good.inflation else '',
@@ -348,7 +348,7 @@ class TableGenerator(Eu5FileGenerator):
 
     def get_law_policy_table(self, policies: Iterable[LawPolicy]):
         policy_table_data = [{
-            'width=30% | Policy': f"'''{policy.display_name}'''\n\n<div style=\"font-style: italic; font-size:smaller;\">{policy.description}</div>",
+            'width=30% | Policy': f"'''{policy.display_name}'''\n\n<div class=\"hidem\" style=\"font-style: italic; font-size:smaller;\">{policy.description}</div>",
             'Allow': self.formatter.format_trigger(policy.allow),  # allow: <class 'eu5.eu5lib.Trigger'>
             'Country Modifier': self.format_modifier_section('country_modifier', policy),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
             'Estate Preferences': self.create_wiki_list([estate_preferences.get_wiki_link_with_icon() for estate_preferences in policy.estate_preferences]),
