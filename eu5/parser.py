@@ -71,7 +71,7 @@ class Eu5Parser(JominiParser):
             'negative_icon_file': lambda name, data: self.modifier_icons.get_or_default(name, Tree({})).get_or_default('negative', None),
         })
 
-    def parse_modifier_section_from_wiki_section_ame(self, wiki_section_name: str) -> list[Eu5Modifier]:
+    def parse_modifier_section_from_wiki_section_name(self, wiki_section_name: str) -> list[Eu5Modifier]:
         """
         Can get the modifiers from an arbitrary section which is specified by a dot-separated string which can be used
         as a section name on the wiki
@@ -126,7 +126,7 @@ class Eu5Parser(JominiParser):
                                             )
 
     @cached_property
-    def buildings(self):
+    def buildings(self) -> dict[str, Building]:
         buildings = self.parse_advanced_entities('in_game/common/building_types', Building,
                                             transform_value_functions={
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
@@ -168,11 +168,15 @@ class Eu5Parser(JominiParser):
         return result
 
     @cached_property
-    def estate_privileges(self):
+    def estates(self) -> dict[str, Estate]:
+        return self.parse_advanced_entities('in_game/common/estates', Estate)
+
+    @cached_property
+    def estate_privileges(self) -> dict[str, EstatePrivilege]:
         return self.parse_advanced_entities('in_game/common/estate_privileges', EstatePrivilege)
 
     @cached_property
-    def game_concepts(self):
+    def game_concepts(self) -> dict[str, Eu5GameConcept]:
         """Includes the aliases as well"""
         concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept, localization_prefix='game_concept_')
         for name in list(concepts.keys()):  # iterate over a new list so that we can add to the concepts variable during the iteration
@@ -188,17 +192,17 @@ class Eu5Parser(JominiParser):
         return concepts
 
     @cached_property
-    def goods(self):
+    def goods(self) -> dict[str, Good]:
         return self.parse_advanced_entities('in_game/common/goods', Good)
 
     @cached_property
-    def goods_demand(self):
+    def goods_demand(self) -> dict[str, GoodsDemand]:
         return self.parse_nameable_entities('in_game/common/goods_demand', GoodsDemand, extra_data_functions={
             'demands': lambda name, data: [Cost.create_with_goods(key, value) for key, value in data if key in self.goods],
         })
 
     @cached_property
-    def laws(self):
+    def laws(self) -> dict[str, Law]:
         return self.parse_advanced_entities('in_game/common/laws', Law, extra_data_functions={
             'policies': self._parse_law_policies,
         })
@@ -213,13 +217,13 @@ class Eu5Parser(JominiParser):
         pass
 
     @cached_property
-    def prices(self):
+    def prices(self) -> dict[str, Price]:
         return self.parse_nameable_entities('in_game/common/prices', Price, extra_data_functions={
             'costs': lambda name, data: [Cost.create_with_hardcoded_resource(key, value) for key, value in data if key in HardcodedResource]
         })
 
     @cached_property
-    def production_methods(self):
+    def production_methods(self) -> dict[str, ProductionMethod]:
         return self._parse_production_methods('in_game/common/production_methods')
 
     def _parse_production_methods(self, data_source: str | Tree):

@@ -251,49 +251,109 @@ class TableGenerator(Eu5FileGenerator):
             result.append(self.get_law_table(sorted(laws, key=attrgetter('display_name'))))
         return result
 
-    def get_law_tables(self):
+    def get_law_tables(self, section_level: int = None):
         result = {}
         for (io_type, law_category), laws in unsorted_groupby(self.parser.laws.values(), key=attrgetter('io_type', 'law_category')):
             if io_type == '':
                 io_type_section = ''
+                increased_section_level = 0
             else:
                 io_type_section = f'io_{io_type}_'
-            result[f'laws_{io_type_section}{law_category}'] = self.get_law_table(laws)
+                increased_section_level = 1
+            if section_level is None:
+                data = self.get_law_table(laws)
+            else:
+                data =  self.get_laws_as_sections(laws, section_level + increased_section_level)
+            result[f'laws_{io_type_section}{law_category}'] = data
 
         return result
 
     def get_law_table(self, laws: Iterable[Law]):
-        law_data = [{
-            'Name': f'{{{{iconbox|{law.display_name}|{law.description}|w=300px|image={law.get_wiki_filename()}}}}}',
-            'Allow': self.formatter.format_trigger(law.allow),  # allow: <class 'common.paradox_parser.Tree'>
-            # 'Law Category': law.law_category_loc,  # law_category: <class 'str'>
-            'Law Country Group': self.parser.localize(law.law_country_group) if law.law_country_group else '',  # law_country_group: <class 'str'>
-            'Law Gov Group': self.parser.localize(law.law_gov_group) if law.law_gov_group else '',  # law_gov_group: <class 'str'>
-            'Law Religion Group': self.create_wiki_list([self.parser.localize(law_religion_group) for law_religion_group in law.law_religion_group]),  # law_religion_group: list[str]
-            'Locked': self.formatter.format_trigger(law.locked),  # locked: <class 'eu5.eu5lib.Trigger'>
-            'Potential': self.formatter.format_trigger(law.potential),  # potential: <class 'eu5.eu5lib.Trigger'>
-            'Requires Vote': '' if law.requires_vote is None else ('[[File:Yes.png|20px|Requires Vote]]' if law.requires_vote else '[[File:No.png|20px|Not Requires Vote]]'),
-            # requires_vote: <class 'bool'>
-            # 'Type': law.type,  # type  'str'
-            'Unique': '' if law.unique is None else '[[File:Yes.png|20px|Unique]]' if law.unique else '[[File:No.png|20px|Not Unique]]',  # unique: <class 'bool'>
-            'Policies': self.get_law_policy_table(law.policies.values()),
-        } for law in laws]
+        law_data = [self.get_law_data(law) for law in laws]
         return self.make_wiki_table(law_data, table_classes=['mildtable', 'plainlist'],
                                     one_line_per_cell=True,
                                     remove_empty_columns=True,
                                     )
 
+    def get_law_data(self, law: Law) -> dict[str, str]:
+        return {
+            'Name': f'{{{{iconbox|{law.display_name}|{law.description}|w=300px|image={law.get_wiki_filename()}}}}}',
+            'Potential': self.formatter.format_trigger(law.potential),  # potential: <class 'eu5.eu5lib.Trigger'>
+            'Allow': self.formatter.format_trigger(law.allow),  # allow: <class 'common.paradox_parser.Tree'>
+            # 'Law Category': law.law_category_loc,  # law_category: <class 'str'>
+            'Country': self.parser.localize(law.law_country_group) if law.law_country_group else '',  # law_country_group: <class 'str'>
+            'Government type': self.parser.localize(law.law_gov_group) if law.law_gov_group else '',  # law_gov_group: <class 'str'>
+            'Religion groups': self.create_wiki_list([self.parser.localize(law_religion_group) for law_religion_group in law.law_religion_group]),
+            # law_religion_group: list[str]
+            'Locked': self.formatter.format_trigger(law.locked),  # locked: <class 'eu5.eu5lib.Trigger'>
+            'Requires Vote': '' if law.requires_vote is None else (
+                '[[File:Yes.png|20px|Requires Vote]]' if law.requires_vote else '[[File:No.png|20px|Not Requires Vote]]'),
+            # requires_vote: <class 'bool'>
+            # 'Type': law.type,  # type  'str'
+            'Unique': '' if law.unique is None else '[[File:Yes.png|20px|Unique]]' if law.unique else '[[File:No.png|20px|Not Unique]]',
+            # unique: <class 'bool'>
+            'Policies': self.get_law_policy_table(law.policies.values()),
+        }
+
+    def get_laws_as_sections(self, laws: Iterable[Law], section_level = 3) -> str:
+        result = ['']
+        ignored_attributes = ['Name', 'Policies']  # added in other ways
+        attribute_map = {'Country': 'Only for',
+                         'Government type': 'Only for',
+                         'Religion groups': 'Requires one of the following religion groups',
+                         }
+        for law in laws:
+            result.append(self.formatter.create_section_heading(law.display_name, section_level))
+            result.append(f'{{{{iconbox||{law.description}|image={law.get_wiki_filename()}}}}}')
+            law_data = self.get_law_data(law)
+            for attribute, value in law_data.items():
+                if attribute not in ignored_attributes and value is not None and len(value) > 0:
+                    if attribute in attribute_map:
+                        attribute = attribute_map[attribute]
+                    result.append(f';{attribute}: {value}')
+            result.append(law_data['Policies'])
+
+
+        return '\n'.join(result)
+
+    @staticmethod
+    def _format_time_to_implement(policy: LawPolicy, ignore_default_years=2):
+        days = policy.days
+        weeks = policy.weeks
+        months = policy.months
+        years = policy.years
+
+        if days >= 365:
+            years += days // 365
+            days = days % 365
+        if weeks >= 52:
+            years += weeks // 52
+            weeks = weeks % 52
+        if months >= 12:
+            years += months // 12
+            months = months % 12
+
+        if years == ignore_default_years and days == weeks == months == 0:
+            return ''
+        result = []
+        if years > 0:
+            result.append(f'{years} years')
+        if months > 0:
+            result.append(f'{months} months')
+        if weeks > 0:
+            result.append(f'{weeks} weeks')
+        if days > 0:
+            result.append(f'{days} days')
+        return '\n'.join(result)
+
     def get_law_policy_table(self, policies: Iterable[LawPolicy]):
         policy_table_data = [{
-            'width=300px | Name': f"'''{policy.display_name}'''\n\n<div style=\"font-style: italic; font-size:smaller;\">{policy.description}</div>",
+            'width=30% | Policy': f"'''{policy.display_name}'''\n\n<div style=\"font-style: italic; font-size:smaller;\">{policy.description}</div>",
             'Allow': self.formatter.format_trigger(policy.allow),  # allow: <class 'eu5.eu5lib.Trigger'>
             'Country Modifier': self.format_modifier_section('country_modifier', policy),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Estate Preferences': self.create_wiki_list([estate_preferences for estate_preferences in policy.estate_preferences]),
+            'Estate Preferences': self.create_wiki_list([estate_preferences.get_wiki_link_with_icon() for estate_preferences in policy.estate_preferences]),
             # estate_preferences: list[str]
-            'Months': policy.months,  # months: <class 'int'>
-            'Years': policy.years,  # years: <class 'int'>
-            'Weeks': policy.weeks,  # weeks: <class 'int'>
-            'Days': policy.days,  # days: <class 'int'>
+            'Time to implement': self._format_time_to_implement(policy, ignore_default_years=2),
             'On Activate': self.formatter.format_effect(policy.on_activate),  # on_activate: <class 'eu5.eu5lib.Effect'>
             'On Deactivate': self.formatter.format_effect(policy.on_deactivate),  # on_deactivate: <class 'eu5.eu5lib.Effect'>
             'On Pay Price': self.formatter.format_effect(policy.on_pay_price),  # on_pay_price: <class 'eu5.eu5lib.Effect'>

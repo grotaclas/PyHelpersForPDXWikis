@@ -402,8 +402,31 @@ class Building(Eu5AdvancedEntity):
     icon_folder = 'BUILDINGS_ICON_PATH'
 
 
+class Estate(Eu5AdvancedEntity):
+    alliance:float
+    bank: bool = False  #can and will loan money
+    can_have_characters: bool = True
+    characters_have_dynasty: str
+    color: str  # @TODO named color
+    high_power: list[Eu5Modifier]
+    low_power: list[Eu5Modifier]
+    opinion: Tree # scripted value
+    power: list[Eu5Modifier] = []
+    power_per_pop: float
+    priority_for_dynasty_head: bool = False
+    revolt_court_language: str
+    rival: float
+    ruler: bool = False
+    satisfaction: list[Eu5Modifier] = []
+    tax_per_pop: float
+    use_diminutive: bool = False
+
+    def get_wiki_filename(self) -> str:
+        return super().get_wiki_filename().replace(' estate.png', '.png')
+
+
 class EstatePrivilege(Eu5AdvancedEntity):
-    estate: str
+    estate: Estate
 
     potential: Tree  # Trigger
     allow: Tree  # Trigger
@@ -441,7 +464,7 @@ class Eu5GameConcept(GameConcept):
 class LawPolicy(Eu5AdvancedEntity):
     allow: Trigger = None
     country_modifier: list[Eu5Modifier]
-    estate_preferences: list[str] = [] # estate
+    estate_preferences: list[Estate] = [] # estate
     months: int = 0
     years: int = 0
     weeks: int = 0
