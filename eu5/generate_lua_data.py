@@ -19,8 +19,7 @@ class LuaDataGenerator(Eu5FileGenerator):
         return f'''
 local NDefines = {luadata.serialize(result, indent=' ')}
 
-return NDefines
-'''
+return NDefines'''
 
     def generate_modifier_data_lua(self):
         result = {}
