@@ -294,8 +294,6 @@ class Vic3Parser(JominiParser):
     def buildings(self) -> dict[str, Building]:
         all_buildings = self.parse_advanced_entities('common/buildings', Building,
                                                      transform_value_functions={
-                                                         'building_group': lambda building_group:
-                                                         self.building_groups[building_group],
                                                          'required_construction': lambda required_construction:
                                                          self.script_values[required_construction],
                                                      },
@@ -361,9 +359,6 @@ class Vic3Parser(JominiParser):
             'country_modifiers': self._parse_pm_modifiers,
             'state_modifiers': self._parse_pm_modifiers,
             'timed_modifiers': lambda modifier_list: [self.named_modifiers[modifier] for modifier in modifier_list],
-            'disallowing_laws': lambda law_list: [self.laws[law] for law in law_list],
-            'unlocking_laws': lambda law_list: [self.laws[law] for law in law_list],
-            'unlocking_principles': lambda principle_list: [self.principles[principle] for principle in principle_list]
         })
         del production_methods['pm_dummy']
         for pm in production_methods.values():
@@ -417,9 +412,7 @@ class Vic3Parser(JominiParser):
 
     @cached_property
     def decrees(self) -> dict[str, Decree]:
-        return self.parse_advanced_entities('common/decrees', Decree, transform_value_functions={
-            'unlocking_laws': lambda law_list: [self.laws[law] for law in law_list]
-        })
+        return self.parse_advanced_entities('common/decrees', Decree)
 
     @cached_property
     def diplomatic_actions(self) -> dict[str, DiplomaticAction]:

@@ -6,10 +6,10 @@ from abc import ABCMeta, abstractmethod
 
 import sys
 from functools import cached_property
-from typing import Iterator, Type, Callable
+from typing import Iterator, Type, Callable, get_origin, get_args
 
 from common.paradox_parser import ParadoxParser, Tree, ParsingWorkaround
-from common.paradox_lib import Modifier, AE, NE, ME, ModifierType
+from common.paradox_lib import Modifier, AE, NE, ME, ModifierType, NameableEntity
 
 
 class JominiParser(metaclass=ABCMeta):
@@ -19,6 +19,8 @@ class JominiParser(metaclass=ABCMeta):
     localizationOverrides = {}
 
     localization_folder_iterator: Iterator
+
+    _class_property_map: dict[Type[NE]: str] = None
 
     def __init__(self, game_path):
         self.parser = ParadoxParser(game_path)
@@ -183,6 +185,11 @@ class JominiParser(metaclass=ABCMeta):
                         print(f'Error: duplicate section "{k}" in "{name}"')
                         continue
                     entity_values[k] = self._parse_modifier_data(v, typing.get_args(class_attributes[k])[0])
+                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(typing.get_args(class_attributes[k])[0]) and issubclass(
+                        typing.get_args(class_attributes[k])[0], NameableEntity) and typing.get_args(class_attributes[k])[0] != entity_class:
+                    entity_values[k] = [self.resolve_entity_reference(typing.get_args(class_attributes[k])[0], entity_name) for entity_name in v]
+                elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], NameableEntity) and class_attributes[k] != entity_class:
+                    entity_values[k] = self.resolve_entity_reference(class_attributes[k], v)
                 else:
                     entity_values[k] = v
         if conditions is not None:
@@ -253,7 +260,7 @@ class JominiParser(metaclass=ABCMeta):
     def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
         modifiers = []
         for mod_name, mod_value in data:
-            if isinstance(mod_value, list):
+            if isinstance(mod_value, list) and mod_name != 'potential_trigger':
                 mod_value = sum(mod_value)
             mod_type = self.get_modifier_type_or_default(mod_name)
             mod_value = self._parse_mod_value(mod_type, mod_value)
@@ -265,6 +272,23 @@ class JominiParser(metaclass=ABCMeta):
             return []
         else:
             return self._parse_modifier_data(data[section_name], modifier_class)
+
+    def resolve_entity_reference(self, entity_class: Type[NE], entity_name:str):
+        if self._class_property_map is None:
+            self._class_property_map = {}
+            for name, member in inspect.getmembers(self.__class__, predicate=lambda m: type(m) == cached_property):
+                return_type = inspect.signature(member.func).return_annotation
+                if return_type == inspect.Signature.empty:
+                    continue
+                origin = get_origin(return_type)
+                type_args = get_args(return_type)
+                if origin == dict and type_args[0] == str and issubclass(type_args[1], NameableEntity):
+                    self._class_property_map[type_args[1]] = name
+        if entity_class in self._class_property_map:
+            data = getattr(self, self._class_property_map[entity_class])
+            if entity_name in data:
+                return data[entity_name]
+        return entity_name
 
     @cached_property
     def modifier_types(self) -> dict[str, ModifierType]:
