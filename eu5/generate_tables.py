@@ -64,11 +64,38 @@ class TableGenerator(Eu5FileGenerator):
         return '\n----\n'.join(formatted_pm_categories)
 
     def generate_building_tables(self):
-        sorted_buildings = sorted(
-            self.parser.buildings.values(),
-            #[good for good in self.parser.goods.values() if good.category == category and good.method == method]
-            key=attrgetter('display_name')
-            )
+        result = []
+        previous_type = None
+        for (type_name, category), table in self.get_building_tables().items():
+            if type_name != previous_type:
+                result.append(f'== {type_name} buildings ==')
+                previous_type = type_name
+            result.append(f'=== {category.display_name} ===')
+            result.append(f'{{{{iconbox||{category.description}|image={category.get_wiki_filename()}}}}}')
+
+            result.append(table)
+        return result
+
+    def get_building_tables(self):
+        results = {}
+        type_names = {(True, True, True): 'common',
+                          (False, False, True): 'rural',
+                          (False, True, False): 'town',
+                          (True, False, False): 'city',
+                          (True, True, False): 'town+city',
+                          (False, True, True): 'town+rural',
+                          (True, False, True): 'city+rural',
+                          (False, False, False): 'nowhere',
+                          }
+        buildings_by_location_type = {type_names[typ]: list(buildings) for typ, buildings in unsorted_groupby(self.parser.buildings.values(), key=attrgetter('city', 'town', 'rural_settlement'))}
+        for type_name, buildings_for_type in buildings_by_location_type.items():
+            buildings_by_category = unsorted_groupby(buildings_for_type, key=attrgetter('category'))
+            for category, buildings in buildings_by_category:
+                sorted_buildings = sorted(buildings, key=attrgetter('display_name'))
+                results[(type_name, category)] = self.get_building_table(sorted_buildings)
+        return results
+
+    def get_building_table(self, sorted_buildings: list[Building]):
         # sorted_buildings = [b for b in sorted_buildings if b.possible_production_methods and not isinstance(b.possible_production_methods[0], ProductionMethod)]
         # sorted_buildings = [self.parser.buildings['jewelry_guild']] + sorted_buildings[:20]
         buildings = [{
@@ -94,8 +121,8 @@ class TableGenerator(Eu5FileGenerator):
 'Can Destroy': self.formatter.format_trigger(building.can_destroy),  # can_destroy: <class 'eu5.eu5lib.Trigger'>
 'Capital Country Modifier': self.format_modifier_section('capital_country_modifier', building),  # capital_country_modifier: list[eu5.eu5lib.Eu5Modifier]
 'Capital Modifier': self.format_modifier_section('capital_modifier', building),  # capital_modifier: list[eu5.eu5lib.Eu5Modifier]
-'Category': building.category,  # category: <class 'str'>
-'City': '[[File:Yes.png|20px|City]]' if building.city else '[[File:No.png|20px|Not City]]',  # city: <class 'bool'>
+# 'Category': building.category,  # category: <class 'str'>
+# 'City': '[[File:Yes.png|20px|City]]' if building.city else '[[File:No.png|20px|Not City]]',  # city: <class 'bool'>
 'Construction Demand': building.construction_demand.format(icon_only=True) if hasattr(building.construction_demand, 'format') else building.construction_demand,  # construction_demand: <class 'eu5.eu5lib.GoodsDemand'>
 'Country Potential': self.formatter.format_trigger(building.country_potential),  # country_potential: <class 'eu5.eu5lib.Trigger'>
 'Destroy Price': building.destroy_price.format(icon_only=True) if hasattr(building.destroy_price, 'format') else building.destroy_price,  # destroy_price: <class 'eu5.eu5lib.Price'>
@@ -115,8 +142,8 @@ class TableGenerator(Eu5FileGenerator):
 'Price': building.price.format(icon_only=True) if hasattr(building.price, 'format') else building.price,  # price: <class 'eu5.eu5lib.Price'>
 'Raw Modifier': self.format_modifier_section('raw_modifier', building),  # raw_modifier: list[eu5.eu5lib.Eu5Modifier]
 'Remove If': self.formatter.format_trigger(building.remove_if),  # remove_if: <class 'eu5.eu5lib.Trigger'>
-'Rural Settlement': '[[File:Yes.png|20px|Rural Settlement]]' if building.rural_settlement else '[[File:No.png|20px|Not Rural Settlement]]',  # rural_settlement: <class 'bool'>
-'Town': '[[File:Yes.png|20px|Town]]' if building.town else '[[File:No.png|20px|Not Town]]',  # town: <class 'bool'>
+# 'Rural Settlement': '[[File:Yes.png|20px|Rural Settlement]]' if building.rural_settlement else '[[File:No.png|20px|Not Rural Settlement]]',  # rural_settlement: <class 'bool'>
+# 'Town': '[[File:Yes.png|20px|Town]]' if building.town else '[[File:No.png|20px|Not Town]]',  # town: <class 'bool'>
         'Notes': self.get_building_notes(building),
         } for building in sorted_buildings]
         return self.make_wiki_table(buildings, table_classes=['mildtable', 'plainlist'],

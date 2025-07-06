@@ -354,6 +354,9 @@ class ProductionMethod(NameableEntity):
         return [self.display_name, data]
 
 
+class BuildingCategory(Eu5AdvancedEntity):
+    icon_folder = 'building_categories'
+
 class Building(Eu5AdvancedEntity):
     AI_ignore_available_worker_flag: bool = False
     AI_optimization_flag_coastal: bool = False
@@ -365,7 +368,7 @@ class Building(Eu5AdvancedEntity):
     can_destroy: Trigger = None
     capital_country_modifier: list[Eu5Modifier]
     capital_modifier: list[Eu5Modifier]
-    category: str
+    category: BuildingCategory
     city: bool = False
     construction_demand: GoodsDemand = NoPrice()
     conversion_religion: str = None
@@ -391,7 +394,7 @@ class Building(Eu5AdvancedEntity):
     pop_size_created: int = 0
     pop_type: str
     possible_production_methods: list[ProductionMethod] = []
-    price: Price
+    price: Price = NoPrice()
     raw_modifier: list[Eu5Modifier]
     remove_if: Trigger = None
     rural_settlement: bool = False

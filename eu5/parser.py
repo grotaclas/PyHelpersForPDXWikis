@@ -43,12 +43,12 @@ class Eu5Parser(JominiParser):
                                                parsing_workarounds, localization_prefix, allow_empty_entities)
 
     def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None, localization_prefix: str = '') -> dict[str, AE]:
+                                transform_value_functions: dict[str, Callable[[any], any]] = None, localization_prefix: str = '', allow_empty_entities=False) -> dict[str, AE]:
         if extra_data_functions is None:
             extra_data_functions = {}
         if 'description' not in extra_data_functions:
             extra_data_functions['description'] = lambda name, data: self.formatter.format_localization_text(self.localize(localization_prefix + name + '_desc'))
-        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix)
+        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities)
 
     @cached_property
     def modifier_icons(self) -> Tree:
@@ -124,6 +124,10 @@ class Eu5Parser(JominiParser):
                                                 'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
                                             },
                                             )
+
+    @cached_property
+    def building_category(self) -> dict[str, BuildingCategory]:
+            return self.parse_advanced_entities('in_game/common/building_categories', BuildingCategory, allow_empty_entities=True)
 
     @cached_property
     def buildings(self) -> dict[str, Building]:
