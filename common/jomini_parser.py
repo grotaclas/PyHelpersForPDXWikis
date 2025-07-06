@@ -206,7 +206,8 @@ class JominiParser(metaclass=ABCMeta):
     def parse_advanced_entities(self, folder: str, entity_class: Type[AE],
                                 extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
                                 transform_value_functions: dict[str, Callable[[any], any]] = None,
-                                localization_prefix: str = ''
+                                localization_prefix: str = '',
+                                allow_empty_entities=False
                                 ) -> dict[str, AE]:
         """parse a folder into objects which are subclasses of AdvancedEntity
 
@@ -225,7 +226,8 @@ class JominiParser(metaclass=ABCMeta):
             extra_data_functions['description'] = lambda name, data: self.localize(localization_prefix + name + '_desc')
         return self.parse_nameable_entities(folder, entity_class, extra_data_functions=extra_data_functions,
                                             transform_value_functions=transform_value_functions,
-                                            localization_prefix=localization_prefix)
+                                            localization_prefix=localization_prefix,
+                                            allow_empty_entities=allow_empty_entities)
 
     def get_modifier_type_or_default(self, modifier_name: str) -> ModifierType:
         if modifier_name in self.modifier_types:
