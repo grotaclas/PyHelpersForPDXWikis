@@ -63,7 +63,8 @@ class Vic3Parser(JominiParser):
     def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
                                 transform_value_functions: dict[str, Callable[[any], any]] = None,
                                 localization_prefix: str = '',
-                                allow_empty_entities=False) -> dict[str, AE]:
+                                allow_empty_entities=False,
+                                parsing_workarounds: list[ParsingWorkaround] = None,) -> dict[str, AE]:
         """parse a folder into objects which are subclasses of AdvancedEntity
 
         See parse_nameable_entities() for a description of the arguments and return value
@@ -77,7 +78,7 @@ class Vic3Parser(JominiParser):
             extra_data_functions = {}
         if 'required_technologies' not in extra_data_functions:
             extra_data_functions['required_technologies'] = self.parse_technologies_section
-        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities)
+        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities, parsing_workarounds)
 
     @cached_property
     def formatter(self):
@@ -564,3 +565,7 @@ class Vic3Parser(JominiParser):
             'group': lambda name, data: self._principle_name_to_group_map[name],
             'level': lambda name, data: self._principle_name_to_level_map[name],
         })
+
+    @cached_property
+    def religions(self) -> dict[str, Religion]:
+        return self.parse_advanced_entities('common/religions', Religion)

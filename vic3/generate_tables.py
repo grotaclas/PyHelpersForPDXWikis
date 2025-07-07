@@ -107,7 +107,8 @@ class TableGenerator(Vic3FileGenerator):
             'Name': f'id="{decree.name}" | {{{{iconbox|{decree.display_name}|{decree.description}|image={decree.get_wiki_filename()}}}}}',
             'Required technology': ' and '.join(
                 [tech.get_wiki_link_with_icon() for tech in decree.required_technologies]),
-            'Conditions': self.parser.formatter.format_conditions(decree.valid) if decree.valid else '',
+            # 'Conditions': self.parser.formatter.format_conditions(decree.valid) if decree.valid else '',
+            'Conditions': ('Country:' + self.parser.formatter.format_conditions(decree.country_trigger)) if decree.country_trigger else '' + (('\nState:' + self.parser.formatter.format_conditions(decree.state_trigger)) if decree.state_trigger else ''),
             'Modifiers': self.create_wiki_list([modifier.format_for_wiki() for modifier in decree.modifier]),
 
         } for decree in sorted(self.parser.decrees.values(), key=attrgetter('display_name'))]

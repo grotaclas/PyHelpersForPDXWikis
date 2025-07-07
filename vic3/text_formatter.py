@@ -2,6 +2,7 @@ import re
 import sys
 from functools import cached_property
 
+from common.paradox_lib import AdvancedEntity, NameableEntity
 from common.paradox_parser import Tree
 from common.wiki import WikiTextFormatter
 from vic3.vic3_file_generator import vic3game, Vic3FileGenerator
@@ -317,11 +318,10 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                 return mapping[key]
             else:
                 value = mapping[key][1][value]
-                if isinstance(value, Vic3AdvancedEntity):
-                    value = value.get_wiki_link_with_icon()
+                value = self.format_RHS(value)
                 return mapping[key][0].format(value=value)
         else:
-            return f'{key}: {value}'
+            return f'{key}: {self.format_RHS(value)}'
 
     def format_key_value_pair(self, key: str, value, indent):
 
@@ -329,11 +329,25 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             return self.format_key_for_compound_statement(key) + ':' + self.format_conditions(value, indent + 1)
         elif isinstance(value, list):
             return self.create_wiki_list([self.format_key_value_pair(key, inner_value, indent + 1) for inner_value in value], indent)
-        elif isinstance(value, Vic3AdvancedEntity):
+        elif isinstance(value, AdvancedEntity):
             return self.format_simple_statement(key, value.get_wiki_link_with_icon())
         # elif isinstance(value, (int, float, str)):
         else:
             return self.format_simple_statement(key, value)
 
+    def format_RHS(self, value) -> str:
+        if isinstance(value, str) and ':' in value:
+            typ, value_without_prefix = value.split(':')
+            match typ:
+                case 'c':
+                    value = self.parser.countries[value_without_prefix]
+                case 's':
+                    value = self.parser.states[value_without_prefix]
+                case 'rel':
+                    value = self.parser.religions[value_without_prefix]
+        if isinstance(value, Vic3AdvancedEntity):
+            value = value.get_wiki_link_with_icon()
+        elif isinstance(value, NameableEntity):
+            value = value.display_name
 
-
+        return value

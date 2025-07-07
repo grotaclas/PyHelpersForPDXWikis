@@ -311,7 +311,9 @@ class ProductionMethod(Vic3AdvancedEntity):
 
 class Decree(Vic3AdvancedEntity):
     cost: int = 0
-    valid: Tree = None
+    valid: Tree = None  # old
+    country_trigger: Tree = None
+    state_trigger: Tree = None
     unlocking_laws: list[Law] = []  # currently unused
 
     def get_wiki_icon(self) -> str:
@@ -450,3 +452,8 @@ class Principle(Vic3AdvancedEntity):
 
     group: PrincipleGroup
     level: int
+
+
+class Religion(Vic3AdvancedEntity):
+    traits: list[str]
+    taboos: list[str]
