@@ -9,7 +9,7 @@ from functools import cached_property
 from typing import Iterator, Type, Callable, get_origin, get_args
 
 from common.paradox_parser import ParadoxParser, Tree, ParsingWorkaround
-from common.paradox_lib import Modifier, AE, NE, ME, ModifierType, NameableEntity
+from common.paradox_lib import Modifier, AE, NE, ME, ModifierType, NameableEntity, PdxColor
 
 
 class JominiParser(metaclass=ABCMeta):
@@ -180,6 +180,8 @@ class JominiParser(metaclass=ABCMeta):
             elif k in class_attributes and k not in entity_values:
                 if inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], enum.Enum):
                     entity_values[k] = class_attributes[k](v)
+                elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], PdxColor):
+                    entity_values[k] = self.parse_color_value(v)
                 elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(typing.get_args(class_attributes[k])[0]) and issubclass(typing.get_args(class_attributes[k])[0], Modifier):
                     if type(v) == list and len(v) > 0:
                         print(f'Error: duplicate section "{k}" in "{name}"')
@@ -299,3 +301,26 @@ class JominiParser(metaclass=ABCMeta):
     @cached_property
     def script_values(self):
         return self.parser.parse_folder_as_one_file('common/script_values').merge_duplicate_keys()
+
+    def _parse_named_colors(self, folders: list[str]):
+        named_colors = {}
+        for folder in folders:
+            for file, parsed_data in self.parser.parse_files(folder + '/*'):
+                for color_name, color_data in parsed_data['colors']:
+                    if isinstance(color_data, list) and isinstance(color_data[-1], Tree):
+                        # assume that this means that the color is defined multiple times, so we take the last definition
+                        color_data = color_data[-1]
+                    named_colors[color_name] = PdxColor.new_from_parser_obj(color_data)
+        return named_colors
+
+    @cached_property
+    def named_colors(self) -> dict[str, PdxColor]:
+        named_colors = self._parse_named_colors(['../jomini/common/named_colors', 'common/named_colors'])
+        return named_colors
+
+    def parse_color_value(self, color):
+        if isinstance(color, str) and color in self.named_colors:
+            return self.named_colors[color]
+        else:
+            return PdxColor.new_from_parser_obj(color)
+

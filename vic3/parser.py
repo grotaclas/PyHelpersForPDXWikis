@@ -100,7 +100,7 @@ class Vic3Parser(JominiParser):
                     capital_state = self.states[country_data['capital']]
                 else:
                     capital_state = None
-                countries[tag] = Country(tag, self.localize(tag), PdxColor.new_from_parser_obj(country_data['color']),
+                countries[tag] = Country(tag, self.localize(tag), self.parse_color_value(country_data['color']),
                                          country_type=country_data['country_type'], tier=country_data['tier'],
                                          capital_state=capital_state,
                                          cultures=country_data['cultures'])

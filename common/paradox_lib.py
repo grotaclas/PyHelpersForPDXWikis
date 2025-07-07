@@ -98,6 +98,11 @@ class PdxColor(sRGBColor):
         """
         if isinstance(color_obj, list):
             return cls(color_obj[0], color_obj[1], color_obj[2], is_upscaled=True)
+        elif isinstance(color_obj, Tree) and 'rgb' in color_obj:
+            if color_obj['rgb'][0] <= 1.0 and color_obj['rgb'][1] <= 1.0 and color_obj['rgb'][2] <= 1.0:
+                return cls(color_obj['rgb'][0], color_obj['rgb'][1], color_obj['rgb'][2], is_upscaled=False)
+            else:
+                return cls(color_obj['rgb'][0], color_obj['rgb'][1], color_obj['rgb'][2], is_upscaled=True)
         elif isinstance(color_obj, Tree) and 'hsv' in color_obj:
             rgb_color = convert_color(HSVColor(color_obj['hsv'][0], color_obj['hsv'][1], color_obj['hsv'][2]), sRGBColor)
             return cls(rgb_color.rgb_r * 255.0, rgb_color.rgb_g * 255.0, rgb_color.rgb_b * 255.0)
