@@ -2,6 +2,7 @@ from functools import cached_property
 from typing import Optional
 
 from aow4.game import aow4game
+from common.helper import to_camel_case
 from common.paradox_lib import NameableEntity, IconEntity
 
 
@@ -151,16 +152,9 @@ class HeroSkill(IconEntity):
     def get_wiki_icon(self, size: str = '24px') -> str:
         return self.get_wiki_file_tag(size)
 
-    def to_camel_case(self, text):
-        s = text.replace("-", " ").replace("_", " ")
-        s = s.split()
-        if len(text) == 0:
-            return text
-        return ''.join(i.capitalize() for i in s)
-
     def get_wiki_filename(self) -> str:
         if self.type == 'signature':
-            return f'Hero signature skill {self.to_camel_case(self.display_name)}.png'
+            return f'Hero signature skill {to_camel_case(self.display_name)}.png'
         else:
             return super().get_wiki_filename()
 

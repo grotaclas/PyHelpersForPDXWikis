@@ -20,8 +20,6 @@ class JominiParser(metaclass=ABCMeta):
 
     localization_folder_iterator: Iterator
 
-    _class_property_map: dict[Type[NE]: str] = None
-
     def __init__(self, game_path):
         self.parser = ParadoxParser(game_path)
 
@@ -189,6 +187,8 @@ class JominiParser(metaclass=ABCMeta):
                     entity_values[k] = self._parse_modifier_data(v, typing.get_args(class_attributes[k])[0])
                 elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(typing.get_args(class_attributes[k])[0]) and issubclass(
                         typing.get_args(class_attributes[k])[0], NameableEntity) and typing.get_args(class_attributes[k])[0] != entity_class:
+                    if isinstance(v, str):
+                        v = [v]
                     entity_values[k] = [self.resolve_entity_reference(typing.get_args(class_attributes[k])[0], entity_name) for entity_name in v]
                 elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], NameableEntity) and class_attributes[k] != entity_class:
                     entity_values[k] = self.resolve_entity_reference(class_attributes[k], v)
@@ -209,7 +209,8 @@ class JominiParser(metaclass=ABCMeta):
                                 extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
                                 transform_value_functions: dict[str, Callable[[any], any]] = None,
                                 localization_prefix: str = '',
-                                allow_empty_entities=False
+                                allow_empty_entities=False,
+                                parsing_workarounds: list[ParsingWorkaround] = None,
                                 ) -> dict[str, AE]:
         """parse a folder into objects which are subclasses of AdvancedEntity
 
@@ -229,7 +230,8 @@ class JominiParser(metaclass=ABCMeta):
         return self.parse_nameable_entities(folder, entity_class, extra_data_functions=extra_data_functions,
                                             transform_value_functions=transform_value_functions,
                                             localization_prefix=localization_prefix,
-                                            allow_empty_entities=allow_empty_entities)
+                                            allow_empty_entities=allow_empty_entities,
+                                            parsing_workarounds=parsing_workarounds)
 
     def get_modifier_type_or_default(self, modifier_name: str) -> ModifierType:
         if modifier_name in self.modifier_types:
@@ -277,22 +279,41 @@ class JominiParser(metaclass=ABCMeta):
         else:
             return self._parse_modifier_data(data[section_name], modifier_class)
 
+    @cached_property
+    def _class_property_map(self) -> dict[Type[NE]: str]:
+        class_property_map = {}
+        for name, member in inspect.getmembers(self.__class__, predicate=lambda m: type(m) == cached_property):
+            return_type = inspect.signature(member.func).return_annotation
+            if return_type == inspect.Signature.empty:
+                continue
+            origin = get_origin(return_type)
+            type_args = get_args(return_type)
+            if origin == dict and type_args[0] == str and issubclass(type_args[1], NameableEntity):
+                class_property_map[type_args[1]] = name
+        return class_property_map
+
     def resolve_entity_reference(self, entity_class: Type[NE], entity_name:str):
-        if self._class_property_map is None:
-            self._class_property_map = {}
-            for name, member in inspect.getmembers(self.__class__, predicate=lambda m: type(m) == cached_property):
-                return_type = inspect.signature(member.func).return_annotation
-                if return_type == inspect.Signature.empty:
-                    continue
-                origin = get_origin(return_type)
-                type_args = get_args(return_type)
-                if origin == dict and type_args[0] == str and issubclass(type_args[1], NameableEntity):
-                    self._class_property_map[type_args[1]] = name
         if entity_class in self._class_property_map:
             data = getattr(self, self._class_property_map[entity_class])
             if entity_name in data:
                 return data[entity_name]
         return entity_name
+
+    def find_possible_entities_by_name(self, entity_name: str) -> NameableEntity|list[NameableEntity]|None:
+        entities_by_name = {}
+        for cls, prty in self._class_property_map.items():
+            for name, entity in getattr(self, prty).items():
+                if name in entities_by_name:
+                    if not isinstance(entities_by_name[name], list):
+                        entities_by_name[name] = [entities_by_name[name]]
+                    entities_by_name[name].append(entity)
+                else:
+                    entities_by_name[name] = entity
+        if entity_name in entities_by_name:
+            return entities_by_name[entity_name]
+        else:
+            return None
+
 
     @cached_property
     def modifier_types(self) -> dict[str, ModifierType]:
