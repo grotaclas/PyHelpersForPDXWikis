@@ -2,6 +2,7 @@ from aow4.game import aow4game
 from common.paradox_lib import Game
 from cs2.game import cs2game
 from eu4.eu4_file_generator import eu4game
+from eu5.game import eu5game
 from millennia.game import millenniagame
 
 from localpaths import eu4dir
@@ -253,7 +254,7 @@ aowplanetfallgame = AoWPlanetfall()
 
 # mapping of existing games by their short names
 all_games: dict[str, Game] = {game.short_game_name: game for game in [
-    eu4game, vic3game, aow4game, cs2game, millenniagame,  # actually implemented
+    eu4game, eu5game, vic3game, aow4game, cs2game, millenniagame,  # actually implemented
     ck3game, hoi4game, stellarisgame, # limited wikimirror support
     eosgame, stagame, ck2game, aodgame, eu2game, eu3game, euromegame, hoi2game, hoi3game, steeldivisiongame,
     tyrannygame, vic1game, vic2game, skylinesgame, imperatorgame, prisonarchitectgame,
