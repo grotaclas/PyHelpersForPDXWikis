@@ -14,12 +14,28 @@ class Eu5Helper(Helper):
     parser: Eu5Parser
 
     def __init__(self):
+        super().__init__()
         self.parser = eu5game.parser
 
     def get_data(self, folder):
         return self.parser.parser.parse_files(f'{folder}/*')
 
-#####################################################
+    def get_entity_parent_classname(self):
+        return 'Eu5AdvancedEntity'
+
+    def guess_type(self, attribute_name: str) -> str | None:
+        if attribute_name in ['enabled', 'visible', 'potential', 'allow']:
+            return 'Trigger'
+        if attribute_name.startswith('enabled_'):
+            return 'Trigger'
+        if attribute_name in ['effect', 'hidden_effect'] or attribute_name.startswith('on_'):
+            return 'Effect'
+        if 'modifier' in  attribute_name:
+            return 'list[Eu5Modifier]', []
+        return None
+
+
+    #####################################################
     # Helper functions to generate new table generators #
     #####################################################
 
