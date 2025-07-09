@@ -1,15 +1,12 @@
-import inspect
-from pathlib import Path
-from functools import cached_property, reduce
-import sys
-from typing import Callable, TypeVar, Type
+from functools import reduce
+from typing import Callable, Type
 
 from PyHelpersForPDXWikis.localsettings import EU5DIR
 from common.file_generator import FileGenerator
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
-from common.paradox_lib import GameConcept, NE, AE
-from common.paradox_parser import ParadoxParser, ParsingWorkaround
+from common.paradox_lib import NE, AE
+from common.paradox_parser import ParsingWorkaround, QuestionmarkEqualsWorkaround
 
 
 class Eu5Parser(JominiParser):
@@ -43,12 +40,13 @@ class Eu5Parser(JominiParser):
                                                parsing_workarounds, localization_prefix, allow_empty_entities)
 
     def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None, localization_prefix: str = '', allow_empty_entities=False) -> dict[str, AE]:
+                                transform_value_functions: dict[str, Callable[[any], any]] = None, localization_prefix: str = '', allow_empty_entities=False,
+                                parsing_workarounds: list[ParsingWorkaround] = None,) -> dict[str, AE]:
         if extra_data_functions is None:
             extra_data_functions = {}
         if 'description' not in extra_data_functions:
             extra_data_functions['description'] = lambda name, data: self.formatter.format_localization_text(self.localize(localization_prefix + name + '_desc'))
-        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities)
+        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities, parsing_workarounds)
 
     @cached_property
     def modifier_icons(self) -> Tree:
@@ -132,6 +130,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def buildings(self) -> dict[str, Building]:
         buildings = self.parse_advanced_entities('in_game/common/building_types', Building,
+                                            parsing_workarounds=[QuestionmarkEqualsWorkaround()],
                                             transform_value_functions={
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                                 'construction_demand': self._parse_goods_demand,
@@ -148,6 +147,36 @@ class Eu5Parser(JominiParser):
             building.obsolete = [buildings[building_name] for building_name in building.obsolete]
 
         return buildings
+
+    @cached_property
+    def country_description_categories(self) -> dict[str, CountryDescriptionCategory]:
+        return self.parse_nameable_entities('in_game/common/country_description_categories',
+                                            CountryDescriptionCategory,
+                                            allow_empty_entities=True,
+                                            extra_data_functions={
+                                                'display_name': lambda name, data: self.formatter.strip_formatting(
+                                                    self.localize('country_description_category_name_' + name), strip_newlines=True),
+                                                'description': lambda name, data: self.formatter.format_localization_text(
+                                                    self.localize('country_description_category_desc_' + name)),
+                                            })
+
+    @cached_property
+    def countries(self) -> dict[str, Country]:
+        return self.parse_advanced_entities('in_game/setup/countries', Country, transform_value_functions={
+            # @TODO: remove this workaround for duplicate description_category sections
+            'description_category': lambda cat: self.country_description_categories[cat if isinstance(cat, str) else cat[0]],
+        })
+
+    @cached_property
+    def culture_groups(self) -> dict[str, CultureGroup]:
+        return self.parse_nameable_entities('in_game/common/culture_groups', CultureGroup, allow_empty_entities=True)
+
+    @cached_property
+    def cultures(self) -> dict[str, Culture]:
+        return self.parse_advanced_entities('in_game/common/cultures', Culture, transform_value_functions={
+            # @TODO: remove this workaround for duplicate culture_groups sections
+            'culture_groups': lambda groups: [self.culture_groups[g] for g2 in groups for g in g2] if len(groups) > 0 and isinstance(groups[0], list) else [self.culture_groups[g] for g in groups]
+        })
 
     @cached_property
     def defines(self):
@@ -206,6 +235,15 @@ class Eu5Parser(JominiParser):
         })
 
     @cached_property
+    def language_families(self) -> dict[str, LanguageFamily]:
+        return self.parse_nameable_entities('in_game/common/language_families', LanguageFamily)
+
+    @cached_property
+    def languages(self) -> dict[str, Language]:
+        return self.parse_advanced_entities('in_game/common/languages', Language)
+
+
+    @cached_property
     def laws(self) -> dict[str, Law]:
         return self.parse_advanced_entities('in_game/common/laws', Law, extra_data_functions={
             'policies': self._parse_law_policies,
@@ -216,6 +254,9 @@ class Eu5Parser(JominiParser):
         policy_data = data.filter_elements(lambda k, v: k not in possible_law_attributes)
         return self.parse_advanced_entities(policy_data, LawPolicy)
 
+    @cached_property
+    def named_colors(self) -> dict[str, PdxColor]:
+        return self._parse_named_colors(['../jomini/loading_screen/common/named_colors', 'main_menu/common/named_colors'])
 
     def parse_dlc_from_conditions(self, conditions):
         pass
@@ -241,6 +282,33 @@ class Eu5Parser(JominiParser):
                                             transform_value_functions={
                                                 'produced': lambda value: self.goods[value]
                                             })
+
+    @cached_property
+    def religious_aspects(self) -> dict[str, ReligiousAspect]:
+        return self.parse_advanced_entities('in_game/common/religious_aspects', ReligiousAspect)
+
+    @cached_property
+    def religious_factions(self) -> dict[str, ReligiousFaction]:
+        return self.parse_advanced_entities('in_game/common/religious_factions', ReligiousFaction)
+
+    @cached_property
+    def religious_focuses(self) -> dict[str, ReligiousFocus]:
+        return self.parse_advanced_entities('in_game/common/religious_focuses', ReligiousFocus)
+
+    @cached_property
+    def religion_groups(self) -> dict[str, ReligionGroup]:
+        return self.parse_advanced_entities('in_game/common/religion_groups', ReligionGroup)
+
+    @cached_property
+    def religious_schools(self) -> dict[str, ReligiousSchool]:
+        return self.parse_advanced_entities('in_game/common/religious_schools', ReligiousSchool)
+
+    @cached_property
+    def religions(self) -> dict[str, Religion]:
+        return self.parse_advanced_entities('in_game/common/religions', Religion, transform_value_functions={
+            # so that the parser passes the value through even though important_country is not an attribute
+            'important_country': lambda c: c,
+        })
 
     @cached_property
     def script_values(self):

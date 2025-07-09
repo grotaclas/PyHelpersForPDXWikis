@@ -405,6 +405,47 @@ class Building(Eu5AdvancedEntity):
     icon_folder = 'BUILDINGS_ICON_PATH'
 
 
+class CountryDescriptionCategory(NameableEntity):
+    pass
+
+
+class Country(Eu5AdvancedEntity):
+    color: PdxColor
+    color2: PdxColor = None
+    culture_definition: 'Culture' = None  # only unset for special tags DUMMY, PIR and MER
+    description_category: CountryDescriptionCategory = None
+    difficulty: int = 2  # If I understand the readme correctly, the default is 2
+    female_regnal_names: list[str]
+    formable_level: int = 0
+    is_historic: bool = False
+    male_regnal_names: list[str]
+    religion_definition: 'Religion' = None  # only unset for special tags DUMMY, PIR and MER
+    unit_color0: PdxColor = None
+    unit_color1: PdxColor = None
+    unit_color2: PdxColor = None
+
+
+class CultureGroup(NameableEntity):
+    character_modifier: list[Eu5Modifier] = []
+    country_modifier: list[Eu5Modifier] = []
+    location_modifier: list[Eu5Modifier] = []
+
+
+class Culture(Eu5AdvancedEntity):
+    adjective_keys: list[str] = []
+    character_modifier: list[Eu5Modifier] = []
+    color: PdxColor
+    country_modifier: list[Eu5Modifier] = []
+    culture_groups: list[CultureGroup] = []
+    dynasty_name_type: str = ''
+    language: 'Language'
+    location_modifier: list[Eu5Modifier] = []
+    noun_keys: list[str] = []
+    opinions: Tree = None
+    tags: list[str]  # gfx tags
+    use_patronym: bool = False
+
+
 class Estate(Eu5AdvancedEntity):
     alliance:float
     bank: bool = False  #can and will loan money
@@ -462,6 +503,41 @@ class Eu5GameConcept(GameConcept):
     def __init__(self, name: str, display_name: str, **kwargs):
         self.alias = []
         super().__init__(name, display_name, **kwargs)
+
+
+class LanguageFamily(NameableEntity):
+    color: PdxColor = None
+
+
+class Language(Eu5AdvancedEntity):
+    character_name_order: str = ''
+    character_name_short_regnal_number: str = ''
+    color: PdxColor = None
+    descendant_prefix: str = ''
+    descendant_prefix_female: str = ''
+    descendant_prefix_male: str = ''
+    descendant_suffix: str = ''
+    descendant_suffix_female: str = ''
+    descendant_suffix_male: str = ''
+    dialects: Tree = None
+    dynasty_names: list[str] = []
+    dynasty_template_keys: list[str] = []
+    family: LanguageFamily = None
+    female_names: list[str] = []
+    first_name_conjoiner: str = ''
+    location_prefix: str = ''
+    location_prefix_vowel: str = ''
+    location_suffix: str = ''
+    lowborn: list[str] = []
+    male_names: list[str] = []
+    patronym_prefix_daughter: str = ''
+    patronym_prefix_daughter_vowel: str = ''
+    patronym_prefix_son: str = ''
+    patronym_prefix_son_vowel: str = ''
+    patronym_suffix: str = ''
+    patronym_suffix_daughter: str = ''
+    patronym_suffix_son: str = ''
+    ship_names: list[str] = []
 
 
 class LawPolicy(Eu5AdvancedEntity):
@@ -545,3 +621,95 @@ class Law(Eu5AdvancedEntity):
     @cached_property
     def law_category_loc(self):
         return eu5game.parser.formatter.resolve_nested_localizations(eu5game.parser.localize(self.law_category.upper() + '_LAW_CATEGORY'))
+
+
+class ReligiousAspect(Eu5AdvancedEntity):
+    enabled: Trigger = None
+    modifier: list[Eu5Modifier] = []
+    opinions: Tree = None
+    religion: list['Religion']
+    visible: Trigger = None
+
+
+class ReligiousFaction(Eu5AdvancedEntity):
+    actions: list[str] = []
+    enabled: Trigger = None
+    visible: Trigger = None
+
+
+class ReligiousFocus(Eu5AdvancedEntity):
+    ai_will_do: Tree = None
+    effect_on_completion: Tree = None
+    modifier_on_completion: list[Eu5Modifier] = []
+    modifier_while_progressing: list[Eu5Modifier] = []
+    monthly_progress: Tree = None
+
+
+class ReligionGroup(Eu5AdvancedEntity):
+    allow_slaves_of_same_group: bool = True
+    color: PdxColor = None
+    convert_slaves_at_start: bool = None
+    modifier: list[Eu5Modifier] = []
+
+
+class ReligiousSchool(Eu5AdvancedEntity):
+    enabled_for_character: Trigger = None
+    enabled_for_country: Trigger = None
+    modifier: list[Eu5Modifier] = []
+
+
+class Religion(Eu5AdvancedEntity):
+    ai_wants_convert: bool = False
+    color: PdxColor = None
+    culture_locked: bool = False
+    definition_modifier: list[Eu5Modifier] = []
+    enable: str = ''  # @TODO: Date
+    factions: list[ReligiousFaction] = []
+    group: ReligionGroup = None
+    has_autocephalous_patriarchates: bool = False
+    has_avatars: bool = False
+    has_canonization: bool = False
+    has_cardinals: bool = False
+    has_doom: bool = False
+    has_honor: bool = False
+    has_karma: bool = False
+    has_patriarchs: bool = False
+    has_piety: bool = False
+    has_purity: bool = False
+    has_religious_head: bool = False
+    has_religious_influence: bool = False
+    has_rite_power: bool = False
+    has_yanantin: bool = False
+
+    # saved as str when parsing to delay loading the country list, because it depends on the religion list
+    _important_country: str = None
+
+    language: Language = None
+    max_religious_figures_for_religion: Tree = None
+    max_sects: int = 0
+    needs_reform: bool = False
+    num_religious_focuses_needed_for_reform: int = 0
+    opinions: Tree = None
+    reform_to_religion: 'Religion' = None
+    religious_aspects: int = 0
+    religious_focuses: list[ReligiousFocus] = []
+    religious_school: list[ReligiousSchool] = []
+    tags: list[str] = ''  # possible types: {list[eu5.eu5lib.ReligionGroup], list[str], list[eu5.eu5lib.Eu5GameConcept]}
+    tithe: float = 0
+    unique_names: list[str] = []
+    use_icons: bool = False
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if 'important_country' in kwargs:
+            # saved as private attribute and removed to not override the cached_property
+            self._important_country = kwargs['important_country']
+            del kwargs['important_country']
+        super().__init__(name, display_name, **kwargs)
+
+    @cached_property
+    def important_country(self) -> Country|None:
+        """Lazy loaded country to avoid infinite recursion, because the country parsing uses the religions"""
+        if self._important_country:
+            return eu5game.parser.countries[self._important_country]
+        else:
+            return None
