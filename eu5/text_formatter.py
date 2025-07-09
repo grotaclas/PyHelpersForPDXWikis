@@ -1,8 +1,9 @@
 import re
 from decimal import Decimal
 
+from common.paradox_lib import NameableEntity
 from common.paradox_parser import Tree
-from eu5.eu5lib import Resource, HardcodedResource
+from eu5.eu5lib import Resource, HardcodedResource, Eu5AdvancedEntity
 from eu5.game import eu5game
 from vic3.text_formatter import Vic3WikiTextFormatter
 
@@ -56,10 +57,45 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
     def format_trigger(self, trigger: Tree|None):
         if not trigger:
             return ''
-        return 'Not implemented yet'
+        if isinstance(trigger, list):
+            result = []
+            for condition in trigger:
+                if isinstance(condition, Tree):
+                    result.append(self.format_conditions(condition))
+                else:
+                    result.append(condition)
+            return self.create_wiki_list(result)
+        return self.format_conditions(trigger)
 
     def format_effect(self, effect: Tree|None):
         if not effect:
             return ''
         return 'Not implemented yet'
 
+    def format_simple_statement(self, key, value):
+        return f'{key}: {self.format_RHS(value)}'
+
+    def format_RHS(self, value) -> str:
+        suffix = None
+        if isinstance(value, str) and ':' in value:
+            typ, value_without_prefix = value.split(':')
+            value_without_prefix_and_suffix, _seperator, suffix = value_without_prefix.partition('.')
+            match typ:
+                case 'building_type':
+                    value = self.parser.buildings[value_without_prefix_and_suffix]
+                case 'c':
+                    value = self.parser.countries[value_without_prefix_and_suffix]
+                case 'estate_privilege':
+                    value = self.parser.estate_privileges[value_without_prefix_and_suffix]
+                case 'religion':
+                    value = self.parser.religions[value_without_prefix_and_suffix]
+                case _:
+                    suffix = None  # we use the unchanged value, so we don't want to add the suffix to it
+        if isinstance(value, Eu5AdvancedEntity):
+            value = value.get_wiki_link_with_icon()
+        elif isinstance(value, NameableEntity):
+            value = value.display_name
+        if suffix:
+            return f'{value}.{suffix}'
+        else:
+            return value
