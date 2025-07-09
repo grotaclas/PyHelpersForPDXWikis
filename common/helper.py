@@ -18,6 +18,10 @@ def to_camel_case(text):
 class Helper:
     parser:JominiParser = None
 
+    def __init__(self):
+        self.element_counter = 0
+        self.key_counter = {}
+
     def get_data(self, folder):
         raise NotImplementedError('Subclasses must implement this function')
 
@@ -68,10 +72,11 @@ class Helper:
             possible_class_name = possible_class_name.removesuffix('s')
         print(f'class {possible_class_name}({self.get_entity_parent_classname()}):')
         for key, values in sorted(keys.items()):
-            if key == 'language':
-                pass
             value_types = {v if isinstance(v, type) or isinstance(v, GenericAlias) else type(v) for v in values}
-            first_example = list(values)[0]
+            if values:
+                first_example = list(values)[0]
+            else:
+                first_example = None
             is_color = False
             try:
                 color = self.parser.parse_color_value(first_example)
@@ -79,10 +84,12 @@ class Helper:
                     is_color = True
             except:
                 pass
+            guessed_type = self.guess_type(key)
+            value_type_str = None
+            default = None
             if len(value_types) == 1 or is_color:
                 value_type = value_types.pop()
                 default = None
-                guessed_type = self.guess_type(key)
                 if guessed_type is None:
                     value_type_str = value_type.__name__
                 elif isinstance(guessed_type, tuple):
@@ -121,9 +128,18 @@ class Helper:
                         default = []
                     else:
                         value_type_str = pprint.pformat(value_type)
-                print('    {}: {} = {}'.format(key, value_type_str, pprint.pformat(default)))
-            else:
+            elif guessed_type is not None:
+                if isinstance(guessed_type, tuple):
+                    value_type_str, default = guessed_type
+                else:
+                    value_type_str = guessed_type
+            if value_type_str is None:
                 print('    {}: any  # possible types: {}'.format(key, value_types))
+            elif self.element_counter == self.key_counter[key]:
+                # no default, because all elements have that key
+                print('    {}: {}'.format(key, value_type_str))
+            else:
+                print('    {}: {} = {}'.format(key, value_type_str, pprint.pformat(default)))
         print('\n==Parsing==')
         print(f"""    @cached_property
     def {folder_name}(self) -> dict[str, {possible_class_name}]:
@@ -133,7 +149,7 @@ class Helper:
     def guess_type(self, attribute_name: str) -> str|None:
         return None
 
-    def get_value_for_example(self, value):
+    def get_value_for_example(self, value, key):
         if isinstance(value, collections.abc.Hashable):
             return value
         else:
@@ -153,11 +169,14 @@ class Helper:
             for item in data:
                 self._update_keys_from_data(item, keys, ignored_keys)
         else:
+            self.element_counter += 1
             for k, v in data:
                 if k in ignored_keys:
                     continue
                 if k not in keys:
                     keys[k] = set()
-                example = self.get_value_for_example(v)
+                    self.key_counter[k] = 0
+                self.key_counter[k] += 1
+                example = self.get_value_for_example(v, k)
                 if example is not None:
                     keys[k].add(example)
