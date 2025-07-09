@@ -150,6 +150,10 @@ class NameableEntity:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def __repr__(self):
+        string = super().__repr__()
+        return string.replace(self.__class__.__name__, f'{self.__class__.__name__}({self.name})')
+
     def __str__(self):
         return self.display_name
 
