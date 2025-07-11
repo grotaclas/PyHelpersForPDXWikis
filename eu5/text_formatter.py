@@ -80,17 +80,22 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         if isinstance(value, str) and ':' in value:
             typ, value_without_prefix = value.split(':')
             value_without_prefix_and_suffix, _seperator, suffix = value_without_prefix.partition('.')
-            match typ:
-                case 'building_type':
-                    value = self.parser.buildings[value_without_prefix_and_suffix]
-                case 'c':
-                    value = self.parser.countries[value_without_prefix_and_suffix]
-                case 'estate_privilege':
-                    value = self.parser.estate_privileges[value_without_prefix_and_suffix]
-                case 'religion':
-                    value = self.parser.religions[value_without_prefix_and_suffix]
-                case _:
-                    suffix = None  # we use the unchanged value, so we don't want to add the suffix to it
+            type_sources = {
+                'building_type': self.parser.buildings,
+                'c': self.parser.countries,
+                'culture': self.parser.cultures,
+                'culture_group': self.parser.culture_groups,
+                'estate_privilege': self.parser.estate_privileges,
+                'estate_type': self.parser.estates,
+                'goods': self.parser.goods,
+                'languages': self.parser.languages,
+                'religion': self.parser.religions,
+                'religion_group': self.parser.religion_groups,
+            }
+            if typ in type_sources:
+                value = type_sources[typ][value_without_prefix_and_suffix]
+            else:
+                suffix = None  # we use the unchanged value, so we don't want to add the suffix to it
         if isinstance(value, Eu5AdvancedEntity):
             value = value.get_wiki_link_with_icon()
         elif isinstance(value, NameableEntity):
