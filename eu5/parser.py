@@ -5,7 +5,7 @@ from PyHelpersForPDXWikis.localsettings import EU5DIR
 from common.file_generator import FileGenerator
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
-from common.paradox_lib import NE, AE
+from common.paradox_lib import NE, AE, ME
 from common.paradox_parser import ParsingWorkaround, QuestionmarkEqualsWorkaround
 
 
@@ -68,6 +68,21 @@ class Eu5Parser(JominiParser):
             'icon_file': lambda name, data: self.modifier_icons.get_or_default(name, Tree({})).get_or_default('positive', None),
             'negative_icon_file': lambda name, data: self.modifier_icons.get_or_default(name, Tree({})).get_or_default('negative', None),
         })
+
+    @cached_property
+    def named_modifiers(self) -> dict[str, Eu5NamedModifier]:
+        return self.parse_nameable_entities('main_menu/common/modifiers', Eu5NamedModifier,
+                                            localization_prefix='STATIC_MODIFIER_NAME_',
+                                            extra_data_functions={
+                                                'modifier': lambda name, data: self._parse_modifier_data(
+                                                    Tree({name: value for name, value in data if name not in ['category', 'decaying']}),
+                                                    modifier_class=Eu5Modifier),
+                                                'description': lambda name, data: self.formatter.format_localization_text(self.localize('STATIC_MODIFIER_DESC_' + name, default='')),
+                                            })
+
+    def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
+        """@TODO: parse potential_trigger and scale"""
+        return super()._parse_modifier_data(Tree({mod_name: mod_value for mod_name, mod_value in data if mod_name not in ['potential_trigger', 'scale']}), modifier_class)
 
     def parse_modifier_section_from_wiki_section_name(self, wiki_section_name: str) -> list[Eu5Modifier]:
         """

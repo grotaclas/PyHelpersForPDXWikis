@@ -79,6 +79,26 @@ class Eu5Modifier(Modifier):
         return f'[[File:{self.modifier_type.get_wiki_filename()}|32px]] {value_and_name}'
 
 
+class Eu5NamedModifier(NameableEntity):
+    """Modifier describes several related concepts.
+    This class is for entities from the common/modifiers folder which groups together multiple modifiers and
+    gives them a name, category and description
+    For the individual modifiers see the class Eu5Modifier
+    For the possible types of these modifiers see Eu5ModifierType"""
+
+    category: str
+    description: str = ''
+    decaying: bool = False
+    modifier: list[Eu5Modifier]
+
+    def format_for_wiki(self, time_limit_weeks: int = None) -> str:
+        """@TODO: use wiki template"""
+        return "Modifier ''“{}”''{} giving:\n* {}".format(
+                                                       self.display_name,
+                                                       ' for {} weeks'.format(time_limit_weeks) if time_limit_weeks is not None else '',
+                                                       '\n* '.join([modifier.format_for_wiki() for modifier in self.modifier]))
+
+
 class Eu5AdvancedEntity(AdvancedEntity):
 
     icon_folder: str = None
