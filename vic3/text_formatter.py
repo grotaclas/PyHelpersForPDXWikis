@@ -294,11 +294,14 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
     def format_key_for_compound_statement(self, key):
         key_mappings = {
             'OR': 'At least one of',
-            'NOR': 'Neither of the following',
+            'NOR': 'Neither of',
+            'AND': 'All of',
+            'NOT': 'Not',
         }
         if key in key_mappings:
             return key_mappings[key]
         else:
+            # print(f'Notice: Unhandled compound key "{key}"')
             return key
 
     @cached_property
