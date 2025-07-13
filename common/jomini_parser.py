@@ -100,6 +100,8 @@ class JominiParser(metaclass=ABCMeta):
             overwrite_duplicate_toplevel_keys = False
         if isinstance(folder, Tree):
             tree = folder
+        elif folder.endswith('.txt'):
+            tree = self.parser.parse_file(folder, workarounds=parsing_workarounds)
         else:
             tree = self.parser.parse_folder_as_one_file(folder, overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys,
                                                     workarounds=parsing_workarounds)
