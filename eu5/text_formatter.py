@@ -58,10 +58,12 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         if not trigger:
             return ''
         if isinstance(trigger, list):
+            if len(trigger) == 1:
+                return self.format_conditions(trigger[0])
             result = []
             for condition in trigger:
                 if isinstance(condition, Tree):
-                    result.append(self.format_conditions(condition))
+                    result.append(self.format_conditions(condition, indent=2))
                 else:
                     result.append(condition)
             return self.create_wiki_list(result)
