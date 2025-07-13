@@ -33,6 +33,11 @@ class Eu5Parser(JominiParser):
                                 transform_value_functions: dict[str, Callable[[any], any]] = None, entity_level: int = 0,
                                 level_headings_keys: dict[str, 0] = None, parsing_workarounds: list[ParsingWorkaround] = None, localization_prefix: str = '',
                                 allow_empty_entities=False) -> dict[str, NE]:
+        if parsing_workarounds is None:
+            parsing_workarounds = []
+        if not any(isinstance(workaround, QuestionmarkEqualsWorkaround) for workaround in parsing_workarounds):
+            parsing_workarounds.append(QuestionmarkEqualsWorkaround())
+
         if extra_data_functions is None:
             extra_data_functions = {}
         if 'display_name' not in extra_data_functions:
@@ -147,7 +152,6 @@ class Eu5Parser(JominiParser):
     @cached_property
     def buildings(self) -> dict[str, Building]:
         buildings = self.parse_advanced_entities('in_game/common/building_types', Building,
-                                            parsing_workarounds=[QuestionmarkEqualsWorkaround()],
                                             transform_value_functions={
                                                 'build_time': lambda value: self.script_values[value] if isinstance(value, str) else value,
                                                 'construction_demand': self._parse_goods_demand,
