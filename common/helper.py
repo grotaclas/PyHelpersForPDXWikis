@@ -5,6 +5,7 @@ from typing import get_origin, get_args
 
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NameableEntity, PdxColor
+from common.paradox_parser import Tree
 
 
 def to_camel_case(text):
@@ -87,6 +88,8 @@ class Helper:
             guessed_type = self.guess_type(key)
             value_type_str = None
             default = None
+            if value_types == {float, int}:
+                value_types = {float}
             if len(value_types) == 1 or is_color:
                 value_type = value_types.pop()
                 default = None
@@ -163,6 +166,11 @@ class Helper:
                     return list[types_in_list.pop()]
                 elif len(types_in_list) == 0:
                     return None
+            elif isinstance(value, Tree):
+                try:
+                    return self.parser.parse_color_value(value)
+                except:
+                    pass
             return type(value)
     def _update_keys_from_data(self, data, keys, ignored_keys: list):
         if isinstance(data, list):
