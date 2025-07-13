@@ -1,3 +1,5 @@
+import copy
+from collections.abc import MutableMapping
 from functools import reduce
 from typing import Callable, Type
 
@@ -45,7 +47,7 @@ class Eu5Parser(JominiParser):
         if extra_data_functions is None:
             extra_data_functions = {}
         if 'description' not in extra_data_functions:
-            extra_data_functions['description'] = lambda name, data: self.formatter.format_localization_text(self.localize(localization_prefix + name + '_desc'))
+            extra_data_functions['description'] = lambda name, data: self.formatter.format_localization_text(self.localize(localization_prefix + name + '_desc', default=''))
         return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities, parsing_workarounds)
 
     @cached_property
@@ -164,6 +166,80 @@ class Eu5Parser(JominiParser):
         return buildings
 
     @cached_property
+    def climates(self) -> dict[str, Climate]:
+        return self.parse_advanced_entities('in_game/common/climates', Climate)
+
+    def _parse_province_data(self, area: str, province_data: Tree) -> dict[str, Province]:
+        return {
+            province: Province(province,
+                               self.formatter.strip_formatting(
+                                   self.localize(province), strip_newlines=True
+                               ),
+                               _area = area,
+                               locations={location: self.locations[location]
+                                          for location in locations}
+                               )
+            for province, locations in province_data
+        }
+
+    @cached_property
+    def continents(self):
+        continents = self.parse_nameable_entities('in_game/map_data/' + self.default_map.get_or_default('setup', 'definitions.txt'),
+                          Continent,
+                          extra_data_functions={
+                              'sub_continents': lambda continent, sub_continent_data:
+                              self.parse_nameable_entities(sub_continent_data,
+                                  SubContinent,
+                                  extra_data_functions={
+                                      '_continent': lambda _, __: continent,
+                                      'regions': lambda sub_continent, region_data:
+                                      self.parse_nameable_entities(
+                                          region_data,
+                                          Region,
+                                          extra_data_functions={
+                                              '_sub_continent': lambda _, __: sub_continent,
+                                              'areas': lambda region, area_data:
+                                              self.parse_nameable_entities(
+                                                  area_data,
+                                                  Area,
+                                                  extra_data_functions={
+                                                      '_region': lambda _, __: region,
+                                                      'provinces': lambda area, province_data: self._parse_province_data(area, province_data)
+                                                  }
+                                              )
+                                          }
+                                      )
+                                  }
+                              )
+                          }
+        )
+        return continents
+
+    @cached_property
+    def sub_continents(self) -> dict[str, SubContinent]:
+        return {sub_continent.name: sub_continent
+                for continent in self.continents.values()
+                for sub_continent in continent.sub_continents.values()}
+
+    @cached_property
+    def regions(self) -> dict[str, Region]:
+        return {region.name: region
+                for sub_continent in self.sub_continents.values()
+                for region in sub_continent.regions.values()}
+
+    @cached_property
+    def areas(self) -> dict[str, Area]:
+        return {area.name: area
+                for region in self.regions.values()
+                for area in region.areas.values()}
+
+    @cached_property
+    def provinces(self) -> dict[str, Province]:
+        return {province.name: province
+                for area in self.areas.values()
+                for province in area.provinces.values()}
+
+    @cached_property
     def country_description_categories(self) -> dict[str, CountryDescriptionCategory]:
         return self.parse_nameable_entities('in_game/common/country_description_categories',
                                             CountryDescriptionCategory,
@@ -177,10 +253,90 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def countries(self) -> dict[str, Country]:
-        return self.parse_advanced_entities('in_game/setup/countries', Country, transform_value_functions={
-            # @TODO: remove this workaround for duplicate description_category sections
-            'description_category': lambda cat: self.country_description_categories[cat if isinstance(cat, str) else cat[0]],
-        })
+        return self.parse_advanced_entities('in_game/setup/countries',
+                                            Country,
+                                            transform_value_functions={
+                                                # @TODO: remove this workaround for duplicate description_category sections
+                                                'description_category': lambda cat: self.country_description_categories[
+                                                    cat if isinstance(cat, str) else cat[0]],
+                                            },
+                                            extra_data_functions={
+                                                'setup_data': lambda tag, data: self.setup_data['countries']['countries'][tag] if tag in
+                                                                                                                                  self.setup_data['countries'][
+                                                                                                                                      'countries'] else None
+                                            })
+
+    @cached_property
+    def setup_data(self) -> Tree:
+        template_data_without_include = {
+            filename.stem: self._fix_law_values(data)
+            for filename, data in self.parser.parse_files('main_menu/setup/templates/*.txt')
+        }
+        template_data = {}
+        for filename, template in template_data_without_include.items():
+            template_data[filename] = self._resolve_includes(template, template_data, template_data_without_include)
+
+        return self._resolve_includes(self._fix_law_values(self.parser.parse_folder_as_one_file('main_menu/setup/start/')),
+                                      template_data,
+                                      other_templates={},
+                                      recursive=True
+                                      )
+
+    def _fix_law_value(self, law_value):
+        if isinstance(law_value, list):
+            law_value = Tree({law_key: law_value
+                              for law_tree in law_value
+                              for law_key, law_value in law_tree})
+        return law_value
+
+    def _fix_law_values(self, data: Tree):
+        """If there are multiple law sections, the parser turns them into a list of Tree.
+         This function merges the trees from that list.
+         It goes recursively through the data to fix the sections wherever they are"""
+        for key, value in data:
+            if key == 'laws':
+                data[key] = self._fix_law_value(value)
+            elif isinstance(value, Tree):
+                self._fix_law_values(value)
+        return data
+
+    def _resolve_includes(self, data: Tree, templates, other_templates, recursive=False):
+        if 'include' in data or recursive:
+            new_template = Tree({})
+            for key, value in data:
+                if key == 'include':
+                    if not isinstance(value, list):
+                        value = [value]
+                    for include_file in value:
+                        if include_file in templates:
+                            included_data = templates[include_file]
+                        else:
+                            included_data = other_templates[include_file]
+                        new_template.update(copy.deepcopy(included_data))
+                elif key in new_template:
+                    if isinstance(value, Tree) or isinstance(value, MutableMapping):
+                        new_template[key].update(value)
+                    elif isinstance(value, list) or isinstance(new_template[key], list):
+                        if not isinstance(new_template[key], list):
+                            new_template[key] = [new_template[key]]
+                        if not isinstance(value, list):
+                            value = [value]
+                        new_template[key].extend(value)
+                    elif value is None and new_template[key] is not None:
+                        pass
+                    else:
+                        new_template[key] = value
+                else:
+                    if key == 'laws':
+                        value = self._fix_law_value(value)
+                    if isinstance(value, Tree):
+                        new_template[key] = self._resolve_includes(value, templates, other_templates, recursive)
+                    else:
+                        new_template[key] = value
+
+            return new_template
+        else:
+            return data
 
     @cached_property
     def culture_groups(self) -> dict[str, CultureGroup]:
@@ -192,6 +348,11 @@ class Eu5Parser(JominiParser):
             # @TODO: remove this workaround for duplicate culture_groups sections
             'culture_groups': lambda groups: [self.culture_groups[g] for g2 in groups for g in g2] if len(groups) > 0 and isinstance(groups[0], list) else [self.culture_groups[g] for g in groups]
         })
+
+    @cached_property
+    def default_map(self) -> Tree:
+        return self.parser.parse_file('in_game/map_data/default.map')
+
 
     @cached_property
     def defines(self):
@@ -250,6 +411,10 @@ class Eu5Parser(JominiParser):
         })
 
     @cached_property
+    def government_types(self) -> dict[str, GovernmentType]:
+        return self.parse_advanced_entities('in_game/common/government_types', GovernmentType)
+
+    @cached_property
     def language_families(self) -> dict[str, LanguageFamily]:
         return self.parse_nameable_entities('in_game/common/language_families', LanguageFamily)
 
@@ -268,6 +433,19 @@ class Eu5Parser(JominiParser):
         possible_law_attributes = Law.all_annotations().keys()
         policy_data = data.filter_elements(lambda k, v: k not in possible_law_attributes)
         return self.parse_advanced_entities(policy_data, LawPolicy)
+
+    @cached_property
+    def locations(self) -> dict[str, Location]:
+        return self.parse_advanced_entities('in_game/map_data/' + self.default_map.get_or_default('location_templates', 'location_templates.txt'), Location)
+
+    def get_province(self, location: Location):
+        return self._prov_for_loc[location.name]
+
+    @cached_property
+    def _prov_for_loc(self):
+        return {location: province
+                for province in self.provinces.values()
+                for location in province.locations.keys()}
 
     @cached_property
     def named_colors(self) -> dict[str, PdxColor]:
@@ -331,3 +509,11 @@ class Eu5Parser(JominiParser):
         result.update(self.parser.parse_folder_as_one_file('in_game/common/script_values'))
         result.merge_duplicate_keys()
         return result
+
+    @cached_property
+    def topography(self) -> dict[str, Topography]:
+        return self.parse_advanced_entities('in_game/common/topography', Topography)
+
+    @cached_property
+    def vegetation(self) -> dict[str, Vegetation]:
+        return self.parse_advanced_entities('in_game/common/vegetation', Vegetation)

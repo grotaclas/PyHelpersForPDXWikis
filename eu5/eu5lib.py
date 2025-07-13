@@ -155,6 +155,60 @@ class Effect(Tree):
     pass
 
 
+# Map classes
+class Location(Eu5AdvancedEntity):
+    climate: 'Climate'
+    culture: 'Culture' = None
+    modifier: Eu5NamedModifier = None
+    movement_assistance: list[float] = []
+    natural_harbor_suitability: float = None
+    raw_material: 'Good' = None
+    religion: 'Religion' = None
+    topography: 'Topography'
+    vegetation: 'Vegetation' = None
+
+    @cached_property
+    def province(self):
+        # lazy loading to avoid infinite recursions, because province parsing requires locations
+        return eu5game.parser.get_province(self)
+
+class Province(NameableEntity):
+    locations: dict[str, Location]
+    _area: str
+
+    @cached_property
+    def area(self) -> 'Area':
+        return eu5game.parser.areas[self._area]
+
+class Area(NameableEntity):
+    provinces: dict[str, Province]
+    _region: str
+
+    @cached_property
+    def region(self) -> 'Region':
+        return eu5game.parser.regions[self._region]
+
+class Region(NameableEntity):
+    areas: dict[str, Area]
+    _sub_continent: str
+
+    @cached_property
+    def sub_continent(self) -> 'SubContinent':
+        return eu5game.parser.sub_continents[self._sub_continent]
+
+class SubContinent(NameableEntity):
+    regions: dict[str, Region]
+    _continent: str
+
+    @cached_property
+    def continent(self) -> 'Continent':
+        return eu5game.parser.continents[self._continent]
+
+
+class Continent(NameableEntity):
+    sub_continents: dict[str, SubContinent]
+
+
 class Advance(Eu5AdvancedEntity):
     age: str
     ai_preference_tags: list = []
@@ -425,11 +479,22 @@ class Building(Eu5AdvancedEntity):
     icon_folder = 'BUILDINGS_ICON_PATH'
 
 
+class Climate(Eu5AdvancedEntity):
+    audio_tags: Tree
+    color: PdxColor
+    debug_color: PdxColor
+    has_precipitation: bool = True
+    location_modifier: list[Eu5Modifier]
+    unit_modifier: list[Eu5Modifier] = []
+    winter: str
+
+
 class CountryDescriptionCategory(NameableEntity):
     pass
 
 
 class Country(Eu5AdvancedEntity):
+    # From in_game/setup/countries
     color: PdxColor
     color2: PdxColor = None
     culture_definition: 'Culture' = None  # only unset for special tags DUMMY, PIR and MER
@@ -443,6 +508,64 @@ class Country(Eu5AdvancedEntity):
     unit_color0: PdxColor = None
     unit_color1: PdxColor = None
     unit_color2: PdxColor = None
+
+    # From main_menu/setup/start/10_countries_and_roads.txt
+    accepted_cultures: 'Culture' = None
+    add_pops_from_locations: list[Location] = None
+    ai_advance_preference_tags: Tree = None
+    capital: Location = None
+    control: list[Location] = []
+    country_name: str = ''
+    country_rank: str = ''
+    court_language: str = ''
+    currency_data: Tree = None
+    discovered_areas: list[Area] = []
+    discovered_provinces: list[Province] = []
+    discovered_regions: list[Region] = []
+    dynasty: str = ''
+    flag: str = None
+    government: Tree  # @TODO: government parsing
+    include: str = ''
+    is_valid_for_release: bool = True
+    liturgical_language: 'Language' = None
+    our_cores_conquered_by_others: list[Location] = []
+    own_conquered: list[Location] = []
+    own_control_colony: list[Location] = []
+    own_control_conquered: list[Location] = []
+    own_control_core: list[Location] = []
+    own_control_integrated: list[Location] = []
+    own_core: list[Location] = []
+    religious_school: 'ReligiousSchool' = None
+    revolt: bool = False
+    scholars: 'ReligiousSchool' = None
+    starting_technology_level: int = None
+    timed_modifier: list[Eu5Modifier] = []
+    tolerated_cultures: list['Culture'] = []
+    type: 'GovernmentType'
+    variables: Tree = None
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if kwargs['setup_data']:
+            for k, v in kwargs['setup_data']:
+                if k in kwargs:
+                    print(f'Error: duplicate key {k} in {name}. Orig_value: "{kwargs[k]}"; setup_value: "{v}"')
+                else:
+                    kwargs[k] = v
+
+        super().__init__(name, display_name, **kwargs)
+        if self.country_name:
+            self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'
+
+    def has_flag(self, flag: str):
+        if self.variables and 'data' in self.variables:
+            for variable in self.variables['data']:
+                if (
+                        variable['flag'] == flag
+                        and variable['data']['type'] == 'boolean'
+                        and variable['data']['identity'] == 1
+                ):
+                    return True
+        return False
 
 
 class CultureGroup(NameableEntity):
@@ -515,6 +638,32 @@ class EstatePrivilege(Eu5AdvancedEntity):
         return 'Privilege'
 
 
+class HeirSelection(Eu5AdvancedEntity):
+    all_in_country: bool = None
+    all_in_dynasty: bool = None
+    allow_children: bool = None
+    allow_female: bool = None
+    allow_male: bool = None
+    allowed: Trigger = None
+    allowed_estates: list[Estate] = []
+    cached: bool = None
+    calc: Tree = None
+    candidate_country: Trigger = None
+    heir_is_allowed: Trigger = None
+    ignore_ruler: bool = False
+    include_ruler_siblings: bool = None
+    locked: Trigger = None
+    max_possible_candidates: int = None
+    potential: Trigger = None
+    show_candidates: bool = None
+    sibling_score: Tree = None  # @TODO: value calculation
+    succession_effect: Effect = None
+    term_duration: int = 0
+    through_female: bool = None
+    traverse_family_tree: bool = False
+    use_election: bool = None
+    use_mothers_dynasty: bool = False
+
 class Eu5GameConcept(GameConcept):
     family: str = ''
     alias: list['Eu5GameConcept']
@@ -523,6 +672,17 @@ class Eu5GameConcept(GameConcept):
     def __init__(self, name: str, display_name: str, **kwargs):
         self.alias = []
         super().__init__(name, display_name, **kwargs)
+
+
+class GovernmentType(Eu5AdvancedEntity):
+    care_about_producing_heirs: bool = False
+    color: PdxColor
+    default_character_estate: Estate
+    generate_consorts: bool = False
+    government_power: HardcodedResource
+    heir_selection: list[HeirSelection] = []
+    modifier: list[Eu5Modifier]
+    use_regnal_number: bool = False
 
 
 class LanguageFamily(NameableEntity):
@@ -733,3 +893,34 @@ class Religion(Eu5AdvancedEntity):
             return eu5game.parser.countries[self._important_country]
         else:
             return None
+
+
+class Topography(Eu5AdvancedEntity):
+    audio_tags: Tree
+    blocked_in_winter: bool = False
+    can_freeze_over: bool = None
+    can_have_ice: bool = False
+    color: PdxColor
+    debug_color: PdxColor
+    defender: int = 0
+    has_sand: bool = False
+    location_modifier: list[Eu5Modifier] = []
+    movement_cost: float
+    vegetation_density: float = 0
+    weather_cyclone_strength_change_percent: int
+    weather_front_strength_change_percent: int
+    weather_tornado_strength_change_percent: int
+
+    icon_folder = 'TOPOGRAPHY_TYPE_ICON_PATH'
+
+
+class Vegetation(Eu5AdvancedEntity):
+    audio_tags: Tree
+    color: PdxColor
+    debug_color: PdxColor
+    defender: int = 0
+    has_sand: bool = False
+    location_modifier: list[Eu5Modifier]
+    movement_cost: float
+
+    icon_folder = 'VEGETATION_TYPE_ICON_PATH'
