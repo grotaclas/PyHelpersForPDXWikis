@@ -244,6 +244,14 @@ class Advance(Eu5AdvancedEntity):
 
     icon_folder = 'ADVANCE_ICON_PATH'
 
+    def get_wiki_icon(self, size: str = '32px') -> str:
+        if self.get_wiki_filename().removesuffix(".png") == self.display_name:
+            localized_name_param = ''
+        else:
+            localized_name_param = f'|{self.display_name}'
+
+        return f'{{{{Advance|{self.get_wiki_filename().removesuffix(".png")}{localized_name_param}|w={size}}}}}'
+
 
 class Resource(IconMixin):
     pass
