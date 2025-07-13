@@ -5,6 +5,7 @@ from typing import get_type_hints, get_origin, get_args
 
 from common.helper import Helper
 from common.paradox_lib import IconMixin
+from common.paradox_parser import ParsingWorkaround
 from eu5.eu5lib import Eu5AdvancedEntity, Cost, GoodsDemand, Price, Eu5Modifier, Trigger, Effect
 from eu5.game import eu5game
 from eu5.parser import Eu5Parser
@@ -17,8 +18,29 @@ class Eu5Helper(Helper):
         super().__init__()
         self.parser = eu5game.parser
 
-    def get_data(self, folder):
-        return self.parser.parser.parse_files(f'{folder}/*')
+    def find_all_keys_in_folder(self, folder, depth=0, ignored_toplevel_keys: list = None, ignored_keys: list = None):
+        folder = folder.removeprefix('game/')
+        return super().find_all_keys_in_folder(folder, depth, ignored_toplevel_keys, ignored_keys)
+
+    def get_data(self, folder: str):
+        if folder.endswith('.txt'):
+            glob = folder
+        else:
+            glob = f'{folder}/*.txt'
+        return self.parser.parser.parse_files(glob)
+
+        # Temporary code to include template data for files which have an include= line
+        # template_data = {}
+        # for file in (self.parser.parser.base_folder / 'main_menu/setup/templates').glob("*.txt"):
+        #     with open(file, encoding='utf-8-sig') as fp:
+        #         template_data[file.stem] = fp.read()
+        # class TemplateWorkaround(ParsingWorkaround):
+        #     """replaces statements like
+        #         include = "filename"
+        #     with the contents of the file game/main_menu/setup/templates/filename.txt
+        #     """
+        #     replacement_regexes = {f'\n\\s*include\\s*=\\s*"?{filename}"?\\s*(#.*)?\n': f'\n{contents}\n' for filename, contents in template_data.items()}
+        # return self.parser.parser.parse_files(glob, workarounds=[TemplateWorkaround()])
 
     def get_entity_parent_classname(self):
         return 'Eu5AdvancedEntity'
