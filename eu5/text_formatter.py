@@ -72,7 +72,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
     def format_effect(self, effect: Tree|None):
         if not effect:
             return ''
-        return 'Not implemented yet'
+        return self.format_trigger(effect)
 
     def format_simple_statement(self, key, value):
         return f'{key}: {self.format_RHS(value)}'
