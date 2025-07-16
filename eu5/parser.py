@@ -4,6 +4,7 @@ from functools import reduce
 from typing import Callable, Type
 
 from PyHelpersForPDXWikis.localsettings import EU5DIR
+from common.cache import disk_cache
 from common.file_generator import FileGenerator
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
@@ -67,6 +68,7 @@ class Eu5Parser(JominiParser):
         return ''
 
     @cached_property
+    @disk_cache(eu5game)
     def modifier_types(self) -> dict[str, Eu5ModifierType]:
         return self.parse_nameable_entities('main_menu/common/modifier_types', Eu5ModifierType,
                                             allow_empty_entities=True,
@@ -138,7 +140,7 @@ class Eu5Parser(JominiParser):
         return value
 
     @cached_property
-    def advances(self):
+    def advances(self) -> dict[str, Advance]:
         return self.parse_advanced_entities('in_game/common/advances', Advance,
                                             extra_data_functions={
                                                 'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
@@ -256,6 +258,7 @@ class Eu5Parser(JominiParser):
                                             })
 
     @cached_property
+    @disk_cache(eu5game)
     def countries(self) -> dict[str, Country]:
         return self.parse_advanced_entities('in_game/setup/countries',
                                             Country,
@@ -271,6 +274,7 @@ class Eu5Parser(JominiParser):
                                             })
 
     @cached_property
+    @disk_cache(eu5game)
     def setup_data(self) -> Tree:
         template_data_without_include = {
             filename.stem: self._fix_law_values(data)
@@ -347,6 +351,7 @@ class Eu5Parser(JominiParser):
         return self.parse_nameable_entities('in_game/common/culture_groups', CultureGroup, allow_empty_entities=True)
 
     @cached_property
+    @disk_cache(eu5game)
     def cultures(self) -> dict[str, Culture]:
         return self.parse_advanced_entities('in_game/common/cultures', Culture, transform_value_functions={
             # @TODO: remove this workaround for duplicate culture_groups sections
@@ -439,6 +444,7 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities(policy_data, LawPolicy)
 
     @cached_property
+    @disk_cache(game=eu5game)
     def locations(self) -> dict[str, Location]:
         return self.parse_advanced_entities('in_game/map_data/' + self.default_map.get_or_default('location_templates', 'location_templates.txt'), Location)
 
