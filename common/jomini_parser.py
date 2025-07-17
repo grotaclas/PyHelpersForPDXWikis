@@ -22,6 +22,7 @@ class JominiParser(metaclass=ABCMeta):
 
     def __init__(self, game_path):
         self.parser = ParadoxParser(game_path)
+        self._entity_reference_cache = {}
 
     @cached_property
     def _localization_dict(self):
@@ -282,7 +283,7 @@ class JominiParser(metaclass=ABCMeta):
             return self._parse_modifier_data(data[section_name], modifier_class)
 
     @cached_property
-    def _class_property_map(self) -> dict[Type[NE]: str]:
+    def class_property_map(self) -> dict[Type[NE]: str]:
         class_property_map = {}
         for name, member in inspect.getmembers(self.__class__, predicate=lambda m: type(m) == cached_property):
             return_type = inspect.signature(member.func).return_annotation
@@ -295,15 +296,20 @@ class JominiParser(metaclass=ABCMeta):
         return class_property_map
 
     def resolve_entity_reference(self, entity_class: Type[NE], entity_name:str):
-        if entity_class in self._class_property_map:
-            data = getattr(self, self._class_property_map[entity_class])
+        property_name = self.class_property_map.get(entity_class)
+        if property_name is not None:
+            data = self._entity_reference_cache.get(property_name)
+            if data is None:
+                data = getattr(self, self.class_property_map[entity_class])
+                self._entity_reference_cache[property_name] = data
             if entity_name in data:
                 return data[entity_name]
         return entity_name
 
-    def find_possible_entities_by_name(self, entity_name: str) -> NameableEntity|list[NameableEntity]|None:
+    @cached_property
+    def all_entities_by_name(self):
         entities_by_name = {}
-        for cls, prty in self._class_property_map.items():
+        for cls, prty in self.class_property_map.items():
             for name, entity in getattr(self, prty).items():
                 if name in entities_by_name:
                     if not isinstance(entities_by_name[name], list):
@@ -311,8 +317,11 @@ class JominiParser(metaclass=ABCMeta):
                     entities_by_name[name].append(entity)
                 else:
                     entities_by_name[name] = entity
-        if entity_name in entities_by_name:
-            return entities_by_name[entity_name]
+        return entities_by_name
+
+    def find_possible_entities_by_name(self, entity_name: str) -> NameableEntity|list[NameableEntity]|None:
+        if entity_name in self.all_entities_by_name:
+            return self.all_entities_by_name[entity_name]
         else:
             return None
 
