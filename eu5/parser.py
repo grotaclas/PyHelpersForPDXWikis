@@ -1,4 +1,5 @@
 import copy
+import uuid
 from collections.abc import MutableMapping
 from functools import reduce
 from typing import Callable, Type
@@ -126,6 +127,11 @@ class Eu5Parser(JominiParser):
 
         return self.parse_modifier_section('', outer_section, section_component, Eu5Modifier)
 
+    def resolve_entity_reference(self, entity_class: Type[NE], entity_name: str):
+        if entity_class == ScriptValue and isinstance(entity_name, Tree):
+            return self._parse_script_value(f'inline_script_value_{uuid.uuid1()}', entity_name)
+        return super().resolve_entity_reference(entity_class, entity_name)
+
     def _parse_goods_demand(self, value):
         if isinstance(value, str):
             if value in self.goods_demand:
@@ -146,6 +152,10 @@ class Eu5Parser(JominiParser):
                                                 'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
                                             },
                                             )
+
+    @cached_property
+    def age(self) -> dict[str, Age]:
+        return self.parse_advanced_entities('in_game/common/age', Age)
 
     @cached_property
     def building_category(self) -> dict[str, BuildingCategory]:
@@ -457,6 +467,10 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/government_types', GovernmentType)
 
     @cached_property
+    def institution(self) -> dict[str, Institution]:
+        return self.parse_advanced_entities('in_game/common/institution', Institution)
+
+    @cached_property
     def language_families(self) -> dict[str, LanguageFamily]:
         return self.parse_nameable_entities('in_game/common/language_families', LanguageFamily)
 
@@ -481,6 +495,10 @@ class Eu5Parser(JominiParser):
     def locations(self) -> dict[str, Location]:
         return self.parse_advanced_entities('in_game/map_data/' + self.default_map.get_or_default('location_templates', 'location_templates.txt'), Location)
 
+    @cached_property
+    def location_ranks(self) -> dict[str, LocationRank]:
+        return self.parse_advanced_entities('in_game/common/location_ranks', LocationRank)
+
     def get_province(self, location: Location):
         return self._prov_for_loc[location.name]
 
@@ -496,6 +514,23 @@ class Eu5Parser(JominiParser):
 
     def parse_dlc_from_conditions(self, conditions):
         pass
+
+    @cached_property
+    def pop_types(self) -> dict[str, PopType]:
+        pop_types = self.parse_advanced_entities('in_game/common/pop_types',
+                                            PopType,
+                                            extra_data_functions={
+                                                'possible_estates_with_triggers': lambda name, data: {
+                                                    estate: data[estate.name]
+                                                    for estate in self.estates.values()
+                                                    if estate.name in data
+                                                }
+                                            })
+        for pop_type in pop_types.values():
+            if not isinstance(pop_type.promote_to, list):
+                pop_type.promote_to = [pop_type.promote_to]
+            pop_type.promote_to = [pop_types[p] for p in pop_type.promote_to]
+        return pop_types
 
     @cached_property
     def prices(self) -> dict[str, Price]:
@@ -555,24 +590,26 @@ class Eu5Parser(JominiParser):
         script_values = {}
 
         for name, data in tree_data:
-            entity_data = {}
-            if isinstance(data, Tree):
-                # value with calculation
-                calculations = Tree({})
-                for k, v in data:
-                    if k == 'value' and not isinstance(v, Tree):
-                        entity_data['value'] = v
-                    elif k == 'desc':
-                        entity_data['desc'] = self.formatter.format_localization_text(self.localize(v))
-                    else:
-                        calculations[k] = v
-                entity_data['calculations'] = calculations
-            else:
-                entity_data['direct_value'] = data
-            script_values[name] = ScriptValue(name, name, **entity_data)
-
+            script_values[name] = self._parse_script_value(name, data)
 
         return script_values
+
+    def _parse_script_value(self, name, data):
+        entity_data = {}
+        if isinstance(data, Tree):
+            # value with calculation
+            calculations = Tree({})
+            for k, v in data:
+                if k == 'value' and not isinstance(v, Tree):
+                    entity_data['value'] = v
+                elif k == 'desc':
+                    entity_data['desc'] = self.formatter.format_localization_text(self.localize(v))
+                else:
+                    calculations[k] = v
+            entity_data['calculations'] = calculations
+        else:
+            entity_data['direct_value'] = data
+        return ScriptValue(name, name, **entity_data)
 
     @cached_property
     def topography(self) -> dict[str, Topography]:

@@ -492,6 +492,14 @@ class ProductionMethod(NameableEntity):
         # return eu5game.parser.formatter.create_wiki_list(data)
         return [self.display_name, data]
 
+class Age(Eu5AdvancedEntity):
+    efficiency: float
+    hegemons_allowed: bool = False
+    max_price: int
+    mercenaries: float = 0
+    modifier: list[Eu5Modifier]
+    price_stability: float
+    year: int
 
 class BuildingCategory(Eu5AdvancedEntity):
     icon_folder = 'building_categories'
@@ -582,7 +590,7 @@ class Country(Eu5AdvancedEntity):
     control: list[Location] = []
     country_name: str = ''
     country_rank: str = ''
-    court_language: str = ''
+    court_language: 'Language' = None
     currency_data: Tree = None
     discovered_areas: list[Area] = []
     discovered_provinces: list[Province] = []
@@ -750,6 +758,19 @@ class GovernmentType(Eu5AdvancedEntity):
     use_regnal_number: bool = False
 
 
+class Institution(Eu5AdvancedEntity):
+    age: Age
+    can_spawn: Trigger
+    promote_chance: ScriptValue
+    spread_embraced_to_capital: ScriptValue
+    spread_from_any_coast_border_location: ScriptValue
+    spread_from_any_import: ScriptValue
+    spread_from_friendly_coast_border_location: ScriptValue
+    spread_from_was_possible_spawn: ScriptValue
+    spread_scale_on_control_if_owner_embraced: int
+    spread_to_market_member: ScriptValue
+
+
 class LanguageFamily(NameableEntity):
     color: PdxColor = None
 
@@ -866,6 +887,39 @@ class Law(Eu5AdvancedEntity):
     @cached_property
     def law_category_loc(self):
         return eu5game.parser.formatter.resolve_nested_localizations(eu5game.parser.localize(self.law_category.upper() + '_LAW_CATEGORY'))
+
+
+class LocationRank(Eu5AdvancedEntity):
+    allow: Trigger = None
+    build_time: int = 0
+    color: PdxColor
+    construction_demand: GoodsDemand = None
+    country_modifier: list[Eu5Modifier]
+    frame_tier: int
+    is_established_city: bool = False
+    max_rank: bool = False
+    rank_modifier: list[Eu5Modifier]
+    show_in_label: bool
+
+
+class PopType(Eu5AdvancedEntity):
+    assimilation_conversion_factor: float
+    city_graphics: float
+    color: PdxColor
+    counts_towards_market_language: bool = False
+    editor: float = 0
+    grow: bool = False
+    has_cap: bool = False
+    literacy_impact: list[Eu5Modifier] = []
+    migration_factor: float = 0
+    pop_food_consumption: float
+    pop_percentage_impact: list[Eu5Modifier] = []
+    promote_to: list['PopType'] = []
+    promotion_factor: float = 0
+    tribal_rules: bool = False
+    upper: bool = False
+
+    possible_estates_with_triggers: dict[Estate, Trigger|None]
 
 
 class ReligiousAspect(Eu5AdvancedEntity):
