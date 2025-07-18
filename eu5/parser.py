@@ -68,7 +68,7 @@ class Eu5Parser(JominiParser):
         return ''
 
     @cached_property
-    @disk_cache(eu5game)
+    @disk_cache(eu5game, classes_to_cache={Eu5ModifierType})
     def modifier_types(self) -> dict[str, Eu5ModifierType]:
         return self.parse_nameable_entities('main_menu/common/modifier_types', Eu5ModifierType,
                                             allow_empty_entities=True,
@@ -189,61 +189,94 @@ class Eu5Parser(JominiParser):
         }
 
     @cached_property
+    @disk_cache(eu5game, classes_to_cache={Continent, SubContinent, Region, Area, Province})
+    def _map_entities(self):
+        sub_continents = {}
+        regions = {}
+        areas = {}
+        provinces = {}
+        continents = {
+            name: Continent(name,
+                            self.formatter.strip_formatting(self.localize(name), strip_newlines=True),
+                            sub_continents=self._update_and_return_new_elements(
+                                sub_continents,
+                                self._parse_sub_continents(name, data, regions, areas, provinces)
+                            ))
+            for name, data in self.parser.parse_file(
+                'in_game/map_data/' + self.default_map.get_or_default('setup', 'definitions.txt')
+            )
+        }
+        return continents, sub_continents, regions, areas, provinces
+
+    def _parse_sub_continents(self, continent_name, continent_data, regions, areas, provinces):
+        return {
+            sub: SubContinent(sub,
+                              self.formatter.strip_formatting(self.localize(sub), strip_newlines=True),
+                              _continent=continent_name,
+                              regions=self._update_and_return_new_elements(
+                                  regions,
+                                  self._parse_regions(sub, sub_data, areas, provinces)))
+            for sub, sub_data in continent_data
+        }
+
+    def _parse_regions(self, sub_continent_name, sub_continent_data, areas, provinces):
+        return {
+            region_name: Region(region_name,
+                                self.formatter.strip_formatting(self.localize(region_name), strip_newlines=True),
+                                _sub_continent=sub_continent_name,
+                                areas=self._update_and_return_new_elements(
+                                    areas,
+                                    self._parse_areas(region_name, region_data, provinces)
+                                ))
+            for region_name, region_data in sub_continent_data
+        }
+
+
+    def _parse_areas(self, region_name, region_data, provinces):
+        return {
+            area_name: Area(area_name,
+                            self.formatter.strip_formatting(self.localize(area_name), strip_newlines=True),
+                            _region=region_name,
+                            provinces=self._update_and_return_new_elements(provinces, self._parse_provinces(area_name, area_data)))
+            for area_name, area_data in region_data
+        }
+
+    def _parse_provinces(self, area_name, area_data):
+        return {
+            province_name:
+                Province(province_name,
+                         self.formatter.strip_formatting(self.localize(province_name), strip_newlines=True),
+                         _area=area_name,
+                         locations={location: self.locations[location] for
+                                    location in
+                                    locations}
+                         ) for province_name, locations in area_data
+        }
+
+    @staticmethod
+    def _update_and_return_new_elements(original: dict, new_elements: dict) -> dict:
+        original.update(new_elements)
+        return new_elements
+
+    @cached_property
     def continents(self):
-        continents = self.parse_nameable_entities('in_game/map_data/' + self.default_map.get_or_default('setup', 'definitions.txt'),
-                          Continent,
-                          extra_data_functions={
-                              'sub_continents': lambda continent, sub_continent_data:
-                              self.parse_nameable_entities(sub_continent_data,
-                                  SubContinent,
-                                  extra_data_functions={
-                                      '_continent': lambda _, __: continent,
-                                      'regions': lambda sub_continent, region_data:
-                                      self.parse_nameable_entities(
-                                          region_data,
-                                          Region,
-                                          extra_data_functions={
-                                              '_sub_continent': lambda _, __: sub_continent,
-                                              'areas': lambda region, area_data:
-                                              self.parse_nameable_entities(
-                                                  area_data,
-                                                  Area,
-                                                  extra_data_functions={
-                                                      '_region': lambda _, __: region,
-                                                      'provinces': lambda area, province_data: self._parse_province_data(area, province_data)
-                                                  }
-                                              )
-                                          }
-                                      )
-                                  }
-                              )
-                          }
-        )
-        return continents
+        return self._map_entities[0]
 
     @cached_property
     def sub_continents(self) -> dict[str, SubContinent]:
-        return {sub_continent.name: sub_continent
-                for continent in self.continents.values()
-                for sub_continent in continent.sub_continents.values()}
+        return self._map_entities[1]
 
     @cached_property
     def regions(self) -> dict[str, Region]:
-        return {region.name: region
-                for sub_continent in self.sub_continents.values()
-                for region in sub_continent.regions.values()}
+        return self._map_entities[2]
 
     @cached_property
     def areas(self) -> dict[str, Area]:
-        return {area.name: area
-                for region in self.regions.values()
-                for area in region.areas.values()}
+        return self._map_entities[3]
 
     @cached_property
     def provinces(self) -> dict[str, Province]:
-        return {province.name: province
-                for area in self.areas.values()
-                for province in area.provinces.values()}
+        return self._map_entities[4]
 
     @cached_property
     def country_description_categories(self) -> dict[str, CountryDescriptionCategory]:
@@ -258,7 +291,7 @@ class Eu5Parser(JominiParser):
                                             })
 
     @cached_property
-    @disk_cache(eu5game)
+    @disk_cache(eu5game, classes_to_cache={Country})
     def countries(self) -> dict[str, Country]:
         return self.parse_advanced_entities('in_game/setup/countries',
                                             Country,
@@ -351,7 +384,7 @@ class Eu5Parser(JominiParser):
         return self.parse_nameable_entities('in_game/common/culture_groups', CultureGroup, allow_empty_entities=True)
 
     @cached_property
-    @disk_cache(eu5game)
+    @disk_cache(eu5game, classes_to_cache={Culture})
     def cultures(self) -> dict[str, Culture]:
         return self.parse_advanced_entities('in_game/common/cultures', Culture, transform_value_functions={
             # @TODO: remove this workaround for duplicate culture_groups sections
@@ -444,7 +477,7 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities(policy_data, LawPolicy)
 
     @cached_property
-    @disk_cache(game=eu5game)
+    @disk_cache(game=eu5game, classes_to_cache={Location})
     def locations(self) -> dict[str, Location]:
         return self.parse_advanced_entities('in_game/map_data/' + self.default_map.get_or_default('location_templates', 'location_templates.txt'), Location)
 
