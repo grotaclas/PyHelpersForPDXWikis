@@ -1,3 +1,5 @@
+import copy
+import numbers
 import re
 from enum import StrEnum
 from functools import cached_property
@@ -51,6 +53,16 @@ class Eu5ModifierType(ModifierType):
         description = self.parser.localize('MODIFIER_TYPE_DESC_' + self.name)
         description = self.parser.formatter.format_localization_text(description, [])
         return display_name, description
+
+    def format_value(self, value):
+        if isinstance(value, ScriptValue) and value.direct_value:
+            value = value.direct_value
+        return super().format_value(value)
+
+    def format_value_without_color(self, value):
+        if isinstance(value, ScriptValue) and value.direct_value:
+            value = value.direct_value
+        return super().format_value_without_color(value)
 
     def get_icon_path(self) -> Path|None:
         base_icon_folder = eu5game.game_path / 'game/main_menu'
@@ -154,6 +166,51 @@ class Effect(Tree):
     """Placeholder"""
     pass
 
+class ScriptValue(NameableEntity):  # can't have a name, but we want to use logic of the parent class
+    direct_value: float|str = None  # if it is defined as name_of_scripted_value = value
+    desc: str = ''
+    value: float|str = None
+    calculations:Tree = None  # everything else has to be processed in order
+
+    def format(self):
+        if self.direct_value:
+            return self.direct_value
+        else:
+            if self.desc:
+                tooltip_text = self.desc
+            elif self.value:
+                tooltip_text = self.value
+            else:
+                tooltip_text = self.name
+            # @TODO: implement showing calculations or some kind of tenmplate with a better explanation
+            return f'{{{{Tooltip|{tooltip_text}|Showing the full calculation is not implemented yet}}}}'
+
+    def __mul__(self, other):
+        if isinstance(other, numbers.Number):
+            other_number = other
+        elif isinstance(other, ScriptValue):
+            if other.direct_value:
+                other_number = other.direct_value
+            elif self.direct_value:
+                return other.__mul__(self)
+            else:
+                return NotImplemented
+        else:
+            return NotImplemented
+
+        if self.direct_value:
+            return self.direct_value * other_number
+        else:
+            result_name = f'{self.name}*{other_number}'
+            result = ScriptValue(result_name, result_name)
+            if self.desc:
+                result.desc = f'{self.desc} * {other_number}'
+            result_calculations = copy.deepcopy(self.calculations)
+            result_calculations['multiply'] = other_number
+            result.calculations = result_calculations
+            return result
+    def __str__(self):
+        return str(self.format())
 
 # Map classes
 class Location(Eu5AdvancedEntity):

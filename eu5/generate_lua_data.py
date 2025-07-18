@@ -57,7 +57,7 @@ local p = ''' + luadata.serialize(result, indent=' ')
         for named_mod in self.parser.named_modifiers.values():
             mod_data = {'category': named_mod.category,
                         'loc': named_mod.display_name,
-                        'mods': { mod.modifier_type.name: mod.value for mod in named_mod.modifier}}
+                        'mods': { mod.modifier_type.name: mod.value.format() if hasattr(mod.value, 'format') else mod.value for mod in named_mod.modifier}}
             if named_mod.description:
                 mod_data['desc'] = named_mod.description.replace('\n', '<br>')
 

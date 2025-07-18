@@ -514,11 +514,32 @@ class Eu5Parser(JominiParser):
         })
 
     @cached_property
-    def script_values(self):
-        result = self.parser.parse_folder_as_one_file('main_menu/common/script_values')
-        result.update(self.parser.parse_folder_as_one_file('in_game/common/script_values'))
-        result.merge_duplicate_keys()
-        return result
+    def script_values(self) -> dict[str, ScriptValue]:
+        # @TODO: this needs to be parsed differently, because some entries could be duplicated and their order matters
+        tree_data = self.parser.parse_folder_as_one_file('main_menu/common/script_values')
+        tree_data.update(self.parser.parse_folder_as_one_file('in_game/common/script_values'))
+        tree_data.merge_duplicate_keys()
+        script_values = {}
+
+        for name, data in tree_data:
+            entity_data = {}
+            if isinstance(data, Tree):
+                # value with calculation
+                calculations = Tree({})
+                for k, v in data:
+                    if k == 'value' and not isinstance(v, Tree):
+                        entity_data['value'] = v
+                    elif k == 'desc':
+                        entity_data['desc'] = self.formatter.format_localization_text(self.localize(v))
+                    else:
+                        calculations[k] = v
+                entity_data['calculations'] = calculations
+            else:
+                entity_data['direct_value'] = data
+            script_values[name] = ScriptValue(name, name, **entity_data)
+
+
+        return script_values
 
     @cached_property
     def topography(self) -> dict[str, Topography]:
