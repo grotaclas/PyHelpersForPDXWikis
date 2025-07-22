@@ -338,6 +338,8 @@ class Eu5Parser(JominiParser):
             law_value = Tree({law_key: law_value
                               for law_tree in law_value
                               for law_key, law_value in law_tree})
+        if isinstance(law_value, Tree):
+            law_value = self._fix_law_values(law_value)
         return law_value
 
     def _fix_law_values(self, data: Tree):
@@ -345,7 +347,7 @@ class Eu5Parser(JominiParser):
          This function merges the trees from that list.
          It goes recursively through the data to fix the sections wherever they are"""
         for key, value in data:
-            if key == 'laws':
+            if key in ['laws', 'government']:
                 data[key] = self._fix_law_value(value)
             elif isinstance(value, Tree):
                 self._fix_law_values(value)
@@ -378,7 +380,7 @@ class Eu5Parser(JominiParser):
                     else:
                         new_template[key] = value
                 else:
-                    if key == 'laws':
+                    if key in ['laws', 'government']:
                         value = self._fix_law_value(value)
                     if isinstance(value, Tree):
                         new_template[key] = self._resolve_includes(value, templates, other_templates, recursive)
