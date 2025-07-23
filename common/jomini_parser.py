@@ -56,7 +56,9 @@ class JominiParser(metaclass=ABCMeta):
                                 level_headings_keys: dict[str, 0] = None,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
                                 localization_prefix: str = '',
-                                allow_empty_entities=False) -> dict[str, NE]:
+                                allow_empty_entities=False,
+                                localization_suffix: str = '',
+                                ) -> dict[str, NE]:
         """parse a folder into objects which are subclasses of NameableEntity
 
         Args:
@@ -93,7 +95,7 @@ class JominiParser(metaclass=ABCMeta):
         if level_headings_keys is None:
             level_headings_keys = {}
         if 'display_name' not in extra_data_functions:
-            extra_data_functions['display_name'] = lambda entity_name, entity_data: self.localize(localization_prefix + entity_name)
+            extra_data_functions['display_name'] = lambda entity_name, entity_data: self.localize(localization_prefix + entity_name + localization_suffix)
         class_attributes = entity_class.all_annotations()
         if entity_level == 0:
             overwrite_duplicate_toplevel_keys = True
@@ -214,6 +216,7 @@ class JominiParser(metaclass=ABCMeta):
                                 localization_prefix: str = '',
                                 allow_empty_entities=False,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
+                                localization_suffix: str = '',
                                 ) -> dict[str, AE]:
         """parse a folder into objects which are subclasses of AdvancedEntity
 
@@ -233,6 +236,7 @@ class JominiParser(metaclass=ABCMeta):
         return self.parse_nameable_entities(folder, entity_class, extra_data_functions=extra_data_functions,
                                             transform_value_functions=transform_value_functions,
                                             localization_prefix=localization_prefix,
+                                            localization_suffix=localization_suffix,
                                             allow_empty_entities=allow_empty_entities,
                                             parsing_workarounds=parsing_workarounds)
 
