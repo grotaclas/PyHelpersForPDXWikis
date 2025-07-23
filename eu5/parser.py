@@ -451,7 +451,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def game_concepts(self) -> dict[str, Eu5GameConcept]:
         """Includes the aliases as well"""
-        concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept, localization_prefix='game_concept_')
+        concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept, localization_prefix='game_concept_', allow_empty_entities=True)
         for name in list(concepts.keys()):  # iterate over a new list so that we can add to the concepts variable during the iteration
             concept = concepts[name]
             aliases = []
@@ -500,7 +500,7 @@ class Eu5Parser(JominiParser):
     def _parse_law_policies(self, name: str, data: Tree) -> list[LawPolicy]:
         possible_law_attributes = Law.all_annotations().keys()
         policy_data = data.filter_elements(lambda k, v: k not in possible_law_attributes)
-        return self.parse_advanced_entities(policy_data, LawPolicy)
+        return self.parse_advanced_entities(policy_data, LawPolicy, allow_empty_entities=True)
 
     @cached_property
     @disk_cache(game=eu5game, classes_to_cache={Location})
@@ -546,7 +546,7 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def prices(self) -> dict[str, Price]:
-        return self.parse_nameable_entities('in_game/common/prices', Price, extra_data_functions={
+        return self.parse_nameable_entities('in_game/common/prices', Price, allow_empty_entities=True, extra_data_functions={
             'costs': lambda name, data: [Cost.create_with_hardcoded_resource(key, value) for key, value in data if key in HardcodedResource]
         })
 
@@ -650,10 +650,10 @@ class Eu5Parser(JominiParser):
                                             )
     @cached_property
     def ai_diplochance(self) -> dict[str, AiDiplochance]:
-        return self.parse_advanced_entities('in_game/common/ai_diplochance', AiDiplochance)
+        return self.parse_advanced_entities('in_game/common/ai_diplochance', AiDiplochance, allow_empty_entities=True)
     @cached_property
     def artist_types(self) -> dict[str, ArtistType]:
-        return self.parse_advanced_entities('in_game/common/artist_types', ArtistType,
+        return self.parse_advanced_entities('in_game/common/artist_types', ArtistType, allow_empty_entities=True,
                                             description_localization_prefix='ARTIST_TYPE_DESC_', description_localization_suffix='', # Used in 12/12 Examples: {'ARTIST_TYPE_DESC_calligrapher': "Calligraphers create art through intricate combinations of letters, that may be exposed in books or scrolls, usually in palaces and temples. Famous calligraphers of the era include Mir Emad Hassani, Han Seok-bong, or the #italic Kan'ei Sanpitsu#!.", 'ARTIST_TYPE_DESC_sculptor': 'A sculptor shapes clay, stone, marble, wood, and other materials into art. Famous sculptors of the era include Donatello, Michelangelo, and Gianlorenzo Bernini.'}
                                             localization_prefix='ARTIST_TYPE_NAME_', # Used in 12/12 Examples: {'ARTIST_TYPE_NAME_iconographer': 'Iconographer', 'ARTIST_TYPE_NAME_jurist': 'Jurist'}
                                             )
@@ -736,7 +736,7 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/customizable_localization', CustomizableLocalization)
     @cached_property
     def death_reason(self) -> dict[str, DeathReason]:
-        return self.parse_advanced_entities('in_game/common/death_reason', DeathReason,
+        return self.parse_advanced_entities('in_game/common/death_reason', DeathReason, allow_empty_entities=True,
                                             localization_prefix='DEATH_REASON_', # Used in 49/49 Examples: {'DEATH_REASON_poison_arrow': '[CHARACTER.GetHeSheFormal|U] killed by a poison arrow.', 'DEATH_REASON_froze': '[CHARACTER.GetHeSheFormal|U] froze to death.'}
                                             # localization_prefix='DEATH_REASON_', localization_suffix='_location', # Used in 16/49 Examples: {'DEATH_REASON_assassination_location': "[CHARACTER.GetHeSheFormal|U] was assassinated in [SCOPE.sLocation('location').GetName].", 'DEATH_REASON_camp_location': "[CHARACTER.GetHeSheFormal|U] died while the army was camped in [SCOPE.sLocation('location').GetName]."}
                                             )
@@ -749,6 +749,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def diplomatic_costs(self) -> dict[str, DiplomaticCost]:
         return self.parse_advanced_entities('in_game/common/diplomatic_costs', DiplomaticCost,
+                                            allow_empty_entities=True,
                                             )
     @cached_property
     def disasters(self) -> dict[str, Disaster]:
@@ -813,6 +814,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def goods_demand_category(self) -> dict[str, GoodsDemandCategory]:
         return self.parse_advanced_entities('in_game/common/goods_demand_category', GoodsDemandCategory,
+                                            allow_empty_entities=True,
                                             # localization_prefix='', localization_suffix='', # Used in 13/13 Examples: {'government_activities': 'Government Activities', 'mills_input': 'Mills Input'}
                                             )
     @cached_property
@@ -893,7 +895,7 @@ class Eu5Parser(JominiParser):
                                             )
     @cached_property
     def on_action(self) -> dict[str, OnAction]:
-        return self.parse_advanced_entities('in_game/common/on_action', OnAction)
+        return self.parse_advanced_entities('in_game/common/on_action', OnAction, allow_empty_entities=True)
     @cached_property
     def parliament_agendas(self) -> dict[str, ParliamentAgenda]:
         return self.parse_advanced_entities('in_game/common/parliament_agendas', ParliamentAgenda,
@@ -963,6 +965,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def scriptable_hints(self) -> dict[str, ScriptableHint]:
         return self.parse_advanced_entities('in_game/common/scriptable_hints', ScriptableHint,
+                                            allow_empty_entities=True,
                                             # localization_prefix='', localization_suffix='', # Used in 54/54 Examples: {'hint_market_out_of_supply': 'Market Out of Supply', 'hint_no_allies': 'No allies'}
                                             # localization_prefix='', localization_suffix='_administrative', # Used in 54/54 Examples: {'hint_low_stability_administrative': '\\"A nation with high stability is, of course, a nation in a state of prosperity! When harvests are plentiful, so too is the flow of wealth into our coffers.\\"', 'hint_increasing_trade_advantage_administrative': 'Core to our strategy: Predict the next wave in price through the roll of the dice and the heavenly alignment of the stars.'}
                                             # localization_prefix='', localization_suffix='_diplomatic', # Used in 54/54 Examples: {'hint_in_deficit_diplomatic': '\\"As the saying goes, we need to spend money to make money! Ensuring that our buildings and pops are profitable is the best way to turn the ship around.\\"', 'hint_has_possible_law_diplomatic': '\\"A State without Laws is a a building without pillars, a body without limbs. Better too many, than too few.\\"'}
@@ -989,6 +992,7 @@ class Eu5Parser(JominiParser):
             replacement_regexes = {r'(?m)^(\s*)(\$[^$]+\$)\s*$': r'\1_only_parameter = "\2"'}
 
         return self.parse_advanced_entities('in_game/common/scripted_effects', ScriptedEffect,
+                                            allow_empty_entities=True,
                                             parsing_workarounds=[ScriptedEffectsWorkaround()])
     @cached_property
     def scripted_lists(self) -> dict[str, ScriptedList]:
