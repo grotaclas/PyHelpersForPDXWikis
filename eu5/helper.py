@@ -1,32 +1,34 @@
 import re
 from collections.abc import Set
+from operator import methodcaller
 from types import UnionType
-from typing import get_type_hints, get_origin, get_args
+from typing import get_type_hints, get_origin, get_args, Iterable, Type
 
-from common.helper import Helper
-from common.paradox_lib import IconMixin
+from common.helper import OneTypeHelper, MultiTypeHelper
+from common.paradox_lib import IconMixin, NE
 from common.paradox_parser import ParsingWorkaround
+from eu5 import eu5lib
 from eu5.eu5lib import Eu5AdvancedEntity, Cost, GoodsDemand, Price, Eu5Modifier, Trigger, Effect
 from eu5.game import eu5game
 from eu5.parser import Eu5Parser
 
 
-class Eu5Helper(Helper):
+class Eu5OneTypeHelper(OneTypeHelper):
     parser: Eu5Parser
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, folder, depth=0, ignored_toplevel_keys: list = None, ignored_keys: list = None):
         self.parser = eu5game.parser
-
-    def find_all_keys_in_folder(self, folder, depth=0, ignored_toplevel_keys: list = None, ignored_keys: list = None):
         folder = folder.removeprefix('game/')
-        return super().find_all_keys_in_folder(folder, depth, ignored_toplevel_keys, ignored_keys)
+        super().__init__(folder, depth, ignored_toplevel_keys, ignored_keys)
 
-    def get_data(self, folder: str):
-        if folder.endswith('.txt'):
-            glob = folder
+
+
+
+    def get_data(self):
+        if self.folder.endswith('.txt'):
+            glob = self.folder
         else:
-            glob = f'{folder}/*.txt'
+            glob = f'{self.folder}/*.txt'
         return self.parser.parser.parse_files(glob)
 
         # Temporary code to include template data for files which have an include= line
@@ -55,7 +57,6 @@ class Eu5Helper(Helper):
         if 'modifier' in  attribute_name:
             return 'list[Eu5Modifier]', []
         return None
-
 
     #####################################################
     # Helper functions to generate new table generators #
@@ -236,24 +237,81 @@ class Eu5Helper(Helper):
         #         else:
         #             print(f"'{loc}': {var_name}.{attribute}.{sub_attribute} if '{attribute}' in {var_name} else '',")
 
-if __name__ == '__main__':
-    # Eu5Helper().find_all_keys_in_folder('in_game/common/laws',
-    #                                     depth=1,
-    #                                     ignored_toplevel_keys=[
-    #                                         'allow',
-    #                                         'law_category',
-    #                                         'law_country_group',
-    #                                         'law_gov_group',
-    #                                         'law_religion_group',
-    #                                         'locked',
-    #                                         'potential',
-    #                                         'requires_vote',
-    #                                         'type',
-    #                                         'unique',
-    #                                     ]
-    #                                     # , ignored_keys=list(eu5game.parser.goods.keys())
-    #                                     )
-    # exit()
+
+class Eu5MultiTypeHelper(MultiTypeHelper):
+    def __init__(self):
+        self.parser = eu5game.parser
+
+
+    def create_helper(self, folder: str, **kwargs) -> OneTypeHelper:
+        return Eu5OneTypeHelper(folder, **kwargs)
+
+    def print_base_code_for_missing_types(self, glob='*/common/*',
+                                          already_parsed_folders: Iterable[str] = (),
+                                          ignored_folders: Iterable[str]=(),
+                                          newlines_between_classes: int = 2,
+                                          newlines_between_parsing: int = 1
+                                          ):
+        return super().print_base_code_for_missing_types(glob, already_parsed_folders, ignored_folders,
+                                                  newlines_between_classes, newlines_between_parsing)
+
+
+def get_basic_parsing():
+    helper = Eu5MultiTypeHelper()
+    parsed_folders = ['in_game/common/advances', 'in_game/common/age', 'in_game/common/building_categories',
+                      'in_game/common/building_types', 'in_game/common/climates',
+                      'in_game/common/country_description_categories', 'in_game/common/culture_groups',
+                      'in_game/common/cultures', 'in_game/common/estate_privileges', 'in_game/common/estates',
+                      'in_game/common/goods', 'in_game/common/goods_demand', 'in_game/common/government_types',
+                      'in_game/common/institution', 'in_game/common/language_families', 'in_game/common/languages',
+                      'in_game/common/laws', 'in_game/common/location_ranks', 'in_game/common/pop_types',
+                      'in_game/common/prices', 'in_game/common/production_methods',
+                      'in_game/common/religion_groups', 'in_game/common/religions',
+                      'in_game/common/religious_aspects', 'in_game/common/religious_factions',
+                      'in_game/common/religious_focuses', 'in_game/common/religious_schools',
+                      'in_game/common/script_values', 'in_game/common/topography', 'in_game/common/vegetation',
+                      'in_game/map_data/',
+                      'in_game/setup/countries', 'loading_screen/common/defines',
+                      'loading_screen/common/named_colors', 'main_menu/common/game_concepts',
+                      'main_menu/common/modifier_icons', 'main_menu/common/modifiers',
+                      'main_menu/common/modifier_types', 'main_menu/common/named_colors',
+                      'main_menu/common/script_values', 'main_menu/setup/start/', 'main_menu/setup/templates/']
+    # result = helper.print_base_code_for_missing_types(already_parsed_folders=parsed_folders,
+    #                                                       ignored_folders=['in_game/common/tests',
+    #                                                                    'in_game/common/tutorial_lesson_chains',
+    #                                                                    'in_game/common/tutorial_lessons',
+    #
+    #                                                                        'main_menu/common/coat_of_arms'
+    #                                                                    ],
+    #                                                   newlines_between_classes=0,
+    #                                                   newlines_between_parsing=0)
+    result = helper.get_helpers_for_missing_folders(
+        glob='*/common/*',
+        already_parsed_folders=parsed_folders,
+        ignored_folders=['in_game/common/tests',
+                         'in_game/common/tutorial_lesson_chains',
+                         'in_game/common/tutorial_lessons',
+
+                         'main_menu/common/coat_of_arms'
+                         ],
+    )
+    result = sorted(result.values(), key=methodcaller('get_possible_class_name'))
+    for helper in result:
+        # print(f'eu5lib.{helper.get_possible_class_name()}: \'{helper.get_parser_function_name()}\',')
+        # print(f'{helper.get_possible_class_name()}: {len(helper.entity_names)}')
+        # print(helper.get_possible_loc_prefixes_or_suffixes())
+        print(helper.get_parsing_code())
+
+def advanced_parsing():
+    Eu5OneTypeHelper(
+        'in_game/common/something'
+        # depth=2,
+        # ignored_keys=list(eu5game.parser.modifier_types.keys())
+        # ignored_toplevel_keys=['current_age', 'road_network'],
+
+    ).print_examples_and_code()
+
+def table_generator():
     building = next(iter(eu5game.parser.buildings.values()))
     messages_for_non_default_values = {
         'always_add_demands': 'Demand does not scale with workers',
@@ -272,8 +330,12 @@ if __name__ == '__main__':
         'stronger_power_projection': 'Requires more power projection to construct in a foreign location',
     }
 
-    Eu5Helper().print_possible_table_columns(list(eu5game.parser.laws.values())[0].policies,
+    Eu5OneTypeHelper().print_possible_table_columns(list(eu5game.parser.laws.values())[0].policies,
                                              'policy',
-                                             # ignored_attributes = set(messages_for_non_default_values.keys()),
-                                             # cargo=True
-                                             )
+                                                    # ignored_attributes = set(messages_for_non_default_values.keys()),
+                                                    # cargo=True
+                                                    )
+
+if __name__ == '__main__':
+    get_basic_parsing()
+    exit()
