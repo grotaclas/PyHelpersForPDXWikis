@@ -50,6 +50,13 @@ class QuestionmarkEqualsWorkaround(ParsingWorkaround):
     replacement_regexes = {r' \?= ': ' = '}
 
 
+class IgnoreAtVariablesWorkaround(ParsingWorkaround):
+    """ignores lines which start with code like
+        @abc = 123
+    """
+    replacement_regexes = {r'(?m)^\s*@[a-zA-Z]+[^\n]*\n?': ''}
+
+
 class ParadoxParser:
     """the parse_ methods parse paradox development studio game scripts into python objects"""
 
