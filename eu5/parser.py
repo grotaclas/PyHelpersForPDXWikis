@@ -101,8 +101,8 @@ class Eu5Parser(JominiParser):
                                             })
 
     def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
-        """@TODO: parse potential_trigger and scale"""
-        return super()._parse_modifier_data(Tree({mod_name: mod_value for mod_name, mod_value in data if mod_name not in ['potential_trigger', 'scale']}), modifier_class)
+        """@TODO: parse potential_trigger and scale and pure_tooltip_entry"""
+        return super()._parse_modifier_data(Tree({mod_name: mod_value for mod_name, mod_value in data if mod_name not in ['potential_trigger', 'scale', 'pure_tooltip_entry']}), modifier_class)
 
     def parse_modifier_section_from_wiki_section_name(self, wiki_section_name: str) -> list[Eu5Modifier]:
         """
