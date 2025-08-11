@@ -125,25 +125,32 @@ class Eu5AdvancedEntity(AdvancedEntity):
             name = self.name
         return f'{name}.dds'
 
-    def get_icon_path(self) -> Path:
+    @classmethod
+    def get_icon_folder(cls):
         base_icon_folder = eu5game.game_path / 'game/main_menu/gfx/interface/icons'
-        if self.icon_folder is None:
-            icon_folder = re.sub(r'(?<!^)(?=[A-Z])', '_', self.__class__.__name__).lower()
+        if cls.icon_folder is None:
+            icon_folder = re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
             path = base_icon_folder / icon_folder
             if not path.exists():
                 # try plural
                 icon_folder += 's'
                 path = base_icon_folder / icon_folder
                 if not path.exists():
-                    raise Exception(f'No icon folder for class "{self.__class__.__name__}"')
+                    raise Exception(f'No icon folder for class "{cls.__name__}"')
         else:
-            if self.icon_folder in eu5game.parser.defines['NGameIcons']:
+            if cls.icon_folder in eu5game.parser.defines['NGameIcons']:
                 base_icon_folder = eu5game.game_path / 'game/main_menu'
-                icon_folder = eu5game.parser.defines['NGameIcons'][self.icon_folder]
+                icon_folder = eu5game.parser.defines['NGameIcons'][cls.icon_folder]
+            elif cls.icon_folder in eu5game.parser.defines['NGameIllustrations']:
+                base_icon_folder = eu5game.game_path / 'game/main_menu'
+                icon_folder = eu5game.parser.defines['NGameIllustrations'][cls.icon_folder]
             else:
-                icon_folder = self.icon_folder
+                icon_folder = cls.icon_folder
 
-        return base_icon_folder / icon_folder / self.get_icon_filename()
+        return base_icon_folder / icon_folder
+
+    def get_icon_path(self) -> Path:
+        return self.get_icon_folder() / self.get_icon_filename()
 
     def get_wiki_filename(self) -> str:
         filename = self.get_icon_filename().replace('.dds', '.png')
@@ -1117,7 +1124,26 @@ class Bias(Eu5AdvancedEntity):
 class CabinetAction(Eu5AdvancedEntity):
     pass
 class CasusBelli(Eu5AdvancedEntity):
-    pass
+    war_goal_type: 'Wargoal' = None
+
+    icon_folder = 'CASUS_BELLI_ICON_PATH'
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'CB'
+
+    def get_icon_filename(self) -> str:
+        filename = f'{self.name}.dds'
+        if (self.get_icon_folder() / filename).exists():
+            return filename
+        else:
+            war_goal_filename = f'{self.war_goal_type.name}.dds'
+            if (self.get_icon_folder() / war_goal_filename).exists():
+                return war_goal_filename
+            else:
+                return filename
+
+
+
 class CharacterInteraction(Eu5AdvancedEntity):
     pass
 class ChildEducation(Eu5AdvancedEntity):
@@ -1163,7 +1189,7 @@ class God(Eu5AdvancedEntity):
 class GoodsDemandCategory(Eu5AdvancedEntity):
     pass
 class GovernmentReform(Eu5AdvancedEntity):
-    pass
+    icon_folder = 'GOVERNMENT_REFORMS_ILLUSTRATION_PATH'
 class Hegemon(Eu5AdvancedEntity):
     pass
 class HistoricalScore(Eu5AdvancedEntity):
@@ -1175,7 +1201,15 @@ class HolySiteType(Eu5AdvancedEntity):
 class Insult(Eu5AdvancedEntity):
     pass
 class InternationalOrganization(Eu5AdvancedEntity):
-    pass
+    icon_folder = 'INTERNATIONAL_ORGANIZATION_TYPE_ICON_PATH'
+
+    def get_wiki_filename(self) -> str:
+        return 'IO ' + super().get_wiki_filename().removeprefix('Io ')
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'IO'
+
+
 class InternationalOrganizationLandOwnershipRule(Eu5AdvancedEntity):
     pass
 class InternationalOrganizationPayment(Eu5AdvancedEntity):
@@ -1227,6 +1261,7 @@ class ScriptedRelation(Eu5AdvancedEntity):
 class ScriptedTrigger(Eu5AdvancedEntity):
     pass
 class Situation(Eu5AdvancedEntity):
+    icon_folder = 'SITUATION_ICON_PATH'
     pass
 class SocietalValue(Eu5AdvancedEntity):
     pass
