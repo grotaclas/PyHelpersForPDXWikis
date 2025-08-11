@@ -1006,10 +1006,9 @@ class Eu5Parser(JominiParser):
                                             )
     @cached_property
     def scripted_triggers(self) -> dict[str, ScriptedTrigger]:
-        return self.parse_advanced_entities('in_game/common/scripted_triggers', ScriptedTrigger)
-    @cached_property
-    def scripted_triggers(self) -> dict[str, ScriptedTrigger]:
-        return self.parse_advanced_entities('main_menu/common/scripted_triggers', ScriptedTrigger)
+        triggers = self.parse_advanced_entities('main_menu/common/scripted_triggers', ScriptedTrigger)
+        triggers.update(self.parse_advanced_entities('in_game/common/scripted_triggers', ScriptedTrigger))
+        return triggers
     @cached_property
     def situations(self) -> dict[str, Situation]:
         return self.parse_advanced_entities('in_game/common/situations', Situation,

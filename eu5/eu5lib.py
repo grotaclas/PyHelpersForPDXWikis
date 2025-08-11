@@ -7,8 +7,10 @@ from pathlib import Path
 
 from common.paradox_lib import GameConcept, NameableEntity, AdvancedEntity, PdxColor, ModifierType, Modifier, IconMixin
 from common.paradox_parser import Tree
+from eu5.event_target import EventTarget
 from eu5.game import eu5game
-
+from eu5.trigger import Trigger
+from eu5.effect import Effect
 
 class Eu5ModifierType(ModifierType):
     # unique to eu5:
@@ -157,15 +159,6 @@ class Eu5AdvancedEntity(AdvancedEntity):
         return self.get_wiki_file_tag(size, link='self')
 
 
-class Trigger(Tree):
-    """Placeholder"""
-    pass
-
-
-class Effect(Tree):
-    """Placeholder"""
-    pass
-
 class ScriptValue(NameableEntity):  # can't have a name, but we want to use logic of the parent class
     direct_value: float|str = None  # if it is defined as name_of_scripted_value = value
     desc: str = ''
@@ -211,6 +204,36 @@ class ScriptValue(NameableEntity):  # can't have a name, but we want to use logi
             return result
     def __str__(self):
         return str(self.format())
+
+    @classmethod
+    def could_be_script_value(cls, script: Tree):
+        for key, value in script:
+            if key in ['save_temporary_scope_as', 'save_temporary_value_as', 'limit', 'desc', ]:
+                # ignored
+                continue
+            elif key in ['add', 'divide', 'max', 'min', 'multiply', 'subtract', 'value', ]:
+                # actual script value calculations
+                continue
+            elif  EventTarget.could_be_event_target(key) or key in ['if', 'else_if', 'else'] or Effect.is_iterator(key):
+                if isinstance(value, Tree):
+                    if not cls.could_be_script_value(value):
+                        return False
+                elif isinstance(value, list):
+                    for v2 in value:
+                        if isinstance(v2, Tree):
+                            if not cls.could_be_script_value(v2):
+                                return False
+                        else:
+                            # print(f'Error: unknown sub-value type "{type(value)}" in list in {key}-block in script value')
+                            return False
+                else:
+                    # print(f'Error: unknown value type "{type(value)}" in {key}-block in script value')
+                    return False
+
+            else:
+                return False
+
+        return True
 
 # Map classes
 class Location(Eu5AdvancedEntity):

@@ -80,7 +80,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
     def format_RHS(self, value) -> str:
         suffix = None
         if isinstance(value, str) and ':' in value:
-            typ, value_without_prefix = value.split(':')
+            typ, _, value_without_prefix = value.partition(':')
             value_without_prefix_and_suffix, _seperator, suffix = value_without_prefix.partition('.')
             type_sources = {
                 'building_type': self.parser.buildings,

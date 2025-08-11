@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from PyHelpersForPDXWikis.localsettings import EU5DIR
+from PyHelpersForPDXWikis.localsettings import EU5DIR, EU5DIR_DOCUMENTS
 from common.paradox_lib import Game
 
 
@@ -10,6 +10,7 @@ class EuropaUniversalisV(Game):
     name = 'Europa Universalis V'
     short_game_name = 'eu5'
     game_path = EU5DIR
+    documents_path = EU5DIR_DOCUMENTS
     # launcher_settings = game_path / 'launcher-settings.json'
     wiki_domain = 'tomato.paradoxwikis.com'
 
