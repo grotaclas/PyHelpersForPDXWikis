@@ -252,6 +252,26 @@ class Location(Eu5AdvancedEntity):
         # lazy loading to avoid infinite recursions, because province parsing requires locations
         return eu5game.parser.get_province(self)
 
+    @cached_property
+    def area(self):
+        return self.province.area
+
+    @cached_property
+    def region(self):
+        return self.area.region
+
+    @cached_property
+    def sub_continent(self):
+        return self.region.sub_continent
+
+    @cached_property
+    def continent(self):
+        return self.sub_continent.continent
+
+    def get_position_description(self):
+        return f'{self.province}(`{self.province.name}`), {self.area}(`{self.area.name}`), {self.region}(`{self.region.name}`), {self.sub_continent}(`{self.sub_continent.name}`), {self.continent}(`{self.continent.name}`)'
+
+
 class Province(NameableEntity):
     locations: dict[str, Location]
     _area: str
