@@ -150,6 +150,8 @@ class JominiParser(metaclass=ABCMeta):
                                                           transform_value_functions, conditions)
                         entities[name] = entity
                     else:  # assume list
+                        if not data and not allow_empty_entities:
+                            print(f'Ignoring empty section "{heading}" when parsing "{entity_class}"')
                         for entry in data:
                             if len(entry) > 0:
                                 name, entity = self._parse_entity(class_attributes, entry, entity_class,
