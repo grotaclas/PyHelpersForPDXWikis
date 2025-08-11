@@ -415,6 +415,7 @@ class Good(Eu5AdvancedEntity, Resource):
     is_slaves: bool = False
     method: str = ''
     transport_cost: float = 1
+    custom_tags: list[str] = []
 
     icon_folder = 'TRADE_GOODS_ICON_PATH'
 
@@ -434,6 +435,9 @@ class Good(Eu5AdvancedEntity, Resource):
             return 'Goods ' + wiki_filename.removeprefix('Goods goods ')
         else:
             return wiki_filename
+
+    def get_wiki_page_name(self) -> str:
+        return 'Goods'
 
 
 class ResourceValue:
