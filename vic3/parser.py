@@ -335,7 +335,8 @@ class Vic3Parser(JominiParser):
                      'hires_unemployed_only', 'infrastructure_usage_per_level', 'fired_pops_become_radical',
                      'pays_taxes', 'is_government_funded', 'created_by_trade_routes', 'subsidized', 'is_military',
                      'default_building', 'ignores_productivity_when_hiring',
-                     'min_productivity_to_hire', 'owns_other_buildings', 'always_self_owning', 'has_trade_revenue', 'company_headquarter', 'regional_company_headquarter']:
+                     'min_productivity_to_hire', 'owns_other_buildings', 'always_self_owning', 'has_trade_revenue', 'company_headquarter', 'regional_company_headquarter',
+                     'construction_efficiency_modifier']:
                 entity_values[k] = v
             elif k == 'parent_group':
                 entity_values['parent_group'] = parsed_building_groups[v]
@@ -426,7 +427,11 @@ class Vic3Parser(JominiParser):
         parties = {}
         for name, data in self.parser.parse_folder_as_one_file('common/parties'):
             parties[name] = Party(name=name,
-                                  display_name=self.localize(data['name']['first_valid']['triggered_desc'][-1]['desc']),
+                                  display_name=self.localize(
+                                      data['name']['first_valid']['triggered_desc'][-1]['desc']
+                                      if 'first_valid' in data['name']
+                                      else data['name']['desc']
+                                  ),
                                   description=self.localize(name + '_desc'),
                                   icon=data['icon']['default'],
                                   required_technologies=self.parse_technologies_section(name, data)
