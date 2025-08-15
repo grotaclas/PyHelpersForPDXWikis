@@ -436,13 +436,15 @@ class Good(Eu5AdvancedEntity, Resource):
     base_production: float = 0
     category: GoodCategory
     color: PdxColor
+    custom_tags: list[str] = []
     default_market_price: float = 1
+    demand_add: Tree = None
+    demand_multiply: Tree = None
     food: float = 0
     inflation: bool = False
     is_slaves: bool = False
     method: str = ''
     transport_cost: float = 1
-    custom_tags: list[str] = []
 
     icon_folder = 'TRADE_GOODS_ICON_PATH'
 
@@ -465,6 +467,28 @@ class Good(Eu5AdvancedEntity, Resource):
 
     def get_wiki_page_name(self) -> str:
         return 'Goods'
+
+    @cached_property
+    def demands(self) -> dict['PopType', float]:
+        demands = {}
+        for pop in eu5game.parser.pop_types.values():
+            demand = 0
+            if self.demand_add:
+                if pop.name in self.demand_add:
+                    demand += self.demand_add[pop.name]
+                if 'all' in self.demand_add:
+                    demand += self.demand_add['all']
+                if pop.upper and 'upper' in self.demand_add:
+                    demand += self.demand_add['upper']
+            if self.demand_multiply:
+                if pop.name in self.demand_multiply:
+                    demand *= self.demand_multiply[pop.name]
+                if 'all' in self.demand_multiply:
+                    demand *= self.demand_multiply['all']
+                if pop.upper and 'upper' in self.demand_multiply:
+                    demand *= self.demand_multiply['upper']
+            demands[pop] = demand
+        return demands
 
 
 class ResourceValue:
@@ -974,6 +998,9 @@ class PopType(Eu5AdvancedEntity):
     upper: bool = False
 
     possible_estates_with_triggers: dict[Estate, Trigger|None]
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'Pop'
 
 
 class ReligiousAspect(Eu5AdvancedEntity):
