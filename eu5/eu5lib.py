@@ -1282,7 +1282,14 @@ class ScriptedDiplomaticObjective(Eu5AdvancedEntity):
 class ScriptedEffect(Eu5AdvancedEntity):
     pass
 class ScriptedList(Eu5AdvancedEntity):
-    pass
+    @cached_property
+    def triggers(self) -> list[str]:
+        return [f'any_{self.name}']
+
+    @cached_property
+    def effects(self) -> list[str]:
+        return [f'{prefix}_{self.name}' for prefix in ['every', 'ordered', 'random']]
+
 class ScriptedRelation(Eu5AdvancedEntity):
     pass
 class ScriptedTrigger(Eu5AdvancedEntity):
