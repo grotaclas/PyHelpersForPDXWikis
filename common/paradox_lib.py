@@ -46,6 +46,7 @@ class Game:
     name: str
     short_game_name: str
     game_path: Path
+    documents_path: Path
     launcher_settings: Path
     wiki_domain: str
     parser: Any
