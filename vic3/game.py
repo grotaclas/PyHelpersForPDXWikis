@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from PyHelpersForPDXWikis.localsettings import VIC3DIR
+from PyHelpersForPDXWikis.localsettings import VIC3DIR, VIC3DIR_DOCUMENTS
 from common.paradox_lib import Game
 
 
@@ -10,6 +10,7 @@ class Victoria3(Game):
     name = 'Victoria 3'
     short_game_name = 'vic3'
     game_path = VIC3DIR
+    documents_path = VIC3DIR_DOCUMENTS
     launcher_settings = game_path / 'launcher/launcher-settings.json'
     wiki_domain = 'vic3.paradoxwikis.com'
 

@@ -11,6 +11,9 @@ VIC3DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Victoria 3')      
 # VIC3DIR = Path('~/.steam/steam/steamapps/common/Victoria 3').expanduser()           # linux
 # VIC3DIR = Path('~/Library/Application Support/Steam/steamapps/common/Victoria 3').expanduser() # macOS
 
+# @TODO document default paths for windows and macOS
+VIC3DIR_DOCUMENTS = Path('~/.local/share/Paradox Interactive/Victoria 3').expanduser() # linux
+
 # the folder where Age of Wonders 4 is installed (currently only used for some minor localizations)
 AOW4DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4')            # windows
 # AOW4DIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4') # cygwin
