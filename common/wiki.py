@@ -38,6 +38,17 @@ class WikiTextFormatter:
         return str(number)
 
     @staticmethod
+    def format_float(number: float, max_significant_digits = 12) -> str:
+        """
+        format a float as a string without using scientific notation
+        while removing floating point artifacts and trailing zeros
+            e.g.
+                0.0000400000000000000032721221565612523818344925530254840850830078125 => 0.00004
+                0.01000000000000000020816681711721685132943093776702880859375         => 0.01
+        """
+        return f'{round(number, max_significant_digits):f}'.rstrip('0').rstrip('.')
+
+    @staticmethod
     def create_wiki_list(elements: list[str], indent=1, no_list_with_one_element=False, prefix_with_linebreak=True, format_with_icon=False) -> str:
         if len(elements) == 0:
             return ''
