@@ -3,7 +3,7 @@ import inspect
 import re
 import sys
 from gettext import GNUTranslations
-from typing import Callable, TypeVar, Type
+from typing import Callable, TypeVar, Type, Any
 from functools import cached_property
 
 from PyHelpersForPDXWikis.localsettings import AOW4DATADIR, AOW4DIR
@@ -45,8 +45,8 @@ class AoW4Parser:
         return  localization
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE], name_column: str = 'id',
-                                extra_data_functions: dict[str, Callable[[str, dict], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None) -> dict[str, NE]:
+                                extra_data_functions: dict[str, Callable[[str, dict], Any]] = None,
+                                transform_value_functions: dict[str, Callable[[Any], Any]] = None) -> dict[str, NE]:
         """parse a folder into objects which are subclasses of NameableEntity
 
         Args:
@@ -94,8 +94,8 @@ class AoW4Parser:
         return ''
 
     def parse_icon_entities(self, folder: str, entity_class: Type[IE], name_column: str = 'id',
-                                extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None
+                                extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+                                transform_value_functions: dict[str, Callable[[Any], Any]] = None
                                 ) -> dict[str, IE]:
         if extra_data_functions is None:
             extra_data_functions = {}

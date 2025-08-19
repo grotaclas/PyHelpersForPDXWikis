@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 from collections.abc import Iterator, MutableMapping
 from tempfile import mkstemp
-from typing import Callable
+from typing import Callable, Any
 
 try:  # when used by PyHelpersForPDXWikis
     from PyHelpersForPDXWikis.localsettings import RAKALY_CLI
@@ -198,7 +198,7 @@ class Tree(MutableMapping):
     def keys(self):
         return self.dictionary.keys()
 
-    def get_or_default(self, key: str, default: any):
+    def get_or_default(self, key: str, default: Any):
         """Return the value for the given key or the default if the key is not in this Tree"""
         if key in self.dictionary:
             return self.dictionary[key]
@@ -248,7 +248,7 @@ class Tree(MutableMapping):
                 self.dictionary[key] = merged
         return self
 
-    def filter_elements(self, filter_func: Callable[[str, any], bool]) -> 'Tree':
+    def filter_elements(self, filter_func: Callable[[str, Any], bool]) -> 'Tree':
         """create a new tree which only contains the elements for which filter_func returns True"""
         return Tree({k: v for k, v in self.dictionary.items() if filter_func(k, v)})
 

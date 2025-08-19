@@ -265,11 +265,11 @@ class AttributeEntity:
     add_attributes is used to populate the object which in turn uses transform_value_functions and extra_data_functions and the annotations to process the data
     """
 
-    transform_value_functions: dict[str, Callable[[any], any]] = {}
+    transform_value_functions: dict[str, Callable[[Any], Any]] = {}
     """ the functions in this dict are called with the value of the data which matches
            the key of this dict. If the key is not present in the data, the function won't
            be called. The function must return the new value for the data"""
-    extra_data_functions: dict[str, Callable[[Dict[str, any]], any]] = {}
+    extra_data_functions: dict[str, Callable[[Dict[str, Any]], Any]] = {}
     """ extra_data_functions: create extra entries in the data. For each key in this dict, the corresponding function
           will be called with the name of the entity and the data dict as parameter. The return
           value will be added to the data dict under the same key"""
@@ -280,7 +280,7 @@ class AttributeEntity:
     def __contains__(self, item):
         return hasattr(self, item)
 
-    def add_attributes(self, attributes: Dict[str, any]):
+    def add_attributes(self, attributes: Dict[str, Any]):
         annotations = self.all_annotations()
         for key, value in attributes.items():
             if key in self.ignored_attributes:
@@ -332,7 +332,7 @@ class ModifierType(NameableEntity):
     color: str = None
 
     # parser: 'JominiParser' = None  # breaks all_annotations
-    parser: any
+    parser: Any
 
     def __init__(self, name: str, display_name: str, **kwargs):
         super().__init__(name, display_name, **kwargs)

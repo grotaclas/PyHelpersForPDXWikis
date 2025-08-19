@@ -5,7 +5,7 @@ import re
 from functools import cached_property
 from operator import methodcaller, itemgetter
 from types import GenericAlias
-from typing import get_origin, get_args, Iterable
+from typing import get_origin, get_args, Iterable, Any
 
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NameableEntity, PdxColor

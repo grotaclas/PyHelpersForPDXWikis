@@ -192,7 +192,7 @@ class MonoBehaviourReader(UnityReader):
                     if isinstance(element, NodeHelper):
                         self.inline_components_recursive(element, visited)
 
-    def flatten_node_tree(self, nodes: NodeHelper, prefix='', max_depth=10) -> dict[str, any]:
+    def flatten_node_tree(self, nodes: NodeHelper, prefix='', max_depth=10) -> dict[str, Any]:
         """Can be used to generate a csv-like export, but is slow if used on many objects and has huge amounts of duplicated data"""
         if max_depth < 0:
             return {'max_depth': 'Max depth reached'}

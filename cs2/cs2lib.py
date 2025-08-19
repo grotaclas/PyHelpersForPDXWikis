@@ -147,7 +147,7 @@ class BaseBuilding(NamedAsset):
     """For Buildings and Building upgrades which sometimes use the BuildingExtension class
      and sometimes use the Building class"""
 
-    def add_attributes(self, attributes: Dict[str, any]):
+    def add_attributes(self, attributes: Dict[str, Any]):
         super().add_attributes(attributes)
         if 'ServiceUpgrade' in attributes:
             self.localization_sub_category_description = 'UPGRADE_DESCRIPTION'

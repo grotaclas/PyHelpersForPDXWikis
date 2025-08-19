@@ -1,5 +1,7 @@
 import re
 import os
+from typing import Any
+
 import sys
 from collections.abc import Iterable, Sequence
 from operator import attrgetter
@@ -254,7 +256,7 @@ local p = {};
 
         return self.get_SVersion_header('table') + '\n' + table
 
-    def iconify(self, what: any, iconify_param: str = None) -> str:
+    def iconify(self, what: Any, iconify_param: str = None) -> str:
         if isinstance(what, list):
             return ', '.join([self.iconify(item, iconify_param) for item in what])
         if str(what).lower() == 'random':

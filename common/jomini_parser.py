@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 
 import sys
 from functools import cached_property
-from typing import Iterator, Type, Callable, get_origin, get_args
+from typing import Iterator, Type, Callable, get_origin, get_args, Any
 
 from common.paradox_parser import ParadoxParser, Tree, ParsingWorkaround
 from common.paradox_lib import Modifier, AE, NE, ME, ModifierType, NameableEntity, PdxColor
@@ -50,8 +50,8 @@ class JominiParser(metaclass=ABCMeta):
             return self._localization_dict.get(key, default)
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE],
-                                extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None,
+                                extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+                                transform_value_functions: dict[str, Callable[[Any], Any]] = None,
                                 entity_level: int = 0,
                                 level_headings_keys: dict[str, 0] = None,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
@@ -213,8 +213,8 @@ class JominiParser(metaclass=ABCMeta):
         pass
 
     def parse_advanced_entities(self, folder: str, entity_class: Type[AE],
-                                extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None,
+                                extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+                                transform_value_functions: dict[str, Callable[[Any], Any]] = None,
                                 localization_prefix: str = '',
                                 allow_empty_entities=False,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
@@ -265,7 +265,7 @@ class JominiParser(metaclass=ABCMeta):
                 return data[icon_key]
         return ''
 
-    def _parse_mod_value(self, mod_type: ModifierType, mod_value: any):
+    def _parse_mod_value(self, mod_type: ModifierType, mod_value: Any):
         """Some post-processing for modifier values. Currently only implements resolving script values"""
         if isinstance(mod_value, str) and mod_value in self.script_values:
             return self.script_values[mod_value]

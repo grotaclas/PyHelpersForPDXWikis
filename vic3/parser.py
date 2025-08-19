@@ -1,4 +1,4 @@
-from typing import TypeVar, Type, Callable
+from typing import TypeVar, Type, Callable, Any
 
 from PyHelpersForPDXWikis.localsettings import VIC3DIR
 from common.jomini_parser import JominiParser
@@ -60,8 +60,8 @@ class Vic3Parser(JominiParser):
             raise Exception(f'more than one DLC is not supported: {dlcs}')
         return dlcs[0]
 
-    def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None,
+    def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+                                transform_value_functions: dict[str, Callable[[Any], Any]] = None,
                                 localization_prefix: str = '',
                                 allow_empty_entities=False,
                                 parsing_workarounds: list[ParsingWorkaround] = None,) -> dict[str, AE]:

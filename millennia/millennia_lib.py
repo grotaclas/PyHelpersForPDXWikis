@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from functools import cached_property
 from pprint import pprint, pformat
+from typing import Any
 
 from PIL import Image
 from common.paradox_lib import AttributeEntity, NameableEntity, IconMixin, unsorted_groupby
@@ -181,7 +182,7 @@ class NamedAttributeEntity(AttributeEntity, MillenniaIconMixin):
 
     tag_to_attribute_map = {}
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         self.name = attributes['name']
         if 'display_name' not in self.extra_data_functions and 'display_name' not in attributes:
             self.extra_data_functions = self.extra_data_functions.copy()  # copy to not modify the class attribute of the subclass
@@ -839,7 +840,7 @@ class TileOverlay(Improvement):
 class MapTile(MillenniaEntity):
     revealHiddenData: Data = Data([])
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         self.extra_data_functions = self.extra_data_functions.copy()  # copy to not modify the class attribute of the superclass
         self.transform_value_functions['revealHiddenData'] = lambda data: Data([] if not data else data['Data'] if 'Data' in data else [])
         super().__init__(attributes)
@@ -926,7 +927,7 @@ class Unit(MillenniaEntity):
                             'Icon': 'unit_icon',
                             }
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         super().__init__(attributes)
         for stat in ['StatHealth', 'StatCommand', 'StatMovement', 'StatAttack', 'StatDefense', 'StatTargetPriority', 'StatUnrestSuppression', 'RevealRadius']:
             value = self.startingData.get(f"{stat}")
@@ -2143,7 +2144,7 @@ class DomainSpecialization(Deck):
         millenniagame.parser.localize(data['name'], 'DomainSpecialization', 'DetailsText', default='')),
                             'infopedia': lambda data: millenniagame.parser.localize(data['name'], 'Info-Topic', 'MainText', default='')}
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         super().__init__(attributes)
         self.base_tech = self.cards[f'{self.name}-AUTOMATIC']
         self.technologies = {name: card for name, card in self.cards.items() if
@@ -2191,7 +2192,7 @@ class NationalSpirit(DomainSpecialization):
     technologies: dict[str, 'NationalSpiritTech']
     age: int
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         super().__init__(attributes)
         for card in self.cards.values():
             card.national_spirit = self
@@ -2209,7 +2210,7 @@ class Government(DomainSpecialization):
 
     _localization_category: str = 'DomainSpecialization'
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         super().__init__(attributes)
         for card in self.cards.values():
             card.government = self
@@ -2224,7 +2225,7 @@ class Government(DomainSpecialization):
 class TechnologyBaseClass(CardBaseClass):
     ages: list['Age']
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         self.ages = []
         super().__init__(attributes)
 
@@ -2598,7 +2599,7 @@ class Terrain(NamedAttributeEntity):
                                  'dataValues': lambda params: Data(params['Data'])
                                  }
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         super().__init__(attributes)
         if self.dataValues.has('MoveCost'):
             self.moveCost = int(self.dataValues.get('MoveCost'))
@@ -2745,7 +2746,7 @@ class GameValue(NamedAttributeEntity):
     _localization_suffix: str = 'Base'
     tag_to_attribute_map = {'#comment': 'comment'}
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         original_name = attributes['name']
         attributes['name'] = original_name.removeprefix('#')  # so that localisation works
         super().__init__(attributes)
@@ -2842,7 +2843,7 @@ class Faction(NamedAttributeEntity):
 
     _localization_category = 'Game-Faction'
 
-    def __init__(self, attributes: dict[str, any]):
+    def __init__(self, attributes: dict[str, Any]):
         self.rewards = {}
         super().__init__(attributes)
 
