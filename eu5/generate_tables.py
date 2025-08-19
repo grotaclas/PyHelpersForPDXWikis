@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import Any
 
 import itertools
 from functools import cached_property
@@ -150,7 +151,7 @@ class TableGenerator(Eu5FileGenerator):
                                      one_line_per_cell=True,
                                      remove_empty_columns=True,
                                      )
-    def create_cargo_tenplate_calls(self, data: list[dict[str, any]], template_name: str):
+    def create_cargo_tenplate_calls(self, data: list[dict[str, Any]], template_name: str):
         lines = []
         for item_data in data:
             lines.append(f'=== {item_data["display_name"]} ===')
@@ -433,7 +434,7 @@ class TableGenerator(Eu5FileGenerator):
             'Price': policy.price.format(icon_only=True) if hasattr(policy.price, 'format') else policy.price,  # price: <class 'eu5.eu5lib.Price'>
             # TODO: AI preference wants_this_policy_bias should be included eventually
             # 'Wants This Policy Bias': '' if policy.wants_this_policy_bias is None else policy.wants_this_policy_bias,
-            # wants_this_policy_bias: <built-in function any>
+            # wants_this_policy_bias
             'Diplomatic Capacity Cost': '' if policy.diplomatic_capacity_cost is None else policy.diplomatic_capacity_cost,
             # diplomatic_capacity_cost: <class 'str'>
             'Gold': '' if policy.gold is None else '[[File:Yes.png|20px|Gold]]' if policy.gold else '[[File:No.png|20px|Not Gold]]',  # gold: <class 'bool'>

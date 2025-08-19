@@ -2,7 +2,7 @@ import re
 from collections.abc import Set
 from operator import methodcaller
 from types import UnionType
-from typing import get_type_hints, get_origin, get_args, Iterable, Type
+from typing import get_type_hints, get_origin, get_args, Iterable, Type, Any
 
 from common.helper import OneTypeHelper, MultiTypeHelper
 from common.paradox_lib import IconMixin, NE
@@ -100,7 +100,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
                 return f'1 if {attribute_access} else 0'
             else:
                 return f"'[[File:Yes.png|20px|{attribute_loc}]]' if {attribute_access} else '[[File:No.png|20px|Not {attribute_loc}]]'"
-        elif attribute_type == any:
+        elif attribute_type == Any:
             return attribute_access
         elif issubclass(attribute_type, Trigger):
             return f'self.formatter.format_trigger({attribute_access})'

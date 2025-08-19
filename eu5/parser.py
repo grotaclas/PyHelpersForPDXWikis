@@ -31,8 +31,8 @@ class Eu5Parser(JominiParser):
         from eu5.text_formatter import Eu5WikiTextFormatter
         return Eu5WikiTextFormatter()
 
-    def parse_nameable_entities(self, folder: str, entity_class: Type[NE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None, entity_level: int = 0,
+    def parse_nameable_entities(self, folder: str, entity_class: Type[NE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+                                transform_value_functions: dict[str, Callable[[Any], Any]] = None, entity_level: int = 0,
                                 level_headings_keys: dict[str, 0] = None, parsing_workarounds: list[ParsingWorkaround] = None, localization_prefix: str = '',
                                 allow_empty_entities=False,
                                 localization_suffix: str = '',
@@ -50,8 +50,8 @@ class Eu5Parser(JominiParser):
         return super().parse_nameable_entities(folder, entity_class, extra_data_functions, transform_value_functions, entity_level, level_headings_keys,
                                                parsing_workarounds, localization_prefix, allow_empty_entities, localization_suffix)
 
-    def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], any]] = None,
-                                transform_value_functions: dict[str, Callable[[any], any]] = None, localization_prefix: str = '', allow_empty_entities=False,
+    def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+                                transform_value_functions: dict[str, Callable[[Any], Any]] = None, localization_prefix: str = '', allow_empty_entities=False,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
                                 description_localization_prefix: str = None,
                                 description_localization_suffix: str = '_desc',

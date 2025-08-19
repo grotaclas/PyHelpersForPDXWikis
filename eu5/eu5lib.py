@@ -4,6 +4,7 @@ import re
 from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
+from typing import Any
 
 from common.paradox_lib import GameConcept, NameableEntity, AdvancedEntity, PdxColor, ModifierType, Modifier, IconMixin
 from common.paradox_parser import Tree
@@ -326,7 +327,7 @@ class Advance(Eu5AdvancedEntity):
     depth: int = None
     age_specialization: str = None  # called "for" in the files, but that's a reserved word in python
     government: str = None
-    in_tree_of: any = None # possible types: {<class 'list'>, <class 'str'>}
+    in_tree_of: Any = None # possible types: {<class 'list'>, <class 'str'>}
     modifier_while_progressing: Tree
     potential: Trigger = None
     requires: list['Advance'] = []
@@ -898,7 +899,7 @@ class LawPolicy(Eu5AdvancedEntity):
     on_fully_activated: Effect = None
     potential: Trigger = None
     price: Price = NoPrice()
-    wants_this_policy_bias: any = None  # scripted number
+    wants_this_policy_bias: Any = None  # scripted number
 
     # for IO laws, but not an IO attribute
     diplomatic_capacity_cost: str = None
