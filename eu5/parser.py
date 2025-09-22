@@ -139,9 +139,13 @@ class Eu5Parser(JominiParser):
 
         return self.parse_modifier_section('', outer_section, section_component, Eu5Modifier)
 
-    def resolve_entity_reference(self, entity_class: Type[NE], entity_name: str):
-        if entity_class == ScriptValue and isinstance(entity_name, Tree):
-            return self._parse_script_value(f'inline_script_value_{uuid.uuid1()}', entity_name)
+    def resolve_entity_reference(self, entity_class: Type[NE], entity_name):
+        if entity_class == ScriptValue:
+            if not entity_name:
+                return None
+            elif not isinstance(entity_name, str):  # will be handled by super class
+                return self._parse_script_value(f'inline_script_value_{uuid.uuid1()}', entity_name)
+
         return super().resolve_entity_reference(entity_class, entity_name)
 
     def _parse_goods_demand(self, value):
@@ -767,7 +771,9 @@ class Eu5Parser(JominiParser):
                                             )
     @cached_property
     def effect_localization(self) -> dict[str, EffectLocalization]:
-        return self.parse_advanced_entities('in_game/common/effect_localization', EffectLocalization)
+        return self.parse_advanced_entities('in_game/common/effect_localization', EffectLocalization, extra_data_functions={
+            'global_': lambda name, data: data['global'] if 'global' in data else ''
+        })
     @cached_property
     def employment_systems(self) -> dict[str, EmploymentSystem]:
         return self.parse_advanced_entities('in_game/common/employment_systems', EmploymentSystem,
@@ -786,6 +792,9 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/formable_countries', FormableCountry,
                                             # localization_prefix='', localization_suffix='', # Used in 127/127 Examples: {'denmark_f': 'Denmark', 'MGE_f': '$MGE$'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 125/127 Examples: {'WES_f_desc': "With the clerical influences over our lands slowly fading into the past it is time to form a new state for [ShowAreaName('westphalia_area')] and proclaim a new era for our people.", 'PUN_f_desc': "We must unite the [ShowCultureName('punjabi')] people if we are ever to be able to stand against foreign invaders. Together we will build a modern state with armies capable of taking on the many enemies who would attack us for our lands, and who would do anything to extinguish our faith!"}
+                                            extra_data_functions={
+                                                'country_name': lambda name, data: data['name'] if 'name' in data else data['tag'],
+                                            }
                                             )
     @cached_property
     def game_rules(self) -> dict[str, GameRule]:
@@ -1053,7 +1062,9 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/trait_flavor', TraitFlavor)
     @cached_property
     def trigger_localization(self) -> dict[str, TriggerLocalization]:
-        return self.parse_advanced_entities('in_game/common/trigger_localization', TriggerLocalization)
+        return self.parse_advanced_entities('in_game/common/trigger_localization', TriggerLocalization, extra_data_functions={
+            'global_': lambda name, data: data['global'] if 'global' in data else '',
+        })
     @cached_property
     def unit_abilities(self) -> dict[str, UnitAbility]:
         return self.parse_advanced_entities('in_game/common/unit_abilities', UnitAbility,

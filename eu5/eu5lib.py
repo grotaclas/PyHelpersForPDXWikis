@@ -113,6 +113,8 @@ class Eu5AdvancedEntity(AdvancedEntity):
     icon_folder: str = None
     "either the name of the define in NGameIcons or the folder name relative to game/main_menu/gfx/interface/icons"
 
+    base_icon_folder = eu5game.game_path / 'game/main_menu/gfx/interface/icons'
+
     def get_icon_filename(self) -> str:
         if self.icon:
             name = self.icon
@@ -122,27 +124,26 @@ class Eu5AdvancedEntity(AdvancedEntity):
 
     @classmethod
     def get_icon_folder(cls):
-        base_icon_folder = eu5game.game_path / 'game/main_menu/gfx/interface/icons'
         if cls.icon_folder is None:
             icon_folder = re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
-            path = base_icon_folder / icon_folder
+            path = cls.base_icon_folder / icon_folder
             if not path.exists():
                 # try plural
                 icon_folder += 's'
-                path = base_icon_folder / icon_folder
+                path = cls.base_icon_folder / icon_folder
                 if not path.exists():
                     raise Exception(f'No icon folder for class "{cls.__name__}"')
         else:
             if cls.icon_folder in eu5game.parser.defines['NGameIcons']:
-                base_icon_folder = eu5game.game_path / 'game/main_menu'
+                cls.base_icon_folder = eu5game.game_path / 'game/main_menu'
                 icon_folder = eu5game.parser.defines['NGameIcons'][cls.icon_folder]
             elif cls.icon_folder in eu5game.parser.defines['NGameIllustrations']:
-                base_icon_folder = eu5game.game_path / 'game/main_menu'
+                cls.base_icon_folder = eu5game.game_path / 'game/main_menu'
                 icon_folder = eu5game.parser.defines['NGameIllustrations'][cls.icon_folder]
             else:
                 icon_folder = cls.icon_folder
 
-        return base_icon_folder / icon_folder
+        return cls.base_icon_folder / icon_folder
 
     def get_icon_path(self) -> Path:
         return self.get_icon_folder() / self.get_icon_filename()
@@ -633,6 +634,8 @@ class Climate(Eu5AdvancedEntity):
     location_modifier: list[Eu5Modifier]
     unit_modifier: list[Eu5Modifier] = []
     winter: str
+
+    icon_folder = 'CLIMATE_ICON_PATH'
 
 
 class CountryDescriptionCategory(NameableEntity):
