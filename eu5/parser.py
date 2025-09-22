@@ -81,7 +81,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     @disk_cache(eu5game, classes_to_cache={Eu5ModifierType})
     def modifier_types(self) -> dict[str, Eu5ModifierType]:
-        return self.parse_nameable_entities('main_menu/common/modifier_types', Eu5ModifierType,
+        return self.parse_nameable_entities('main_menu/common/modifier_type_definitions', Eu5ModifierType,
                                             allow_empty_entities=True,
                                             extra_data_functions={
             'parser': lambda name, data: self,
@@ -91,12 +91,14 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def named_modifiers(self) -> dict[str, Eu5NamedModifier]:
-        return self.parse_nameable_entities('main_menu/common/modifiers', Eu5NamedModifier,
+        return self.parse_nameable_entities('main_menu/common/static_modifiers', Eu5NamedModifier,
                                             localization_prefix='STATIC_MODIFIER_NAME_',
                                             extra_data_functions={
                                                 'modifier': lambda name, data: self._parse_modifier_data(
-                                                    Tree({name: value for name, value in data if name not in ['category', 'decaying']}),
+                                                    Tree({name: value for name, value in data if name not in ['category', 'decaying', 'game_data']}),
                                                     modifier_class=Eu5Modifier),
+                                                'category': lambda name, data: data['game_data']['category'],
+                                                'decaying': lambda name, data: data['game_data']['decaying'] if 'decaying' in data['game_data'] else False,
                                                 'description': lambda name, data: self.formatter.format_localization_text(self.localize('STATIC_MODIFIER_DESC_' + name, default='')),
                                             })
 

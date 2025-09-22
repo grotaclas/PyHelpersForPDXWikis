@@ -14,22 +14,22 @@ from eu5.trigger import Trigger
 from eu5.effect import Effect
 
 class Eu5ModifierType(ModifierType):
-    # unique to eu5:
+    # unique to eu5(stored in the game_data and handled by the constructor):
     ai: bool = False
     bias_type: list[str]|str
     category: str = 'all'
     format: str = ''
-    min: int
-    scale_with_pop: bool
-    should_show_in_modifiers_tab: bool
+    is_societal_value_change: bool = False
+    min: int = None
+    max: int = None
+    scale_with_pop: bool = False
+    should_show_in_modifiers_tab: bool = True
+
+    # stores the data which is unique to eu5
+    game_data: Tree
 
     # shared attributes with different defaults
     num_decimals: int = 2  # vic3 has a default of 0
-
-    # the following are named differently in the parent class and are handled in the constructor
-    is_bool: bool = False
-    is_good: str = 'good'
-    is_percent: bool = False
 
     icon_file: str = None
     "relative path to the icon file"
@@ -37,17 +37,11 @@ class Eu5ModifierType(ModifierType):
     "relative path to the file for the negative icon(if any)"
 
     def __init__(self, name: str, display_name: str, **kwargs):
+        if 'color' not in kwargs:
+            kwargs['color'] = 'good'
         super().__init__(name, display_name, **kwargs)
-        if self.is_percent:
-            self.percent = self.is_percent
-        if self.is_bool:
-            self.boolean = self.is_bool
-        if self.is_good == 'good':
-            self.good = True
-        elif self.is_good == 'bad':
-            self.good = False
-        elif self.is_good == 'neutral':
-            self.neutral = True
+        for k, v in self.game_data:
+            setattr(self, k, v)
 
     def _get_fully_localized_display_name_and_desc(self) -> (str, str):
         display_name = self.parser.localize('MODIFIER_TYPE_NAME_' + self.name)
