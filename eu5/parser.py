@@ -62,8 +62,6 @@ class Eu5Parser(JominiParser):
         if 'description' not in extra_data_functions:
             if description_localization_prefix is None:
                 description_localization_prefix = localization_prefix
-            else:
-                description_localization_suffix = ''
             extra_data_functions['description'] = lambda name, data: self.formatter.format_localization_text(self.localize(description_localization_prefix + name + description_localization_suffix, default=''))
         return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities, parsing_workarounds, localization_suffix)
 
@@ -331,6 +329,14 @@ class Eu5Parser(JominiParser):
                                                                                                                                   self.setup_data['countries'][
                                                                                                                                       'countries'] else None
                                             })
+
+    @cached_property
+    def countries_including_formables(self): # -> dict[str, Country|FormableCountry]:
+        results = self.countries.copy()
+        for formable_name, formable_country in self.formable_countries.items():
+            if hasattr(formable_country, 'tag') and formable_country.tag not in results:
+                results[formable_country.tag] = formable_country
+        return results
 
     @cached_property
     @disk_cache(eu5game)

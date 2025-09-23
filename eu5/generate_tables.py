@@ -470,6 +470,30 @@ class TableGenerator(Eu5FileGenerator):
                                     one_line_per_cell=True,
                                     remove_empty_columns=True,
                                     )
+    def generate_parliament_issue_table(self):
+        issues = [issue for issue in self.parser.parliament_issues.values() if issue.type == 'country']
+        issue_table_data = [{
+            # 'Parliament issue': f'{{{{iconbox|{issue.display_name}|{issue.description}|w=300px|image={issue.get_wiki_filename()}}}}}',
+            'Parliament issue': f"'''{issue.display_name}'''\n\n<div class=\"hidem\" style=\"font-style: italic; font-size:smaller;\">{issue.description}</div>",
+            'Requirements': self.formatter.format_trigger(issue.potential) + '\n' + self.formatter.format_trigger(issue.allow),
+            'Chance': issue.chance.format() if hasattr(issue.chance, 'format') else issue.chance,
+            'Estate': '' if issue.estate is None else issue.estate.get_wiki_link_with_icon() if issue.estate else '',
+            'Modifiers while the issue is debated': self.format_modifier_section('modifier_when_in_debate', issue),
+            'Effects if the issue is being resolved': self.formatter.format_effect(issue.on_debate_passed),
+            'Effects if the issue fails': self.formatter.format_effect(issue.on_debate_failed),
+
+            # for IO debates
+            # 'Selectable For': self.formatter.format_trigger(issue.selectable_for),
+            # selectable_for: <class 'eu5.trigger.Trigger'>
+            # 'Special Status': '' if issue.special_status is None else issue.special_status.get_wiki_link_with_icon() if issue.special_status else '',
+            # special_status: <class 'eu5.eu5lib.InternationalOrganizationSpecialStatus'>
+            # 'AI voting criteria': '' if issue.wants_this_parliament_issue_bias is None else issue.wants_this_parliament_issue_bias.format() if hasattr(
+            #     issue.wants_this_parliament_issue_bias, 'format') else issue.wants_this_parliament_issue_bias,
+        } for issue in issues]
+        return self.make_wiki_table(issue_table_data, table_classes=['mildtable', 'plainlist'],
+                                    one_line_per_cell=True,
+                                    remove_empty_columns=True,
+                                    )
 
 if __name__ == '__main__':
     TableGenerator().run(sys.argv)

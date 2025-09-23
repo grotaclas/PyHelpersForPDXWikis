@@ -2,7 +2,7 @@ import copy
 import numbers
 import re
 from enum import StrEnum
-from functools import cached_property
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -146,10 +146,21 @@ class Eu5AdvancedEntity(AdvancedEntity):
 
         return cls.base_icon_folder / icon_folder
 
+    @classmethod
+    @lru_cache
+    def has_wiki_icon(cls):
+        try:
+            icon_folder = cls.get_icon_folder()
+            return icon_folder.exists()
+        except:
+            return False
+
     def get_icon_path(self) -> Path:
         return self.get_icon_folder() / self.get_icon_filename()
 
     def get_wiki_filename(self) -> str:
+        if not self.has_wiki_icon():
+            return ''
         filename = self.get_icon_filename().replace('.dds', '.png')
         prefix = self.get_wiki_filename_prefix()
         filename = filename.removeprefix('icon_')
@@ -160,6 +171,8 @@ class Eu5AdvancedEntity(AdvancedEntity):
         return filename.capitalize()
 
     def get_wiki_icon(self, size: str = '32px') -> str:
+        if not self.has_wiki_icon():
+            return ''
         return self.get_wiki_file_tag(size, link='self')
 
 
@@ -716,6 +729,13 @@ class Country(Eu5AdvancedEntity):
                 ):
                     return True
         return False
+
+    @classmethod
+    def has_wiki_icon(cls):
+        return True
+
+    def get_wiki_link_with_icon(self) -> str:
+        return f'{{{{flag|{self.display_name}}}}}'
 
 
 class CultureGroup(NameableEntity):
@@ -1729,14 +1749,14 @@ class ParliamentAgenda(Eu5AdvancedEntity):
 class ParliamentIssue(Eu5AdvancedEntity):
     allow: Trigger = None
     chance: ScriptValue
-    estate: CustomizableLocalization = None
+    estate: Estate = None
     modifier_when_in_debate: list[Eu5Modifier] = []
     on_debate_failed: Effect
     on_debate_passed: Effect
     potential: Trigger = None
     selectable_for: Trigger = None
     special_status: InternationalOrganizationSpecialStatus = None
-    type: AttributeColumn = None
+    type: str = 'country'
     wants_this_parliament_issue_bias: ScriptValue = None
 class ParliamentType(Eu5AdvancedEntity):
     allow: Trigger = None

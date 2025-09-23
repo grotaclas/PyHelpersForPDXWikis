@@ -84,7 +84,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
             value_without_prefix_and_suffix, _seperator, suffix = value_without_prefix.partition('.')
             type_sources = {
                 'building_type': self.parser.buildings,
-                'c': self.parser.countries,
+                'c': self.parser.countries_including_formables,
                 'culture': self.parser.cultures,
                 'culture_group': self.parser.culture_groups,
                 'estate_privilege': self.parser.estate_privileges,
