@@ -29,7 +29,7 @@ class Eu5ModifierType(ModifierType):
     game_data: Tree
 
     # shared attributes with different defaults
-    num_decimals: int = 2  # vic3 has a default of 0
+    decimals: int = 2  # vic3 has a default of 0
 
     icon_file: str = None
     "relative path to the icon file"
@@ -38,6 +38,7 @@ class Eu5ModifierType(ModifierType):
 
     def __init__(self, name: str, display_name: str, **kwargs):
         if 'color' not in kwargs:
+            # eu5 has good as default while vic3 has neutral
             kwargs['color'] = 'good'
         super().__init__(name, display_name, **kwargs)
         for k, v in self.game_data:

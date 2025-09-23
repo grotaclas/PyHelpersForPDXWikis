@@ -25,15 +25,15 @@ local NDefines = {luadata.serialize(result, indent=' ')}
         for mod_type in self.parser.modifier_types.values():
             mod_data = {'loc': self.parser.formatter.strip_formatting(mod_type.display_name), }
             if mod_type.percent:
-                mod_data['is_percent'] = True
+                mod_data['percent'] = True
             if mod_type.already_percent:
                 mod_data['already_percent'] = True
             if mod_type.boolean:
-                mod_data['is_bool'] = True
+                mod_data['boolean'] = True
             if mod_type.format != '':
                 mod_data['format'] = mod_type.format
-            mod_data['is_good'] = mod_type.color
-            mod_data['num_decimals'] = mod_type.num_decimals
+            mod_data['color'] = mod_type.color
+            mod_data['decimals'] = mod_type.decimals
 
             if mod_type.icon_file != self.parser.default_modifier_icon:
                 mod_data['icon'] = mod_type.get_wiki_filename().removesuffix('.png')
