@@ -319,7 +319,7 @@ class ModifierType(NameableEntity):
     percent: bool = False
     already_percent: bool = False  # used by ck3
     boolean: bool = False
-    num_decimals: int = None
+    decimals: int = None
     good: bool = None
     neutral: bool = None
     prefix: str = None
@@ -328,7 +328,6 @@ class ModifierType(NameableEntity):
     description: str
 
     # new format
-    decimals: int = None
     color: str = None
 
     # parser: 'JominiParser' = None  # breaks all_annotations
@@ -337,7 +336,7 @@ class ModifierType(NameableEntity):
     def __init__(self, name: str, display_name: str, **kwargs):
         super().__init__(name, display_name, **kwargs)
         if self.decimals is not None:
-            self.num_decimals = self.decimals
+            self.decimals = self.decimals
         if self.color == 'good':
             self.good = True
         if self.color == 'bad':
@@ -434,13 +433,13 @@ class ModifierType(NameableEntity):
             formatted_value *= 100
             postfix += '%'
 
-        if self.num_decimals is not None:
+        if self.decimals is not None:
             try:
                 self.assert_number(value)
-                # test if the number has more significant digits than num_decimals
-                if formatted_value * 10**self.num_decimals - int(formatted_value * 10**self.num_decimals) == 0:
-                    # if it doesn't, we show num_decimals precision
-                    format_string = f'{{:.{self.num_decimals}f}}'
+                # test if the number has more significant digits than decimals
+                if formatted_value * 10**self.decimals - int(formatted_value * 10 ** self.decimals) == 0:
+                    # if it doesn't, we show decimals precision
+                    format_string = f'{{:.{self.decimals}f}}'
                 else:
                     # otherwise we show the full precision, but use the g formatting to remove trailing zeros
                     format_string = f'{{:g}}'
