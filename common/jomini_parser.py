@@ -180,6 +180,9 @@ class JominiParser(metaclass=ABCMeta):
             if key != 'name':
                 entity_values[key] = func(name, data)
         for k, v in data:
+            if isinstance(v, str) and v.startswith('define:'):
+                category, _, define = v.removeprefix('define:').partition('|')
+                v = self.defines[category][define]
             if k in transform_value_functions:
                 entity_values[k] = transform_value_functions[k](v)
             elif k in class_attributes and k not in entity_values:
