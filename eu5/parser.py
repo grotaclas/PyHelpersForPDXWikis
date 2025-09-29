@@ -10,7 +10,7 @@ from common.file_generator import FileGenerator
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NE, AE, ME
-from common.paradox_parser import ParsingWorkaround, QuestionmarkEqualsWorkaround, IgnoreAtVariablesWorkaround
+from common.paradox_parser import ParsingWorkaround
 
 
 class Eu5Parser(JominiParser):
@@ -37,10 +37,6 @@ class Eu5Parser(JominiParser):
                                 allow_empty_entities=False,
                                 localization_suffix: str = '',
                                 ) -> dict[str, NE]:
-        if parsing_workarounds is None:
-            parsing_workarounds = []
-        if not any(isinstance(workaround, QuestionmarkEqualsWorkaround) for workaround in parsing_workarounds):
-            parsing_workarounds.append(QuestionmarkEqualsWorkaround())
 
         if extra_data_functions is None:
             extra_data_functions = {}
@@ -433,17 +429,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def defines(self):
         # TODO: add defines from jomini folder
-
-        class SemicolonLineEndWorkaround(ParsingWorkaround):
-            """replaces statements like
-                pattern = list "christian_emblems_list"
-            with
-                pattern = { list "christian_emblems_list" }
-            """
-            replacement_regexes = {r'(?m)^([^#]*?);(\s*(#.*)?)$': r'\1 \2'}
-
-
-        return self.parser.parse_folder_as_one_file('loading_screen/common/defines', workarounds=[SemicolonLineEndWorkaround()]).merge_duplicate_keys()
+        return self.parser.parse_folder_as_one_file('loading_screen/common/defines').merge_duplicate_keys()
 
     def get_define(self, define: str):
         """get a define by its game syntax e.g. NGame.START_DATE"""
@@ -652,8 +638,7 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def coat_of_arms(self) -> dict[str, CoatOfArms]:
-        return self.parse_advanced_entities('main_menu/common/coat_of_arms/coat_of_arms', CoatOfArms,
-                                            parsing_workarounds=[IgnoreAtVariablesWorkaround()])
+        return self.parse_advanced_entities('main_menu/common/coat_of_arms/coat_of_arms', CoatOfArms)
     @cached_property
     def achievements(self) -> dict[str, Achievement]:
         return self.parse_advanced_entities('in_game/common/achievements', Achievement,
@@ -791,8 +776,7 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/ethnicities', Ethnicity)
     @cached_property
     def flag_definitions(self) -> dict[str, FlagDefinition]:
-        return self.parse_advanced_entities('main_menu/common/flag_definitions', FlagDefinition,
-                                            parsing_workarounds=[IgnoreAtVariablesWorkaround()])
+        return self.parse_advanced_entities('main_menu/common/flag_definitions', FlagDefinition)
     @cached_property
     def formable_countries(self) -> dict[str, FormableCountry]:
         return self.parse_advanced_entities('in_game/common/formable_countries', FormableCountry,
@@ -811,8 +795,7 @@ class Eu5Parser(JominiParser):
     # @TODO: genes are a nested structure. this just gets the category
     @cached_property
     def genes(self) -> dict[str, Gene]:
-        return self.parse_advanced_entities('in_game/common/genes', Gene,
-                                            parsing_workarounds=[IgnoreAtVariablesWorkaround()])
+        return self.parse_advanced_entities('in_game/common/genes', Gene)
     @cached_property
     def generic_actions(self) -> dict[str, GenericAction]:
         return self.parse_advanced_entities('in_game/common/generic_actions', GenericAction,
