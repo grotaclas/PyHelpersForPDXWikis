@@ -1,5 +1,6 @@
 import json
 import re
+import sys
 from collections import ChainMap
 from dataclasses import dataclass
 from itertools import groupby
@@ -98,7 +99,14 @@ class PdxColor(sRGBColor):
             PdxColor.new_from_parser_obj(data['color'])
         """
         if isinstance(color_obj, list):
-            return cls(color_obj[0], color_obj[1], color_obj[2], is_upscaled=True)
+            if color_obj[0] <= 1.0 and color_obj[1] <= 1.0 and color_obj[2] <= 1.0 and (
+                    isinstance(color_obj[0], float) or
+                    isinstance(color_obj[1], float) or
+                    isinstance(color_obj[2], float)):
+                is_upscaled = False
+            else:
+                is_upscaled = True
+            return cls(color_obj[0], color_obj[1], color_obj[2], is_upscaled=is_upscaled)
         elif isinstance(color_obj, Tree) and 'rgb' in color_obj:
             if color_obj['rgb'][0] <= 1.0 and color_obj['rgb'][1] <= 1.0 and color_obj['rgb'][2] <= 1.0:
                 return cls(color_obj['rgb'][0], color_obj['rgb'][1], color_obj['rgb'][2], is_upscaled=False)
