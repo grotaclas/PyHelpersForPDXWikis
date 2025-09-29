@@ -179,7 +179,7 @@ class TableGenerator(Eu5FileGenerator):
             'capital_country_modifier': self.format_modifier_section('capital_country_modifier', building),
             # capital_country_modifier: list[eu5.eu5lib.Eu5Modifier]
             'capital_modifier': self.format_modifier_section('capital_modifier', building),  # capital_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'category': building.category,  # category: <class 'str'>
+            'category': building.category.name,  # category: <class 'str'>
             'city': 1 if building.city else 0,  # city: <class 'bool'>
             'construction_demand': building.construction_demand.format(icon_only=True) if hasattr(building.construction_demand,
                                                                                                   'format') else building.construction_demand,
@@ -212,6 +212,19 @@ class TableGenerator(Eu5FileGenerator):
             'notes': self.get_building_notes(building),
         } for building in sorted_buildings]
         return self.create_cargo_tenplate_calls(buildings, 'Building')
+
+    def generate_building_categories_cargo(self):
+        sorted_categories = sorted(
+            self.parser.building_category.values(),
+            key=attrgetter('display_name')
+            )
+        categories = [{
+            'name': category.name,
+            'display_name': category.display_name,
+            'description': category.description,
+            'icon': category.get_wiki_filename(),
+        } for category in sorted_categories]
+        return self.create_cargo_tenplate_calls(categories, 'Building_category')
 
     def generate_concept_tables(self):
         concepts = sorted(self.parser.game_concepts.values(), key=attrgetter('family', 'display_name'))
