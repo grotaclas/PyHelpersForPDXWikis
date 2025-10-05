@@ -40,7 +40,8 @@ class NoParserUnpickler(pickle.Unpickler):
         super().__init__(file)
         self.game = game
         self.parser = game.parser
-        self.class_property_map = game.parser.class_property_map
+        if hasattr(game.parser, 'class_property_map'):
+            self.class_property_map = game.parser.class_property_map
 
     def persistent_load(self, pid):
         type_tag, key_id = pid
