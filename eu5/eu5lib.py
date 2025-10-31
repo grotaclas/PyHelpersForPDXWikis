@@ -601,8 +601,8 @@ class Building(Eu5AdvancedEntity):
     build_time: int = 0 # scripted value
     can_close: bool = True
     can_destroy: Trigger = None
-    capital_country_modifier: list[Eu5Modifier]
-    capital_modifier: list[Eu5Modifier]
+    capital_country_modifier: list[Eu5Modifier] = []
+    capital_modifier: list[Eu5Modifier] = []
     category: BuildingCategory
     city: bool = False
     construction_demand: GoodsDemand = NoPrice()
@@ -612,16 +612,16 @@ class Building(Eu5AdvancedEntity):
     employment_size: float = 0
     estate: str = ''
     forbidden_for_estates: bool = False
-    foreign_country_modifier: list[Eu5Modifier]
+    foreign_country_modifier: list[Eu5Modifier] = []
     graphical_tags: list[str] = []
     in_empty: str = 'owned'
     increase_per_level_cost: float = 0
     is_foreign: bool = False
     lifts_fog_of_war: bool = False
     location_potential: Trigger = None
-    market_center_modifier: list[Eu5Modifier]
+    market_center_modifier: list[Eu5Modifier] = []
     max_levels: int|str  # TODO: scripted integer
-    modifier: list[Eu5Modifier]  # possible types: {<class 'list'>, <class 'common.paradox_parser.Tree'>}
+    modifier: list[Eu5Modifier] = []
     need_good_relation: bool = False
     obsolete: list['Building'] = []
     on_built: Effect = None
@@ -630,7 +630,7 @@ class Building(Eu5AdvancedEntity):
     pop_type: str
     possible_production_methods: list[ProductionMethod] = []
     price: Price = NoPrice()
-    raw_modifier: list[Eu5Modifier]
+    raw_modifier: list[Eu5Modifier] = []
     remove_if: Trigger = None
     rural_settlement: bool = False
     stronger_power_projection: bool = False
@@ -757,6 +757,10 @@ class Culture(Eu5AdvancedEntity):
     opinions: Tree = None
     tags: list[str]  # gfx tags
     use_patronym: bool = False
+
+    @classmethod
+    def has_wiki_icon(cls):
+        return False
 
 
 class Estate(Eu5AdvancedEntity):
