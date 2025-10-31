@@ -429,7 +429,13 @@ class Eu5Parser(JominiParser):
     @cached_property
     def defines(self):
         # TODO: add defines from jomini folder
-        return self.parser.parse_folder_as_one_file('loading_screen/common/defines').merge_duplicate_keys()
+        class DoubleSlashCommentWorkaround(ParsingWorkaround):
+            """removes lines which start with spaces and //
+            they are not valid paradox script and cause a debug message when loading, but the defines have them
+            """
+            replacement_regexes = {r'(?m)^\s*//.*$': ''}
+
+        return self.parser.parse_folder_as_one_file('loading_screen/common/defines', workarounds=[DoubleSlashCommentWorkaround()]).merge_duplicate_keys()
 
     def get_define(self, define: str):
         """get a define by its game syntax e.g. NGame.START_DATE"""
