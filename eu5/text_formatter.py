@@ -28,6 +28,11 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                       lambda match: self.parser.localize(match.group('loc_key')), text)
         return text
 
+    def resolve_nested_localizations(self, text: str, seen_keys=None):
+        # dont treat BULLET_WITH_TAB as a nested loc, so that we can turn it into a wiki list
+        text = re.sub(r"\\n\$BULLET_WITH_TAB\$", '\n* ', text)
+        return super().resolve_nested_localizations(text, seen_keys)
+
     def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False, add_plus=False):
         if  isinstance(resource, str):
             resource = HardcodedResource(resource)
