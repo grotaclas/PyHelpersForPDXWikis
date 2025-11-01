@@ -1024,6 +1024,8 @@ class PopType(Eu5AdvancedEntity):
 
     possible_estates_with_triggers: dict[Estate, Trigger|None]
 
+    icon_folder = 'POP_ICON_PATH'
+
     def get_wiki_filename_prefix(self) -> str:
         return 'Pop'
 
