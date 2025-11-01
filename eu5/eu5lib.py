@@ -789,22 +789,22 @@ class Estate(Eu5AdvancedEntity):
 class EstatePrivilege(Eu5AdvancedEntity):
     estate: Estate
 
-    potential: Tree  # Trigger
-    allow: Tree  # Trigger
-    can_revoke: Tree  # Trigger
+    potential: Trigger = None
+    allow: Trigger = None
+    can_revoke: Trigger = None
 
-    on_activate: Tree  # Effect
-    on_fully_activated: Tree  # Effect
-    on_deactivate: Tree  # Effect
+    on_activate: Effect = None
+    on_fully_activated: Effect = None
+    on_deactivate: Effect = None
 
     country_modifier: list[Eu5Modifier]
     province_modifier: list[Eu5Modifier]
     location_modifier: list[Eu5Modifier]
 
-    days: int
-    weeks: int
-    months: int
-    years: int
+    days: int = 0
+    weeks: int = 0
+    months: int = 0
+    years: int = 0
 
     icon_folder = 'ESTATE_PRIVILEGE_ICON_PATH'
 
