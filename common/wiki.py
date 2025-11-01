@@ -189,14 +189,15 @@ class WikiTextFormatter:
         """strip HTML formatting and some common wiki syntax. Replace links by their anchor texts"""
         allowed_characters_in_final_output = r'-—\w. \'&()!:'
         stripped_text = re.sub(r'\[https?:[^] ]+ ([^]]+)]', r'\1', re.sub(r'\[\[([^]|]+\|)?([^]|]+)]]', r'\2', re.sub(r'<[^<]+?>', '', re.sub(r' <[^<]+?> ', ' ', text))))
-        stripped_text = re.sub(r'\{\{icon\|[^}]+}}\s*(&nbsp;)?\s*', '', stripped_text, re.IGNORECASE)
+        stripped_text = re.sub(r'\{\{icon\|[^}]+}}\s*(&nbsp;)?\s*', '', stripped_text, flags=re.IGNORECASE)
         if strip_newlines:
             stripped_text = re.sub(r'\s*[\r\n]+\s*',' ', stripped_text)
         else:
             allowed_characters_in_final_output += r'\n\r'
         if not re.fullmatch('^[' + allowed_characters_in_final_output + ']*$', stripped_text):
             # raise Exception(f'Could not fully strip formatting from the following text "{text}". Partially stripped version: "{stripped_text}"')
-            print(f'Could not fully strip formatting from the following text "{text}". Partially stripped version: "{stripped_text}"')
+            pass
+            # print(f'Could not fully strip formatting from the following text "{text}". Partially stripped version: "{stripped_text}"')
         # remove space from the beginning and end which might have been left over from the other stripping
         return stripped_text.strip()
 
