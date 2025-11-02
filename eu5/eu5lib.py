@@ -1580,6 +1580,12 @@ class Ethnicity(Eu5AdvancedEntity):
     template: 'Ethnicity' = None
 class FlagDefinition(Eu5AdvancedEntity):
     flag_definition: list[Tree] = []
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if isinstance(kwargs['flag_definition'], Tree):
+            kwargs['flag_definition'] = [kwargs['flag_definition']]
+        super().__init__(name, display_name, **kwargs)
+
 class FormableCountry(Eu5AdvancedEntity):
     adjective: str = '' # possible types(out of 126): <class 'str'>(126), <class 'eu5.eu5lib.CustomizableLocalization'>(11)
     allow: Trigger = None
