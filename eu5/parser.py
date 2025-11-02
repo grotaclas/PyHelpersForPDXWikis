@@ -20,6 +20,8 @@ class Eu5Parser(JominiParser):
         # the default is "Trade Embark/Disembark Cost" which is problematic for redirects and filenames, because of the slash
         'MODIFIER_TYPE_NAME_local_trade_embark_disembark_cost_modifier': 'Trade Embark-Disembark Cost',
         'hanseatic_town_hall_price': "$hanseatic_town_hall$ Price",  # avoid recursion TODO: remove workaround when the loc is fixed ingame
+        'BGP': 'Burgundy (BGP)',
+        'MAM': 'Egypt (MAM)'
     }
 
     def __init__(self, game_installation: Path = EU5DIR, language: str = 'english'):
