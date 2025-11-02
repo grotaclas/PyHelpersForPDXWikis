@@ -813,11 +813,27 @@ class Eu5Parser(JominiParser):
     @cached_property
     def generic_action_ai_lists(self) -> dict[str, GenericActionAiList]:
         return self.parse_advanced_entities('in_game/common/generic_action_ai_lists', GenericActionAiList)
+
+    def _parse_religion_in_god(self, religion_entry) -> [Religion]:
+        if isinstance(religion_entry, str):
+            return [self.religions[religion_entry]]
+        elif isinstance(religion_entry, list):
+            result = []
+            for r in religion_entry:
+                result += self._parse_religion_in_god(r)
+            return result
+        elif isinstance(religion_entry, Tree):
+            return self._parse_religion_in_god(religion_entry['religion'])
+
+
     @cached_property
     def gods(self) -> dict[str, God]:
         return self.parse_advanced_entities('in_game/common/gods', God,
                                             # localization_prefix='', localization_suffix='', # Used in 102/102 Examples: {'shakti_god': 'Śakti', 'ikenga_god': 'Ikenga'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 102/102 Examples: {'huitzilopochtli_god_desc': "[ShowGodName('huitzilopochtli_god')] is the solar and war deity of sacrifice for the people of [ShowLocationName('tenochtitlan')].", 'yuma_sammang_god_desc': "$yuma_sammang_god$ is the supreme god and Mother Earth of the [ShowCultureName('limbu_culture')] people."}
+                                            transform_value_functions={
+                                                'religion': self._parse_religion_in_god
+                                            }
                                             )
     @cached_property
     def goods_demand_category(self) -> dict[str, GoodsDemandCategory]:

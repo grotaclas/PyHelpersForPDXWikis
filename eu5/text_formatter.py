@@ -26,6 +26,10 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                       lambda match: self.parser.localize(match.group('loc_key')), text)
         text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetNameWithNoTooltip\s*]",
                       lambda match: self.parser.localize(match.group('loc_key')), text)
+        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetLongNameWithNoTooltip\s*]",
+                      lambda match: self.parser.localize(match.group('loc_key')), text)
+        text = re.sub(r"\[\s*GetEstateNameWithNoTooltip\s*\(\s*'(?P<loc_key>[^']+)'\s*\)\s*]",
+                      lambda match: self.parser.estates[match.group('loc_key')].display_name, text)
         return text
 
     def resolve_nested_localizations(self, text: str, seen_keys=None):
