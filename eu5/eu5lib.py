@@ -331,7 +331,7 @@ class Continent(NameableEntity):
 
 class Advance(Eu5AdvancedEntity):
     age: str
-    ai_preference_tags: list = []
+    ai_preference_tags: list = [str]
     ai_weight: Tree = None
     allow: Trigger = None
     allow_children: bool = True
@@ -340,9 +340,12 @@ class Advance(Eu5AdvancedEntity):
     age_specialization: str = None  # called "for" in the files, but that's a reserved word in python
     government: str = None
     in_tree_of: Any = None # possible types: {<class 'list'>, <class 'str'>}
-    modifier_while_progressing: Tree
+    modifier_while_progressing: list[Eu5Modifier] = []
     potential: Trigger = None
-    requires: list['Advance'] = []
+
+    # saved as str when parsing to avoid recursion
+    _requires: list[str] = []
+
     research_cost: float = None # percentage?
     starting_technology_level: int = 0
     unlock_ability: list[str] = []
@@ -363,6 +366,23 @@ class Advance(Eu5AdvancedEntity):
     unlock_unit: list[str] = []
 
     icon_folder = 'ADVANCE_ICON_PATH'
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if 'requires' in kwargs:
+            # saved as private attribute and removed to not override the cached_property
+            self._requires = kwargs['requires']
+            del kwargs['requires']
+        super().__init__(name, display_name, **kwargs)
+
+    @cached_property
+    def requires(self) -> list['Advance']:
+        """Lazy loaded to avoid infinite recursion"""
+        if self._requires:
+            if not isinstance(self._requires, list):
+                self._requires = [self._requires]
+            return [eu5game.parser.advances[advance] for advance in self._requires]
+        else:
+            return []
 
     def get_wiki_icon(self, size: str = '32px') -> str:
         if self.get_wiki_filename().removesuffix(".png") == self.display_name:
@@ -2229,7 +2249,7 @@ class UnitType(Eu5AdvancedEntity):
     combat_power: float = 0
     combat_speed: float = 0
     construction_demand: GoodsDemand = None
-    copy_from: 'UnitType' = None
+    _copy_from: str = None
     country_potential: Trigger = None
     crew_size: float = 0
     default: bool = False
@@ -2258,8 +2278,34 @@ class UnitType(Eu5AdvancedEntity):
     supply_weight: float = 0
     transport_capacity: float = 0
     upgrades_to: Any = None # possible types(out of 70): <class 'eu5.eu5lib.UnitType'>(69), list[eu5.eu5lib.UnitType](1)
-    upgrades_to_only: 'UnitType' = None
+    _upgrades_to_only: str = None
     use_ship_names: bool = None
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if 'copy_from' in kwargs:
+            # saved as private attribute and removed to not override the cached_property
+            self._copy_from = kwargs['copy_from']
+            del kwargs['copy_from']
+        if 'upgrades_to_only' in kwargs:
+            # saved as private attribute and removed to not override the cached_property
+            self._upgrades_to_only = kwargs['upgrades_to_only']
+            del kwargs['upgrades_to_only']
+        super().__init__(name, display_name, **kwargs)
+
+    @cached_property
+    def copy_from(self) -> 'UnitType|None':
+        """Lazy loaded to avoid infinite recursion"""
+        if self._copy_from:
+            return eu5game.parser.unit_types[self._copy_from]
+        else:
+            return None
+    @cached_property
+    def upgrades_to_only(self) -> 'UnitType|None':
+        """Lazy loaded to avoid infinite recursion"""
+        if self._upgrades_to_only:
+            return eu5game.parser.unit_types[self._upgrades_to_only]
+        else:
+            return None
 class Wargoal(Eu5AdvancedEntity):
     attacker: Tree = None
     defender: Any = None # possible types(out of 32): <class 'common.paradox_parser.Tree'>(31), list[common.paradox_parser.Tree](1)

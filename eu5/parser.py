@@ -163,6 +163,10 @@ class Eu5Parser(JominiParser):
                                             extra_data_functions={
                                                 'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
                                             },
+                                            transform_value_functions={
+                                                # so that the parser passes the value through even though requires is not an attribute
+                                                'requires': lambda c: c,
+                                            },
                                             )
 
     @cached_property
@@ -1095,6 +1099,11 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/unit_types', UnitType,
                                             # localization_prefix='', localization_suffix='', # Used in 265/265 Examples: {'n_kilwan_dhow': '$ZAN_ADJ$ Dhow', 'n_square_rigged_caravel': 'Square-Rigged Caravel'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 265/265 Examples: {'n_age_4_reformation_galley_desc': '$unit_template_desc$', 'a_men_at_arms_desc': 'Armored footmen outfitted with a medley of hand-to-hand weapons, $a_men_at_arms$ are heavy melee infantry who can break through enemy formations.'}
+                                            transform_value_functions={
+                                                # so that the parser passes the value through even though copy_from and upgrades_to_only are not attributes
+                                                'copy_from': lambda c: c,
+                                                'upgrades_to_only': lambda c: c,
+                                            },
                                             )
     @cached_property
     def wargoals(self) -> dict[str, Wargoal]:
