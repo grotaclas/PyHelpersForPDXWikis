@@ -40,6 +40,13 @@ MILLENNIADIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Millennia')  
 # MILLENNIADIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Millennia') # cygwin
 # MILLENNIADIR = Path('~/.steam/steam/steamapps/common/Millennia').expanduser()           # linux
 
+# the folder where Europa Universalis V is installed
+EU5DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Europa Universalis V')       # windows
+EU5DIR = Path('~/.steam/steam/steamapps/common/Europa Universalis V').expanduser()        # linux
+
+# @TODO document default paths for windows
+EU5DIR_DOCUMENTS = Path('~/.local/share/Steam/steamapps/compatdata/3450310/pfx/drive_c/users/steamuser/Documents/Paradox Interactive/Europa Universalis V').expanduser()
+
 # generated files will be stored in a game/version subfolder of this folder
 # per default we just use output in the base folder of the project
 OUTPATH = Path(__file__).absolute().parents[1] / 'output'
