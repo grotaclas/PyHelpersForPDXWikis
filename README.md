@@ -77,7 +77,7 @@ better suited to generate the needed output without too much boilerplate.
 # Configuration
 
 Copy localsettings.py.example to localsettings.py and configure the location of the game installation(s) and rakaly for
-your system. The example file describes the options.
+your system. The example file describes the options. For eu5, the language can also be changed there
 
 # Usage
 

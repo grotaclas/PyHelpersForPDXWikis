@@ -47,6 +47,9 @@ EU5DIR = Path('~/.steam/steam/steamapps/common/Europa Universalis V').expanduser
 # @TODO document default paths for windows
 EU5DIR_DOCUMENTS = Path('~/.local/share/Steam/steamapps/compatdata/3450310/pfx/drive_c/users/steamuser/Documents/Paradox Interactive/Europa Universalis V').expanduser()
 
+# optional, can be used to change which localisation is read from the game files
+# EU5_LANGUAGE = 'english'
+
 # generated files will be stored in a game/version subfolder of this folder
 # per default we just use output in the base folder of the project
 OUTPATH = Path(__file__).absolute().parents[1] / 'output'
