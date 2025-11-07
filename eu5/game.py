@@ -12,7 +12,7 @@ class EuropaUniversalisV(Game):
     game_path = EU5DIR
     documents_path = EU5DIR_DOCUMENTS
     # launcher_settings = game_path / 'launcher-settings.json'
-    wiki_domain = 'tomato.paradoxwikis.com'
+    wiki_domain = 'eu5.paradoxwikis.com'
 
     @cached_property
     def parser(self):
@@ -28,7 +28,7 @@ class EuropaUniversalisV(Game):
         """the branch from caesar_branch.txt. This is not a good indication of a version number, but there isn't a good way to extract one right now"""
         config_path = self.game_path / 'caesar_branch.txt'
         with open(config_path, 'r') as config_file:
-            return config_file.read()
+            return config_file.read().removeprefix('release/')
 
     @cached_property
     def full_version(self):
@@ -36,10 +36,6 @@ class EuropaUniversalisV(Game):
         config_path = self.game_path / 'caesar_rev.txt'
         with open(config_path, 'r') as config_file:
             return self.version + '-' + config_file.read()
-
-    def is_pre_release_version(self) -> bool:
-        """TODO: change this once we have a real version number"""
-        return True
 
 
 eu5game = EuropaUniversalisV()
