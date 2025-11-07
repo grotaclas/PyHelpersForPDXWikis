@@ -13,7 +13,7 @@ from common.paradox_lib import Modifier, AE, NE, ME, ModifierType, NameableEntit
 
 
 class JominiParser(metaclass=ABCMeta):
-    """Shared functions between newer paradox games like ck3 and vic3"""
+    """Shared functions between newer paradox games like ck3, eu5 and vic3"""
 
     # allows the overriding of localization strings
     localizationOverrides = {}

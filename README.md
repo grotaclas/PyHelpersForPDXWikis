@@ -4,6 +4,7 @@ automatically uploading to the wiki. The following games are supported:
 
 * Age of Wonders 4(only rudimentary support for json data files)
 * Cities: Skylines II
+* Europa Universalis V
 * Millennia
 * Victoria 3
 
@@ -13,6 +14,10 @@ The main components are:
 #### ParadoxParser (common/paradox_parser.py)
 parses paradox game scripts with the help of [rakaly cli](https://github.com/rakaly/cli) and turns them into
 Tree objects(a wrapper around dict) and generic python types like list, str, int, float and bool
+
+#### JominiParser (common/jomini_parser.py)
+higher level parsing code which is shared between eu5 and vic3, most notably the functions
+`localize`, `parse_nameable_entities` and `parse_advanced_entities`
 
 #### vic3/vic3lib.py
 contains classes for many of the vic3 game entities like Country, State, Technology, Building, ProductionMethod
@@ -31,6 +36,10 @@ information, to allow some code to work for multiple games. It can be accessed v
 #### aow4
 
 Age of Wonders 4 has the same files as vic3 in its aow4 folder. Instead of rakaly, it reads json files with a data dump.
+
+#### eu5
+
+Europa Universalis V follows the same structure as vic3
 
 #### cs2
 
@@ -88,6 +97,22 @@ generates tables of buildings and production methods
 
 #### aow4/generate_tables.py
 currently the only script for Age of Wonders 4. Generates several tables
+
+#### eu5/generate_lua_data.py
+
+generates most lua modules for the eu5 wiki
+
+#### eu5/generate_tables.py
+
+generates most tables for the eu5 wiki
+
+#### eu5/helper.py
+
+can generate new classes, parsers and table generators. kind of a mess. needs editing the code to use it
+
+#### eu5/script_docs_helper.py
+
+updates `eu5/script_docs_data.py`. Should be done after each major update to help with localising triggers and effects which is partially based on it
 
 #### millennia/generate_tables.py
 generates most of the tables on the wiki
