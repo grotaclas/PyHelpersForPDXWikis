@@ -14,27 +14,31 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         self.parser = eu5game.parser
 
     def localize_concept_name(self, concept_name):
-        return self.parser.localize('game_concept_' + concept_name)
+        return self.parser.localize('game_concept_' + concept_name.removesuffix('_with_icon'))
 
     def _replace_icons(self, match: re.Match) -> str:
         icon_key = match.group(1).lower().replace('_', ' ')
         return f'{{{{icon|{icon_key}}}}}'
 
+
+    def _resolve_data_function(self, data_function: str, parameter: str, name_function: str = None):
+        if data_function in ['GetEstateNameWithNoTooltip', 'GetEstateName']:
+            return self.parser.estates[parameter].display_name
+        if data_function in ['ShowSocietyDirectionName']:
+            return self.parser.localize(f'{parameter}_focus')
+        return self.parser.localize(parameter)
+
     def apply_localization_formatting(self, text: str) -> str:
         text = super().apply_localization_formatting(text)
-        text = re.sub(r"\[\s*Show[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\)\s*]",
-                      lambda match: self.parser.localize(match.group('loc_key')), text)
-        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetNameWithNoTooltip\s*]",
-                      lambda match: self.parser.localize(match.group('loc_key')), text)
-        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetLongNameWithNoTooltip\s*]",
-                      lambda match: self.parser.localize(match.group('loc_key')), text)
-        text = re.sub(r"\[\s*GetEstateNameWithNoTooltip\s*\(\s*'(?P<loc_key>[^']+)'\s*\)\s*]",
-                      lambda match: self.parser.estates[match.group('loc_key')].display_name, text)
+        text = re.sub(r"\[\s*(?P<data_function>(Show|Get)[a-zA-Z_]+)\s*\(\s*'(?P<loc_key>[^']+)'\s*\)(.(?P<name_function>(GetNameWithNoTooltip|GetLongNameWithNoTooltip)))?\s*]",
+                      lambda match: self._resolve_data_function(match.group('data_function'), match.group('loc_key'), match.group('name_function')), text)
+
         return text
 
     def resolve_nested_localizations(self, text: str, seen_keys=None):
         # dont treat BULLET_WITH_TAB as a nested loc, so that we can turn it into a wiki list
         text = re.sub(r"\\n\$BULLET_WITH_TAB\$", '\n* ', text)
+        text = re.sub(r"\\n\$BULLET\$", '\n* ', text)
         return super().resolve_nested_localizations(text, seen_keys)
 
     def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False, add_plus=False):
