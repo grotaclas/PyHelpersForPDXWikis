@@ -344,7 +344,7 @@ class Advance(Eu5AdvancedEntity):
     potential: Trigger = None
 
     # saved as str when parsing to avoid recursion
-    _requires: list[str] = []
+    _requires: list['Advance'] = []
 
     research_cost: float = None # percentage?
     starting_technology_level: int = 0
@@ -1157,7 +1157,7 @@ class Religion(Eu5AdvancedEntity):
     has_yanantin: bool = False
 
     # saved as str when parsing to delay loading the country list, because it depends on the religion list
-    _important_country: str = None
+    _important_country: Country = None
 
     language: Language = None
     max_religious_figures_for_religion: ScriptValue = None
@@ -1456,7 +1456,7 @@ class Bias(Eu5AdvancedEntity):
     yearly_gain: float = 0
     years: int = 0
 class CabinetAction(Eu5AdvancedEntity):
-    ability: Eu5GameConcept
+    ability: str
     ai_will_do: ScriptValue = None
     allow: Trigger = None
     allow_multiple: bool = None
@@ -1474,7 +1474,7 @@ class CabinetAction(Eu5AdvancedEntity):
     potential: Trigger = None
     progress: ScriptValue = None
     province_modifier: list[Eu5Modifier] = []
-    select_trigger: Any = None # possible types(out of 31): <class 'common.paradox_parser.Tree'>(25), list[common.paradox_parser.Tree](6)
+    select_trigger: Tree = None # possible types(out of 31): <class 'common.paradox_parser.Tree'>(25), list[common.paradox_parser.Tree](6)
     societal_values: float = 0
     years: int = 0
     icon_folder = 'CABINET_ACTION_ICON_PATH' # 52 / 63 icons found
@@ -1896,7 +1896,7 @@ class Resolution(Eu5AdvancedEntity):
     effect: Effect
 
     # saved as str when parsing to delay loading the IO list, because it depends on the resolution list
-    _international_organization_type: str = None
+    _international_organization_type: InternationalOrganization = None
 
     is_live: Trigger = None
     loc: str = '' # possible types(out of 3): <class 'str'>(3), <class 'eu5.eu5lib.Eu5GameConcept'>(2), <class 'eu5.eu5lib.Resolution'>(1)
@@ -2249,7 +2249,7 @@ class UnitType(Eu5AdvancedEntity):
     combat_power: float = 0
     combat_speed: float = 0
     construction_demand: GoodsDemand = None
-    _copy_from: str = None
+    _copy_from: 'UnitType' = None
     country_potential: Trigger = None
     crew_size: float = 0
     default: bool = False
@@ -2269,7 +2269,7 @@ class UnitType(Eu5AdvancedEntity):
     maintenance_demand: GoodsDemand = None
     maritime_presence: ScriptValue = None
     max_strength: float = 0
-    mercenaries_per_location: Any = None # possible types(out of 78): <class 'common.paradox_parser.Tree'>(76), list[common.paradox_parser.Tree](2)
+    mercenaries_per_location: list[dict[PopType, float]] = []
     morale_damage_done: float = 0
     morale_damage_taken: float = 0
     movement_speed: float = 0
@@ -2278,7 +2278,7 @@ class UnitType(Eu5AdvancedEntity):
     supply_weight: float = 0
     transport_capacity: float = 0
     upgrades_to: Any = None # possible types(out of 70): <class 'eu5.eu5lib.UnitType'>(69), list[eu5.eu5lib.UnitType](1)
-    _upgrades_to_only: str = None
+    _upgrades_to_only: 'UnitType' = None
     use_ship_names: bool = None
 
     def __init__(self, name: str, display_name: str, **kwargs):
@@ -2308,7 +2308,7 @@ class UnitType(Eu5AdvancedEntity):
             return None
 class Wargoal(Eu5AdvancedEntity):
     attacker: Tree = None
-    defender: Any = None # possible types(out of 32): <class 'common.paradox_parser.Tree'>(31), list[common.paradox_parser.Tree](1)
+    defender: Tree = None # possible types(out of 32): <class 'common.paradox_parser.Tree'>(31), list[common.paradox_parser.Tree](1)
     ticking_war_score: float = 0
     type: str # possible types(out of 58): <class 'str'>(58), <class 'eu5.eu5lib.Wargoal'>(45)
     war_name: str = ''
