@@ -1094,12 +1094,28 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='', # Used in 8/8 Examples: {'army_cavalry': 'Cavalry', 'army_auxiliary': 'Auxiliary'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 8/8 Examples: {'army_artillery_desc': 'Range weapons managed by a crew of specialists that launch projectiles mainly meant for the breaching and destruction of fortifications. ', 'navy_light_ship_desc': 'Light Ships are small and relatively cheap vessels with a shallow keel that focus on speed, agility and ease of navigation.'}
                                             )
+
+    def _parse_mercenaries_per_location(self, data):
+        if not isinstance(data, list):
+            data = [data]
+        # return [{self.pop_types[pop_type]: factor} for tree in data for pop_type, factor in tree]
+        return [{self.pop_types[tree['pop_type']]: tree['multiply']} for tree in data]
+        r = []
+        for tree in data:
+            a = {}
+            # for pop_type, factor in tree:
+            a[self.pop_types[tree['pop_type']]] = tree['multiply']
+            r.append(a)
+        return r
+        # return [{self.pop_types[pop_type]: factor} ]
+
     @cached_property
     def unit_types(self) -> dict[str, UnitType]:
         return self.parse_advanced_entities('in_game/common/unit_types', UnitType,
                                             # localization_prefix='', localization_suffix='', # Used in 265/265 Examples: {'n_kilwan_dhow': '$ZAN_ADJ$ Dhow', 'n_square_rigged_caravel': 'Square-Rigged Caravel'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 265/265 Examples: {'n_age_4_reformation_galley_desc': '$unit_template_desc$', 'a_men_at_arms_desc': 'Armored footmen outfitted with a medley of hand-to-hand weapons, $a_men_at_arms$ are heavy melee infantry who can break through enemy formations.'}
                                             transform_value_functions={
+                                                'mercenaries_per_location': self._parse_mercenaries_per_location,
                                                 # so that the parser passes the value through even though copy_from and upgrades_to_only are not attributes
                                                 'copy_from': lambda c: c,
                                                 'upgrades_to_only': lambda c: c,
