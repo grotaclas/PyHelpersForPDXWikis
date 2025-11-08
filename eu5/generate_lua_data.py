@@ -23,7 +23,7 @@ local NDefines = {luadata.serialize(result, indent=' ')}
     def generate_modifier_data_lua(self):
         result = {}
         for mod_type in self.parser.modifier_types.values():
-            mod_data = {'loc': self.parser.formatter.strip_formatting(mod_type.display_name), }
+            mod_data = {'loc': self.parser.formatter.strip_formatting(mod_type.display_name), 'desc': mod_type.description}
             if mod_type.percent:
                 mod_data['percent'] = True
             if mod_type.already_percent:
