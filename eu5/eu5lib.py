@@ -968,6 +968,7 @@ class Language(Eu5AdvancedEntity):
 
 
 class LawPolicy(Eu5AdvancedEntity):
+    law: 'Law'
     allow: Trigger = None
     country_modifier: list[Eu5Modifier]
     estate_preferences: list[Estate] = [] # estate
@@ -1006,6 +1007,10 @@ class LawPolicy(Eu5AdvancedEntity):
 
     trust_bonus: int = None  # only used once in a PU law. Not sure if it is specific for policies or also for IOs
 
+    def get_wiki_link_target(self) -> str:
+        return self.law.get_wiki_link_target()
+
+
 class Law(Eu5AdvancedEntity):
     allow: Trigger = None  # trigger
     custom_tags: list[str] = []
@@ -1030,6 +1035,8 @@ class Law(Eu5AdvancedEntity):
         super().__init__(name, display_name, **kwargs)
         if isinstance(self.law_category, list):
             self.law_category = self.law_category[0]
+        for policy in self.policies.values():
+            policy.law = self
 
     @cached_property
     def io_types(self) -> list[str]:

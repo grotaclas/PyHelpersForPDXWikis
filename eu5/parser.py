@@ -513,6 +513,11 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities(policy_data, LawPolicy, allow_empty_entities=True)
 
     @cached_property
+    def law_policies(self) -> dict[str, LawPolicy]:
+        return {name: policy for law in self.laws.values() for name, policy in law.policies.items()}
+
+
+    @cached_property
     @disk_cache(game=eu5game, classes_to_cache={Location})
     def locations(self) -> dict[str, Location]:
         return self.parse_advanced_entities('in_game/map_data/' + self.default_map.get_or_default('location_templates', 'location_templates.txt'), Location)

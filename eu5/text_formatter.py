@@ -26,11 +26,13 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
             return self.parser.estates[parameter].display_name
         if data_function in ['ShowSocietyDirectionName']:
             return self.parser.localize(f'{parameter}_focus')
+        if data_function == 'GetCountry' and name_function in ['GetAdjectiveWithNoTooltip', 'GetAdjective']:
+            return self.parser.localize(f'{parameter}_ADJ')
         return self.parser.localize(parameter)
 
     def apply_localization_formatting(self, text: str) -> str:
         text = super().apply_localization_formatting(text)
-        text = re.sub(r"\[\s*(?P<data_function>(Show|Get)[a-zA-Z_]+)\s*\(\s*'(?P<loc_key>[^']+)'\s*\)(.(?P<name_function>(GetNameWithNoTooltip|GetLongNameWithNoTooltip)))?\s*]",
+        text = re.sub(r"\[\s*(?P<data_function>(Show|Get)[a-zA-Z_]+)\s*\(\s*'(?P<loc_key>[^']+)'\s*\)(.(?P<name_function>(GetNameWithNoTooltip|GetLongNameWithNoTooltip|GetShortNameWithNoTooltip|GetAdjectiveWithNoTooltip|GetAdjective)))?\s*]",
                       lambda match: self._resolve_data_function(match.group('data_function'), match.group('loc_key'), match.group('name_function')), text)
 
         return text
@@ -104,6 +106,8 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                 'estate_type': self.parser.estates,
                 'goods': self.parser.goods,
                 'languages': self.parser.languages,
+                'law': self.parser.laws,
+                'policy': self.parser.law_policies,
                 'religion': self.parser.religions,
                 'religion_group': self.parser.religion_groups,
             }
