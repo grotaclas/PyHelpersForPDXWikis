@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# optional requirements which are only needed for the scripts in the millennia folder
+UnityPy>=1.20.13
+xmltodict

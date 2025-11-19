@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# these are only needed for the flag helper scripts
+pyinotify

@@ -57,10 +57,15 @@ the [dependencies](#Dependencies) and [configure](#Configuration) it.
 # Dependencies
 
 This project needs python version 3.10 or above (older versions might work as well). requirements.txt contains the
-needed python modules. The code for each game only uses some of the requirements.
+python modules which are needed for most games. For cs2/millennia requirements-cs2.txt/requirements-millennia.txt 
+have to be used instead. requirements-flag.txt is used for (experimental) flag_helper scripts which use 
+the game to screenshot flags.
+
 They can be installed with pip (preferably in a [venv](https://docs.python.org/3/tutorial/venv.html)):
 
     python3 -m pip install -r requirements.txt
+
+
 
 To parse the vic3 game files, the [rakaly cli](https://github.com/rakaly/cli) is used. It must be either installed somewhere
 in the PATH or the location has to be configured in the settings.
