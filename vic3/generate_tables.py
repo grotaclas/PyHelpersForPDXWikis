@@ -187,7 +187,7 @@ class TableGenerator(Vic3FileGenerator):
                                      sort_function=lambda num, state: (state['Region'], state['Name'])
                                      )
 
-        return self.get_version_header() + '\n{{clear}}\n' + table
+        return self.get_SVersion_header('table') + '\n{{clear}}\n' + table
 
     def _format_resource(self, amount: int, undiscovered_amount: int):
         if undiscovered_amount > 0 and amount > 0:
