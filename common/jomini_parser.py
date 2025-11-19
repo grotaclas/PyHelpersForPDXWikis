@@ -300,7 +300,7 @@ class JominiParser(metaclass=ABCMeta):
                 continue
             origin = get_origin(return_type)
             type_args = get_args(return_type)
-            if origin == dict and type_args[0] == str and issubclass(type_args[1], NameableEntity):
+            if origin == dict and type_args[0] == str and inspect.isclass(type_args[1]) and issubclass(type_args[1], NameableEntity):
                 class_property_map[type_args[1]] = name
         return class_property_map
 

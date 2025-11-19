@@ -485,7 +485,7 @@ class Vic3Parser(JominiParser):
             'interest_group': lambda ig: self.interest_groups.get(ig),
             'ideology': self.localize,
             'culture': lambda c: self.localize((c if not isinstance(c, list) else c[-1]).removeprefix('cu:')),
-            'religion': lambda c: self.localize(c.removeprefix('rel:')),
+            'religion': lambda religion: self.localize((religion[-1] if isinstance(religion, list) else religion).removeprefix('rel:')),
             'traits': lambda traits: [self.localize(trait) for trait in traits],
         }
         template_chars = self.parse_nameable_entities(f'common/character_templates/', Character,
