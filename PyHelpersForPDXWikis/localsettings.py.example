@@ -2,7 +2,8 @@ from pathlib import Path
 
 # the location of the rakaly command line tool from https://github.com/rakaly/cli
 # this is either an absolute path, or just 'rakaly' if it is installed somewhere in the PATH
-# (currently only needed for vic3)
+# At least version 0.8.2 is needed
+# (only used by eu5 and vic3)
 RAKALY_CLI = 'rakaly'
 
 # the folder where Victoria 3 is installed
@@ -11,8 +12,12 @@ VIC3DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Victoria 3')      
 # VIC3DIR = Path('~/.steam/steam/steamapps/common/Victoria 3').expanduser()           # linux
 # VIC3DIR = Path('~/Library/Application Support/Steam/steamapps/common/Victoria 3').expanduser() # macOS
 
-# @TODO document default paths for windows and macOS
-VIC3DIR_DOCUMENTS = Path('~/.local/share/Paradox Interactive/Victoria 3').expanduser() # linux
+# @TODO what is the default path on macOS?
+# the folder where vic3 puts its data.
+# you need to adjust the path if the Documents folder is in a different place
+# or if the data folder was changed with the -userdir launch option
+VIC3DIR_DOCUMENTS = Path('~/Documents/Paradox Interactive/Victoria 3').expanduser()       # windows
+# VIC3DIR_DOCUMENTS = Path('~/.local/share/Paradox Interactive/Victoria 3').expanduser()  # linux
 
 # the folder where Age of Wonders 4 is installed (currently only used for some minor localizations)
 AOW4DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Age of Wonders 4')            # windows
@@ -42,10 +47,14 @@ MILLENNIADIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Millennia')  
 
 # the folder where Europa Universalis V is installed
 EU5DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Europa Universalis V')       # windows
-EU5DIR = Path('~/.steam/steam/steamapps/common/Europa Universalis V').expanduser()        # linux
+# EU5DIR = Path('~/.steam/steam/steamapps/common/Europa Universalis V').expanduser()        # linux
 
-# @TODO document default paths for windows
-EU5DIR_DOCUMENTS = Path('~/.local/share/Steam/steamapps/compatdata/3450310/pfx/drive_c/users/steamuser/Documents/Paradox Interactive/Europa Universalis V').expanduser()
+# the folder where eu5 puts its data.
+# you need to adjust the path if the Documents folder is in a different place
+# or if the eu5 data folder was changed with the -userdir launch option
+EU5DIR_DOCUMENTS = Path('~/Documents/Paradox Interactive/Europa Universalis V').expanduser()
+# linux+proton (depends on the place where steam is installed):
+# EU5DIR_DOCUMENTS = Path('~/.local/share/Steam/steamapps/compatdata/3450310/pfx/drive_c/users/steamuser/Documents/Paradox Interactive/Europa Universalis V').expanduser()
 
 # optional, can be used to change which localisation is read from the game files
 # EU5_LANGUAGE = 'english'
