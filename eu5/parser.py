@@ -305,8 +305,7 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def country_description_categories(self) -> dict[str, CountryDescriptionCategory]:
-        return self.parse_nameable_entities('in_game/common/country_description_categories',
-                                            CountryDescriptionCategory,
+        return self.parse_nameable_entities('in_game/common/country_description_categories', CountryDescriptionCategory,
                                             allow_empty_entities=True,
                                             extra_data_functions={
                                                 'display_name': lambda name, data: self.formatter.strip_formatting(
@@ -318,8 +317,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     @disk_cache(eu5game, classes_to_cache={Country})
     def countries(self) -> dict[str, Country]:
-        return self.parse_advanced_entities('in_game/setup/countries',
-                                            Country,
+        return self.parse_advanced_entities('in_game/setup/countries', Country,
                                             transform_value_functions={
                                                 # @TODO: remove this workaround for duplicate description_category sections
                                                 'description_category': lambda cat: self.country_description_categories[
@@ -543,8 +541,7 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def pop_types(self) -> dict[str, PopType]:
-        pop_types = self.parse_advanced_entities('in_game/common/pop_types',
-                                            PopType,
+        pop_types = self.parse_advanced_entities('in_game/common/pop_types', PopType,
                                             extra_data_functions={
                                                 'possible_estates_with_triggers': lambda name, data: {
                                                     estate: data[estate.name]
