@@ -656,7 +656,7 @@ class TableGenerator(Eu5FileGenerator):
             'Unlock Government Reform': self.create_wiki_list([unlock_government_reform for unlock_government_reform in advances.unlock_government_reform]),  # unlock_government_reform: list[str]
             'Unlock Heir Selection': self.create_wiki_list([unlock_heir_selection for unlock_heir_selection in advances.unlock_heir_selection]),  # unlock_heir_selection: list[str]
             'Unlock Law': self.create_wiki_list([unlock_law for unlock_law in advances.unlock_law]),  # unlock_law: list[str]
-            'Unlock Levy': self.create_wiki_list([unlock_levy for unlock_levy in advances.unlock_levy]),  # unlock_levy: list[str]
+            'Unlock Levy': self.create_wiki_list([unlock_levy.display_name for unlock_levy in advances.unlock_levy]),  # unlock_levy: list[str]
             'Unlock Policy': self.create_wiki_list([unlock_policy for unlock_policy in advances.unlock_policy]),  # unlock_policy: list[str]
             'Unlock Production Method': self.create_wiki_list([unlock_production_method for unlock_production_method in advances.unlock_production_method]),  # unlock_production_method: list[str]
             'Unlock Road Type': self.create_wiki_list([unlock_road_type for unlock_road_type in advances.unlock_road_type]),  # unlock_road_type: list[str]

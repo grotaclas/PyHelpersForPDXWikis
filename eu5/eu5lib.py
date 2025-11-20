@@ -358,7 +358,7 @@ class Advance(Eu5AdvancedEntity):
     unlock_government_reform: list[str] = []
     unlock_heir_selection: list[str] = []
     unlock_law: list[str] = []
-    unlock_levy: list[str] = []
+    unlock_levy: list['Levy'] = []
     unlock_policy: list[str] = []
     unlock_production_method: list[str] = []
     unlock_road_type: list[str] = []
@@ -1805,8 +1805,15 @@ class Levy(Eu5AdvancedEntity):
     allowed_culture: list[Culture] = []
     allowed_pop_type: list[PopType] = []
     country_allow: Trigger = None
-    size: float
+    size: ScriptValue
     unit: 'UnitType'
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if name == display_name:
+            display_name = kwargs['unit'].display_name
+        super().__init__(name, display_name, **kwargs)
+
+
 class Mission(Eu5AdvancedEntity):
     abort: Trigger = None
     chance: int
