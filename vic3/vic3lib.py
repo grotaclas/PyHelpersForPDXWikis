@@ -50,9 +50,9 @@ class NamedModifier(Vic3AdvancedEntity):
 
 
 class StateResource:
-    def __init__(self, building_group: str, amount: int = 0, undiscovered_amount: int = 0, is_arable: bool = False,
+    def __init__(self, building: str, amount: int = 0, undiscovered_amount: int = 0, is_arable: bool = False,
                  is_capped: bool = False, is_discoverable: bool = False):
-        self.building_group = building_group
+        self.building = building
         self.amount = amount
         self.undiscovered_amount = undiscovered_amount
         self.is_arable = is_arable
@@ -112,7 +112,7 @@ class StrategicRegion(NameableEntity):
 class Country(NameableEntity):
 
     def __init__(self, tag: str, display_name: str, color: PdxColor, country_type: str, tier: str, capital_state: State,
-                 cultures: list[str]):
+                 cultures: list[Culture], religion: Religion):
         super().__init__(tag, display_name)
         self.tag = tag
         self.color = color
@@ -120,6 +120,7 @@ class Country(NameableEntity):
         self.tier = tier
         self.capital_state = capital_state
         self.cultures = cultures
+        self.religion = religion
 
     def exists(self):
         """exists at the start of the game"""
@@ -140,6 +141,12 @@ class Country(NameableEntity):
     def get_wiki_link_with_icon(self):
         return '{{flag|' + self.display_name + '}}'
 
+class Culture(Vic3AdvancedEntity):
+    color: PdxColor
+    religion: Religion
+    heritage: str
+    language: str
+    
 class LawGroup(NameableEntity):
     laws: list['Law']
     law_category_wiki_pages = {
@@ -162,6 +169,17 @@ class LawGroup(NameableEntity):
 
 class Law(Vic3AdvancedEntity):
     group: LawGroup = None
+    category: str = None
+    unlocking_laws: list['Law'] = None
+    disallowing_laws: list['Law'] = None
+    parent: 'Law' = None
+    can_enact: Tree = None
+    is_visible: Tree = None
+    on_enact: Tree = None
+    on_activate: Tree = None
+    on_deactivate: Tree = None
+    institution: 'Institution' = None
+    institution_modifier: dict[str, list[Modifier]] = {}
 
     def get_wiki_page_name(self) -> str:
         return self.group.get_wiki_page()
@@ -333,6 +351,16 @@ class DiplomaticAction(Vic3AdvancedEntity):
     def get_wiki_filename(self) -> str:
         return f'Diplomacy {self.display_name.lower()}.png'
 
+class TreatyArticle(Vic3AdvancedEntity):
+    def get_wiki_icon(self) -> str:
+        return self.get_wiki_file_tag()
+
+    def get_wiki_page_name(self) -> str:
+        return 'Treaty'
+
+    def get_wiki_filename(self) -> str:
+        return f'Treaty {self.display_name.lower()}.png'
+
 
 class Party(Vic3AdvancedEntity):
     def get_wiki_icon(self) -> str:
@@ -347,14 +375,64 @@ class Ideology(Vic3AdvancedEntity):
     priority: int = 0
     show_in_list: bool = True
     leader_weight: Tree
-    possible: Tree
+    #possible: Tree
     law_approvals: dict[Law, str]
+
+
+class Movement(Vic3AdvancedEntity):
+    #creation_trigger: Tree
+    character_ideologies: dict[Ideology, str]
 
 
 class InterestGroup(Vic3AdvancedEntity):
     def get_wiki_link_with_icon(self) -> str:
         return self.get_wiki_icon() + ' ' + self.display_name
 
+
+class MobilizationOption(Vic3AdvancedEntity):
+    possible: Tree
+    def get_wiki_icon(self) -> str:
+        return self.get_wiki_file_tag()
+
+
+class Unit(Vic3AdvancedEntity):
+    max_manpower: int
+    battle_modifier: dict[str, list[Modifier]] = {}
+    upkeep_modifier: dict[str, list[Modifier]] = {}
+    formation_modifier: dict[str, list[Modifier]] = {}
+    conscript_peasant_levies: bool = False
+    upgrades: list[Unit] = []
+    group: UnitGroup = None
+    combat_unit_image: Tree
+    def get_wiki_icon(self) -> str:
+        return self.get_wiki_file_tag()
+
+
+class UnitGroup(NameableEntity):
+    units: list['Unit']
+    unit_type_wiki_pages = {
+        'army': 'Land warfare',
+        'navy': 'Naval warfare',
+    }
+    unit_type_icon = {
+        'army': 'battalion',
+        'navy': 'flotilla',
+    }
+
+    def __init__(self, name: str, display_name: str, unit_group_type: str):
+        super().__init__(name, display_name)
+        self.unit_group_type = unit_group_type
+        self.units = []
+
+    def add_unit(self, unit: 'Unit'):
+        self.units.append(unit)
+
+    def get_type_icon(self) -> str:
+        return self.unit_type_icon[self.unit_group_type]
+    
+    def get_wiki_page(self) -> str:
+        return self.unit_type_wiki_pages[self.unit_group_type]
+    
 
 class PopType(Vic3AdvancedEntity):
     display_name_without_icon: str
@@ -457,3 +535,6 @@ class Principle(Vic3AdvancedEntity):
 class Religion(Vic3AdvancedEntity):
     traits: list[str]
     taboos: list[str]
+
+class Institution(Vic3AdvancedEntity):
+    pass

@@ -17,33 +17,78 @@ class TableGenerator(Vic3FileGenerator):
     @staticmethod
     def get_country_notes(country: Country):
         notes = []
-        if not country.exists():
-            notes.append('does not exist at game start')
+        if country.exists():
+            notes.append(' {{icon|yes}} ||')
+        else:
+            notes.append(' {{icon|no}} ||')
         if country.is_formable():
-            notes.append('formable')
+            notes.append(' {{icon|yes}} ||')
+        else:
+            notes.append(' {{icon|no}} ||')
         if country.is_releasable():
-            notes.append('releasable')
-        if country.is_event_releasable():
-            notes.append('releasable via event')
-        if country.is_event_formable():
-            notes.append('formable via event')
-        return ', '.join(notes)
+            notes.append(' {{icon|yes}} ||')
+        else:
+            notes.append(' {{icon|no}} ||')
+        if country.is_event_releasable() or country.is_event_formable():
+            notes.append(' {{icon|yes}}')
+        else:
+            notes.append(' {{icon|no}}')
+        return ''.join(notes)
 
     def generate_country_table(self):
+        def get_tier_out(tier):
+            tiers = {'City-State': '1" | City-State', 'Principality':'2" | Principality', 'Grand Principality':'3" | Grand Princ.', 'Kingdom':'4" | Kingdom', 'Empire':'5" | Empire', 'Hegemony':'6" | Hegemony' }
+            return tiers.get(tier)
         countries = [{
-            '': f'id="{c.display_name}" style="width: 2px; background-color: {c.color.css_color_string}"|' + ("".join([f"{{{{anchor|{name}}}}}" for name in self.parser.dynamic_country_names[c.tag]]) if c.tag in self.parser.dynamic_country_names else ""),
-            'width="10%" | Name': f"[[File:{c.display_name}.png|48px|border]] '''{c.display_name}'''" + (f'<br/><small>Other names: {", ".join(self.parser.dynamic_country_names[c.tag])}</small>' if c.tag in self.parser.dynamic_country_names else ""),
+            'class="unsortable" style="width:5px;" |': f'id="{c.display_name}" style="background-color: {c.color.css_color_string}"|' + ("".join([f"{{{{anchor|{name}}}}}" for name in self.parser.dynamic_country_names[c.tag]]) if c.tag in self.parser.dynamic_country_names else ""),
+            'style="width:20%;" | Name<span style="font-size:80%;margin-left:10px;">[[#Top|Return to top]]</span>': f"[[File:{c.display_name}.png|48px|border]] '''{c.display_name}'''" + (f'<br/><small>Other names: {", ".join(self.parser.dynamic_country_names[c.tag])}</small>' if c.tag in self.parser.dynamic_country_names else ""),
             'Tag': f'{c.tag}',
             'Type': self.parser.localize(c.type),
-            'Tier': self.parser.localize('country_tier_' + c.tier),
+            'Tier': f'data-sort-value="{get_tier_out(self.parser.localize('country_tier_' + c.tier))}',
             'Capital state': c.capital_state.display_name if c.capital_state is not None else '',
             'Region': c.capital_state.get_strategic_region().display_name if c.capital_state is not None else '',
-            'Cultures': ', '.join(self.parser.localize(culture) for culture in c.cultures),
-            'Notes': self.get_country_notes(c),
+            'Capital state': c.capital_state.display_name if c.capital_state is not None else '',
+            'style="width:25%;" | Cultures\n': ', '.join(self.parser.localize(culture) for culture in c.cultures) +'\n',
+            '{{TextTooltip|Rel.|Religion}}': f'{{{{icon|{self.parser.localize(c.religion)}}}}}',
+            '{{TextTooltip|E|Exists at&nbsp;start}} !! {{TextTooltip|F|Formable}} !! {{TextTooltip|R|Releasable|style=margin-left:-50px;}} !! {{TextTooltip|S|Event formation or release|style=margin-left:-120px;}}': self.get_country_notes(c),
         } for c in sorted(self.parser.countries.values(), key=attrgetter("display_name"))]
-
+    
         return self.get_SVersion_header() + '\n' + self.make_wiki_table(countries)
 
+    def generate_count_countries(self):
+        exists = 0
+        formable = 0
+        exists_form = 0
+        releasable = 0
+        exists_release = 0
+        special = 0
+        special_form = 0
+        special_release = 0
+        special_none = 0
+        all_countries = 0
+        for country in self.parser.countries.values():
+            all_countries += 1
+            if country.exists():
+                exists += 1
+                if country.is_formable():
+                    exists_form += 1
+                if country.is_releasable():
+                    exists_release += 1
+            if country.is_formable():
+                formable += 1
+            if country.is_releasable():
+                releasable += 1
+            if country.is_event_releasable() or country.is_event_formable():
+                special += 1
+            if not country.exists():
+                if country.is_event_formable() and not country.is_formable():
+                    special_form += 1
+                if country.is_event_releasable() and not country.is_releasable():
+                    special_release += 1
+                if not country.is_formable() and not country.is_releasable() and not country.is_event_formable() and not country.is_event_releasable():
+                    special_none += 1
+        return f"There are {all_countries} countries defined in the game: {exists} of which are present at the 1836 start date. {formable} countries are formable, of which {exists_form} exist at the start (+{special_form} more which can be formed only by effects); {releasable} are releasable, of which {exists_release} exist at the start (+{special_release} more which can be released only by effects). Countries can also appear on the map by culture secession or be generated as part of a revolution ({special_none} can only appear in this way)."
+    
     def write_country_table(self):
         self._write_text_file('country_table', self.generate_country_table())
 
@@ -198,7 +243,14 @@ class TableGenerator(Vic3FileGenerator):
             return f'{amount}'
 
     def _format_resource_name(self, resource: StateResource):
-        return re.sub('_.*$', '', resource.building_group.removeprefix("bg_"))
+        name = re.sub('_.*$', '', resource.building.removeprefix("building_"))
+        name = re.sub('_.*$', '', name.removesuffix("_mine"))
+        name = re.sub('_.*$', '', name.removesuffix("_camp"))
+        name = re.sub('_.*$', '', name.removesuffix("_wharf"))
+        name = re.sub('_.*$', '', name.removesuffix("_station"))
+        name = re.sub('_.*$', '', name.removesuffix("_rig"))
+        name = re.sub('_.*$', '', name.removesuffix("_field"))
+        return name
 
     def generate_state_data_lua(self):
         lua_tables = []
@@ -218,7 +270,7 @@ class TableGenerator(Vic3FileGenerator):
                     resource_amounts[name]['undiscovered_amount'] += res.undiscovered_amount
             resources = ', '.join(f'{name} = "{self._format_resource(amounts["amount"], amounts["undiscovered_amount"])}"'
                                   for name, amounts in resource_amounts.items())
-            arable_resources = ', '.join(f'"{self.parser.building_groups[res.building_group].display_name}"' for res in state.resources.values() if res.is_arable)
+            arable_resources = ', '.join(f'"{self.parser.buildings[res.building].display_name}"' for res in state.resources.values() if res.is_arable)
             lua_tables.append(f'''p["{state.display_name}"] = {{
     arable_land = {state.arable_land},
     arable_resources = {{ {arable_resources} }},
@@ -298,6 +350,33 @@ local p = {};
         result = [f'{{{{Character|Name={character.display_name}|Countries={character.country.tag if character.country else ""}|Roles={",".join(character.get_roles())}|Ideology={character.ideology}|Traits={",".join(character.traits)}}}}}' for character in self.parser.characters.values()]
         return '\n'.join(result)
 
+    def generate_treaty_article_table(self):
+        articles = []
+        for article in self.parser.treaty_articles.values():
+            table_entry = {
+                'Name': f'id="{article.display_name}" | {article.display_name}',
+                'Required technology': ' and '.join(
+                [tech.get_wiki_link_with_icon() for tech in article.required_technologies]),
+            }
+            articles.append(table_entry)
+        table = self.make_wiki_table(articles,
+                                     table_classes=['wikitable', 'plainlist'],
+                                     )
 
+        return self.get_version_header() + '\n{{clear}}\n' + table
+
+    def generate_movement_table(self):
+        movements = []
+        for movement in self.parser.movements.values():
+            table_entry = {
+                'Name': f'{movement.display_name}',
+                'Required technology': ' and '.join(
+                [tech.get_wiki_link_with_icon() for tech in movement.required_technologies]),
+            }
+            movements.append(table_entry)
+        table = self.make_wiki_table(movements,
+                            table_classes=['wikitable', 'plainlist'],
+                            )
+        return self.get_version_header() + '\n{{clear}}\n' + table
 if __name__ == '__main__':
     TableGenerator().run(sys.argv)

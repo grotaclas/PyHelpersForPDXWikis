@@ -60,13 +60,18 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                         'g': '{{{{green|{}}}}}',
                         'n': '{{{{red|{}}}}}',
                         'r': '{{{{red|{}}}}}',
+                        'negative_value': '{{{{red|{}}}}}',
                         'bold': "'''{}'''",
                         'b': "'''{}'''",
                         'italic': "''{}''",
+                        'tooltippable': '{}',
                         'v': '{}',  # white
                         'y': '{}',  # zero_value / white
                         'z': '{}',  # zero_value / white
                         'e': '{}',  # explanation_link in ck3 / TODO: this is normally blue, but we don't want to make it blue if it is a normal link, because they are already blue
+                        'indent_newline:2': '\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}',
+                        'indent_newline:3': '\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}',
+                        'indent_newline:4': '\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}',
                         }
         if format_key not in replacements:
             Vic3FileGenerator.warn('ignoring unknown formatting marker {} in "{}"'.format(format_key, match.group(0)))

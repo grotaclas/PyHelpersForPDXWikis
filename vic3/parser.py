@@ -39,8 +39,16 @@ class Vic3Parser(JominiParser):
             'rp1_content': 'Colossus of the South',
             'ep1_content': 'Sphere of Influence',
             'ep1_cosmetics': 'Sphere of Influence',
+            'lobbies': 'Sphere of Influence',
             'foreign_investment': 'Sphere of Influence',
             'power_bloc_features': 'Sphere of Influence',
+            'subject_and_bloc_actions': 'Sphere of Influence',
+            'ip2_content': 'Pivot of Empire',
+            'ip2_cosmetics': 'Pivot of Empire',
+            'mp1_treaties': 'Charters of Commerce',
+            'mp1_cosmetics': 'Charters of Commerce',
+            'ip3_content': 'National Awakening',
+            'ip3_cosmetics': 'National Awakening',
         }
         dlcs = []
         for key, value in conditions:
@@ -52,6 +60,8 @@ class Vic3Parser(JominiParser):
                 dlcs.append('American Buildings Pack')
             elif key == 'has_mp1_soundtrack_dlc_trigger' and value == 'yes':
                 dlcs.append('Melodies for the Masse')
+            elif key == 'has_mp2_soundtrack_dlc_trigger' and value == 'yes':
+                dlcs.append('Songs of the Homeland')
             elif key == 'has_agitators_cosmetics_dlc_trigger' and value == 'yes':
                 dlcs.append('Voice of the People')
             else:
@@ -60,11 +70,14 @@ class Vic3Parser(JominiParser):
             raise Exception(f'more than one DLC is not supported: {dlcs}')
         return dlcs[0]
 
-    def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+    def parse_advanced_entities(self, folder: str, entity_class: Type[AE],
+    							extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
                                 transform_value_functions: dict[str, Callable[[Any], Any]] = None,
                                 localization_prefix: str = '',
                                 allow_empty_entities=False,
-                                parsing_workarounds: list[ParsingWorkaround] = None,) -> dict[str, AE]:
+                                parsing_workarounds: list[ParsingWorkaround] = None,
+                                localization_suffix: str = '',
+                                ) -> dict[str, AE]:
         """parse a folder into objects which are subclasses of AdvancedEntity
 
         See parse_nameable_entities() for a description of the arguments and return value
@@ -87,6 +100,14 @@ class Vic3Parser(JominiParser):
 
     @cached_property
     def defines(self):
+        class DoubleSlashCommentWorkaround(ParsingWorkaround):
+            """removes lines which start with spaces and //
+            they are not valid paradox script and cause a debug message when loading, but the defines have them
+            """
+            replacement_regexes = {r'(?m)^\s*//.*$': ''}
+        return self.parser.parse_folder_as_one_file('common/defines', workarounds=[DoubleSlashCommentWorkaround()]).merge_duplicate_keys()
+    
+    def defines_comments(self):
         return self.parser.parse_folder_as_one_file('common/defines').merge_duplicate_keys()
 
     @cached_property
@@ -101,10 +122,15 @@ class Vic3Parser(JominiParser):
                     capital_state = self.states[country_data['capital']]
                 else:
                     capital_state = None
+                if 'religion' in country_data:
+                    religion = country_data['religion']
+                else:
+                    religion = self.cultures[country_data['cultures'][0]].religion
                 countries[tag] = Country(tag, self.localize(tag), self.parse_color_value(country_data['color']),
                                          country_type=country_data['country_type'], tier=country_data['tier'],
                                          capital_state=capital_state,
-                                         cultures=country_data['cultures'])
+                                         cultures=country_data['cultures'],
+                                         religion=religion)
         return countries
 
     @cached_property
@@ -142,6 +168,14 @@ class Vic3Parser(JominiParser):
         for file, data in self.parser.parse_files('events/**/*.txt'):
             for create_country_section in data.find_all_recursively('create_country'):
                 tags.add(create_country_section['tag'])
+        for file, data in self.parser.parse_files('common/decisions/*.txt'):
+            #print(file)
+            for create_country_section in data.find_all_recursively('create_country'):
+                tags.add(create_country_section['tag'])
+        for file, data in self.parser.parse_files('common/scripted_*/*.txt'):
+            #print(file)
+            for create_country_section in data.find_all_recursively('create_country'):
+                tags.add(create_country_section['tag'])
         return tags
 
     @cached_property
@@ -149,6 +183,18 @@ class Vic3Parser(JominiParser):
         """tags which get formed with change_tag"""
         tags = set()
         for file, data in self.parser.parse_files('events/**/*.txt'):
+            for tag in data.find_all_recursively('change_tag'):
+                tags.add(tag)
+        for file, data in self.parser.parse_files('common/journal_entries/*.txt'):
+            #print(file)
+            for tag in data.find_all_recursively('change_tag'):
+                tags.add(tag)
+        for file, data in self.parser.parse_files('common/on_actions/*.txt'):
+            #print(file)
+            for tag in data.find_all_recursively('change_tag'):
+                tags.add(tag)
+        for file, data in self.parser.parse_files('common/scripted_*/*.txt'):
+            #print(file)
             for tag in data.find_all_recursively('change_tag'):
                 tags.add(tag)
         return tags
@@ -239,8 +285,13 @@ class Vic3Parser(JominiParser):
             state_name = name_with_s.removeprefix('s:')
             state_populations[state_name] = 0
             for region_state_name, region_state in state:
-                for create_pop in region_state.find_all('create_pop'):
-                    state_populations[state_name] += create_pop['size']
+                if isinstance(region_state, list):
+                    for x in region_state:
+                        for create_pop in x.find_all('create_pop'):
+                            state_populations[state_name] += create_pop['size']
+                else:
+                    for create_pop in region_state.find_all('create_pop'):
+                        state_populations[state_name] += create_pop['size']
         return state_populations
 
     def parse_technologies_section(self, name, data, section_name='unlocking_technologies') -> list[Technology]:
@@ -258,10 +309,24 @@ class Vic3Parser(JominiParser):
 
     @cached_property
     def named_modifiers(self) -> dict[str, NamedModifier]:
-        return self.parse_advanced_entities('common/static_modifiers', NamedModifier, extra_data_functions={
-            'modifier': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'}))
+        named_modifiers = self.parse_advanced_entities('common/static_modifiers', NamedModifier, extra_data_functions={
+            'modifier': lambda name, data: self._parse_modifier_data(Tree({name: value for name, value in data if name != 'icon'})),
+            'description': lambda name, data: self.formatter.format_localization_text(self.localize(name + '_desc', default='')),
         })
+        for named_mod in named_modifiers.values():
+            named_mod.display_name = self.formatter.resolve_nested_localizations(named_mod.display_name)
+            named_mod.display_name = self.formatter.format_localization_text(named_mod.display_name)
+        return named_modifiers
 
+    def parse_laws_section(self, name, data, section_name='unlocking_laws') -> list[Law]:
+        if section_name not in data:
+            return []
+        section = data[section_name]
+        if not isinstance(section, list):
+            raise Exception('Unsupported {} section {}'.format(section_name, section))
+
+        return [self.laws[law_name] for law_name in section]
+    
     @cached_property
     def laws(self) -> dict[str, Law]:
         law_groups = {}
@@ -270,7 +335,9 @@ class Vic3Parser(JominiParser):
                                                  lawgroup_data['law_group_category'])
 
         return self.parse_advanced_entities('common/laws', Law, transform_value_functions={
-            'group': lambda group_name: law_groups[group_name]})
+            'unlocking_laws': lambda data: self.parse_laws_section('', data, 'unlocking_laws') + self.parse_laws_section('', data, 'requires_law_or'),
+            'group': lambda group_name: law_groups[group_name],
+            'category': lambda group_name: law_groups[group_name].law_group_category()})
 
     def _get_monument_location(self, name, data):
         if 'potential' not in data:
@@ -336,7 +403,7 @@ class Vic3Parser(JominiParser):
                      'pays_taxes', 'is_government_funded', 'created_by_trade_routes', 'subsidized', 'is_military',
                      'default_building', 'ignores_productivity_when_hiring',
                      'min_productivity_to_hire', 'owns_other_buildings', 'always_self_owning', 'has_trade_revenue', 'company_headquarter', 'regional_company_headquarter',
-                     'construction_efficiency_modifier']:
+                     'construction_efficiency_modifier', 'self_investment_chance_modifier']:
                 entity_values[k] = v
             elif k == 'parent_group':
                 entity_values['parent_group'] = parsed_building_groups[v]
@@ -400,7 +467,7 @@ class Vic3Parser(JominiParser):
     @cached_property
     def technology_unlocks(self) -> dict[str, list[Vic3AE]]:
         unlocks = {tech_name: [] for tech_name in self.technologies.keys()}
-        entity_dict_with_possible_tech_requirements = [self.buildings, self.laws, self.production_methods, self.decrees, self.diplomatic_actions, self.parties, self.state_traits, self.ideologies]
+        entity_dict_with_possible_tech_requirements = [self.buildings, self.laws, self.production_methods, self.decrees, self.diplomatic_actions, self.treaty_articles, self.parties, self.state_traits, self.ideologies]
         for entity_dict in entity_dict_with_possible_tech_requirements:
             for entity in entity_dict.values():
                 for tech in entity.required_technologies:
@@ -421,6 +488,12 @@ class Vic3Parser(JominiParser):
     @cached_property
     def diplomatic_actions(self) -> dict[str, DiplomaticAction]:
         return self.parse_advanced_entities('common/diplomatic_actions', DiplomaticAction)
+
+    @cached_property
+    def treaty_articles(self) -> dict[str, TreatyArticle]:
+        return self.parse_advanced_entities('common/treaty_articles', TreatyArticle, extra_data_functions={
+            'required_technologies': lambda name, data: self.parse_technologies_section('', data, 'unlocked_by_technologies')
+        })
 
     @cached_property
     def parties(self) -> dict[str, Party]:
@@ -538,9 +611,8 @@ class Vic3Parser(JominiParser):
 
     def _parse_technologies_from_ideology_data(self, name, data):
         technologies = []
-        if 'possible' in data:
-            for tree in data['possible'].find_all('owner'):
-                for techname in tree.find_all('has_technology_researched'):
+        if 'country_trigger' in data:
+            for techname in data['country_trigger'].find_all('has_technology_researched'):
                     technologies.append(self.technologies[techname])
         return technologies
 
@@ -551,6 +623,36 @@ class Vic3Parser(JominiParser):
             'required_technologies': self._parse_technologies_from_ideology_data,
         })
 
+    def _parse_technologies_from_movement_data(self, name, data):
+        technologies = []
+        if 'creation_trigger' in data and type(data['creation_trigger']) != list:
+            for techname in data['creation_trigger'].find_all_recursively('has_technology_researched'):
+                technologies.append(self.technologies[techname])
+        return technologies
+
+    @cached_property
+    def movements(self) -> dict[str, Movement]:
+        return self.parse_advanced_entities('common/political_movements', Movement, extra_data_functions={
+            'required_technologies': self._parse_technologies_from_movement_data,
+        })
+
+    @cached_property
+    def mobilization_options(self) -> dict[str, MobilizationOption]:
+        return self.parse_advanced_entities('common/mobilization_options', MobilizationOption)
+    
+    @cached_property
+    def units(self) -> dict[str, Unit]:
+        unit_groups = {}
+        for unit_group_name, unit_group_data in self.parser.parse_folder_as_one_file('common/combat_unit_groups'):
+            unit_groups[unit_group_name] = UnitGroup(unit_group_name, self.localize(unit_group_name),
+                                                     unit_group_data['type'],)
+        return self.parse_advanced_entities('common/combat_unit_types', Unit, transform_value_functions={
+            'group': lambda group_name: unit_groups[group_name],
+            'battle_modifier': self._parse_modifier_data,
+            'upkeep_modifier': self._parse_modifier_data,
+            'formation_modifier': self._parse_modifier_data,
+        })
+    
     @cached_property
     def principle_groups(self) -> dict[str, PrincipleGroup]:
         return self.parse_advanced_entities('common/power_bloc_principle_groups', PrincipleGroup)
@@ -574,3 +676,7 @@ class Vic3Parser(JominiParser):
     @cached_property
     def religions(self) -> dict[str, Religion]:
         return self.parse_advanced_entities('common/religions', Religion)
+
+    @cached_property
+    def cultures(self) -> dict[str, Culture]:
+        return self.parse_advanced_entities('common/cultures', Culture)
