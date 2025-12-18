@@ -448,6 +448,11 @@ class Eu5Parser(JominiParser):
         return result
 
     @cached_property
+    def earthquakes(self) -> dict[str, Location]:
+        """earthquake zone locations from the earthquakes list in game/in_game/map_data/default.map """
+        return {name: self.locations[name] for name in self.default_map['earthquakes']}
+
+    @cached_property
     def estates(self) -> dict[str, Estate]:
         return self.parse_advanced_entities('in_game/common/estates', Estate)
 
@@ -486,8 +491,18 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/government_types', GovernmentType)
 
     @cached_property
+    def impassable_mountains(self) -> dict[str, Location]:
+        """wasteland locations from the impassable_mountains list in game/in_game/map_data/default.map """
+        return {name: self.locations[name] for name in self.default_map['impassable_mountains']}
+
+    @cached_property
     def institution(self) -> dict[str, Institution]:
         return self.parse_advanced_entities('in_game/common/institution', Institution)
+
+    @cached_property
+    def lakes(self) -> dict[str, Location]:
+        """lake locations from the lakes list in game/in_game/map_data/default.map """
+        return {name: self.locations[name] for name in self.default_map['lakes']}
 
     @cached_property
     def language_families(self) -> dict[str, LanguageFamily]:
@@ -517,7 +532,14 @@ class Eu5Parser(JominiParser):
     @cached_property
     @disk_cache(game=eu5game, classes_to_cache={Location})
     def locations(self) -> dict[str, Location]:
-        return self.parse_advanced_entities('in_game/map_data/' + self.default_map.get_or_default('location_templates', 'location_templates.txt'), Location)
+        return self.parse_advanced_entities('in_game/map_data/' + self.default_map.get_or_default('location_templates', 'location_templates.txt'), Location, extra_data_functions={
+            'is_earthquakes_zone': lambda name, data: name in self.default_map['earthquakes'],
+            'is_impassable_mountains': lambda name, data: name in self.default_map['impassable_mountains'],
+            'is_lake': lambda name, data: name in self.default_map['lakes'],
+            'is_non_ownable': lambda name, data: name in self.default_map['non_ownable'],
+            'is_sea': lambda name, data: name in self.default_map['sea_zones'],
+            'is_volcano': lambda name, data: name in self.default_map['volcanoes'],
+        })
 
     @cached_property
     def location_ranks(self) -> dict[str, LocationRank]:
@@ -535,6 +557,11 @@ class Eu5Parser(JominiParser):
     @cached_property
     def named_colors(self) -> dict[str, PdxColor]:
         return self._parse_named_colors(['../jomini/loading_screen/common/named_colors', 'main_menu/common/named_colors'])
+
+    @cached_property
+    def non_ownable(self) -> dict[str, Location]:
+        """corridor locations from the non_ownable list in game/in_game/map_data/default.map """
+        return {name: self.locations[name] for name in self.default_map['non_ownable']}
 
     def parse_dlc_from_conditions(self, conditions):
         pass
@@ -635,12 +662,22 @@ class Eu5Parser(JominiParser):
         return ScriptValue(name, name, **entity_data)
 
     @cached_property
+    def sea_zones(self) -> dict[str, Location]:
+        """sea tiles from sea_zones list in game/in_game/map_data/default.map """
+        return {name: self.locations[name] for name in self.default_map['sea_zones']}
+
+    @cached_property
     def topography(self) -> dict[str, Topography]:
         return self.parse_advanced_entities('in_game/common/topography', Topography)
 
     @cached_property
     def vegetation(self) -> dict[str, Vegetation]:
         return self.parse_advanced_entities('in_game/common/vegetation', Vegetation)
+
+    @cached_property
+    def volcanoes(self) -> dict[str, Location]:
+        """volcanoe locations from the volcanoes list in game/in_game/map_data/default.map """
+        return {name: self.locations[name] for name in self.default_map['volcanoes']}
 
     ############################################
     #                                          #

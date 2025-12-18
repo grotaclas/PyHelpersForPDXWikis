@@ -267,8 +267,25 @@ class Location(Eu5AdvancedEntity):
     topography: 'Topography'
     vegetation: 'Vegetation' = None
 
+    is_earthquakes_zone: bool = False
+    is_impassable_mountains: bool = False  # wasteland
+    is_lake: bool = False
+    is_non_ownable: bool = False  # corridors
+    is_sea: bool = False
+    is_volcano: bool = False
     @cached_property
-    def province(self):
+    def is_wasteland(self) -> bool:
+        return self.is_impassable_mountains
+    @cached_property
+    def is_corridor(self) -> bool:
+        return self.is_non_ownable
+    @cached_property
+    def is_land(self) -> bool:
+        """Normal land locations which can be owned. Excludes wastland and corridors"""
+        return not self.is_sea and not self.is_lake and not self.is_impassable_mountains and not self.is_non_ownable
+
+    @cached_property
+    def province(self) -> 'Province':
         # lazy loading to avoid infinite recursions, because province parsing requires locations
         return eu5game.parser.get_province(self)
 
