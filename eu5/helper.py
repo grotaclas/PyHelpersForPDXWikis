@@ -13,7 +13,7 @@ from typing import get_type_hints, get_origin, get_args, Iterable, Type, Any
 from common.file_generator import FileGenerator
 from common.helper import OneTypeHelper, MultiTypeHelper
 from common.paradox_lib import IconMixin, NE, Modifier, PdxColor, NameableEntity
-from common.paradox_parser import ParsingWorkaround, Tree, QuestionmarkEqualsWorkaround
+from common.paradox_parser import Tree
 from eu5 import eu5lib
 from eu5.eu5lib import Eu5AdvancedEntity, Cost, GoodsDemand, Price, Eu5Modifier, Trigger, Effect, ScriptValue
 from eu5.game import eu5game
@@ -37,7 +37,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
             glob = self.folder
         else:
             glob = f'{self.folder}/*.txt'
-        return self.parser.parser.parse_files(glob, [QuestionmarkEqualsWorkaround()])
+        return self.parser.parser.parse_files(glob)
 
         # Temporary code to include template data for files which have an include= line
         # template_data = {}
