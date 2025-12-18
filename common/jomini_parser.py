@@ -199,8 +199,24 @@ class JominiParser(metaclass=ABCMeta):
                         typing.get_args(class_attributes[k])[0], NameableEntity) and typing.get_args(class_attributes[k])[0] != entity_class:
                     if isinstance(v, str):
                         v = [v]
+                    else:
+                        flat_v = []
+                        for item in v:
+                            if isinstance(item, str):
+                                flat_v.append(item)
+                            elif isinstance(item, list):
+                                flat_v.extend(item)
+                            else:
+                                raise Exception(f'Unexpected type "{type(item)}" in list for attribute "{k}" in "{name}"')
+                        v = flat_v
+
                     entity_values[k] = [self.resolve_entity_reference(typing.get_args(class_attributes[k])[0], entity_name) for entity_name in v]
                 elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], NameableEntity) and class_attributes[k] != entity_class:
+                    if isinstance(v, list):
+                        different_values = set(v)
+                        v = v[-1]
+                        if len(different_values) > 1:
+                            print(f'Warning: duplicate section "{k}" in "{name}". Using last entry "{v}"')
                     entity_values[k] = self.resolve_entity_reference(class_attributes[k], v)
                 else:
                     entity_values[k] = v
@@ -292,7 +308,7 @@ class JominiParser(metaclass=ABCMeta):
             return self._parse_modifier_data(data[section_name], modifier_class)
 
     @cached_property
-    def class_property_map(self) -> dict[Type[NE]: str]:
+    def class_property_map(self) -> dict[Type[NE], str]:
         class_property_map = {}
         for name, member in inspect.getmembers(self.__class__, predicate=lambda m: type(m) == cached_property):
             return_type = inspect.signature(member.func).return_annotation
