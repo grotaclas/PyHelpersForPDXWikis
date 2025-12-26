@@ -14,6 +14,11 @@ from common.paradox_parser import ParsingWorkaround
 
 
 class Eu5Parser(JominiParser):
+    _class_property_map_overrides: dict[Type[NE], str] = {
+        Location: 'locations',
+        Country: 'countries_including_formables',
+        Language: 'languages_including_dialects',
+    }
 
     # allows the overriding of localization strings
     localizationOverrides = {
@@ -31,12 +36,6 @@ class Eu5Parser(JominiParser):
     def formatter(self):
         from eu5.text_formatter import Eu5WikiTextFormatter
         return Eu5WikiTextFormatter()
-
-    @cached_property
-    def class_property_map(self) -> dict[Type[NE], str]:
-        class_property_map = super().class_property_map
-        class_property_map[Location] = 'locations'
-        return class_property_map
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
                                 transform_value_functions: dict[str, Callable[[Any], Any]] = None, entity_level: int = 0,

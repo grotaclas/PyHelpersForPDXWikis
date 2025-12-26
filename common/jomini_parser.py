@@ -15,6 +15,8 @@ from common.paradox_lib import Modifier, AE, NE, ME, ModifierType, NameableEntit
 class JominiParser(metaclass=ABCMeta):
     """Shared functions between newer paradox games like ck3, eu5 and vic3"""
 
+    _class_property_map_overrides: dict[Type[NE], str] = {}
+
     # allows the overriding of localization strings
     localizationOverrides = {}
 
@@ -213,6 +215,8 @@ class JominiParser(metaclass=ABCMeta):
                     entity_values[k] = [self.resolve_entity_reference(typing.get_args(class_attributes[k])[0], entity_name) for entity_name in v]
                 elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], NameableEntity) and class_attributes[k] != entity_class:
                     if isinstance(v, list):
+                        if len(v) == 0:
+                            continue
                         different_values = set(v)
                         v = v[-1]
                         if len(different_values) > 1:
@@ -318,6 +322,8 @@ class JominiParser(metaclass=ABCMeta):
             type_args = get_args(return_type)
             if origin == dict and type_args[0] == str and inspect.isclass(type_args[1]) and issubclass(type_args[1], NameableEntity):
                 class_property_map[type_args[1]] = name
+        for typ, name in self._class_property_map_overrides.items():
+            class_property_map[typ] = name
         return class_property_map
 
     def resolve_entity_reference(self, entity_class: Type[NE], entity_name:str):

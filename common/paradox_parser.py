@@ -241,7 +241,7 @@ class Tree(MutableMapping):
         @TODO: it might be useful to change this
         """
         for key, value in self.dictionary.items():
-            if isinstance(value, list) and isinstance(value[0], Tree):
+            if isinstance(value, list) and len(value) > 0 and isinstance(value[0], Tree):
                 merged = Tree({})
                 for item in value:
                     merged.dictionary.update(item.dictionary)
