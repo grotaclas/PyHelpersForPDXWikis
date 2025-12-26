@@ -454,7 +454,11 @@ class HardcodedResource(Resource, StrEnum):
 
     @cached_property
     def display_name(self) -> str:
-        return eu5game.parser.localize(self)
+        if self == 'government_power':
+            loc_key = 'game_concept_government_power'
+        else:
+            loc_key = self
+        return eu5game.parser.localize(loc_key)
 
     @cached_property
     def positive_is_good(self):
@@ -731,21 +735,22 @@ class Country(Eu5AdvancedEntity):
     unit_color2: PdxColor = None
 
     # From main_menu/setup/start/10_countries_and_roads.txt
-    accepted_cultures: 'Culture' = None
+    accepted_cultures: list['Culture'] = []
     add_pops_from_locations: list[Location] = None
     ai_advance_preference_tags: Tree = None
     capital: Location = None
     control: list[Location] = []
     country_name: str = ''
-    country_rank: str = ''
+    country_rank: 'CountryRank'  # default is County, this is set in the parser
     court_language: 'Language' = None
-    currency_data: Tree = None
+    currency_data: list[ResourceValue] = []
     discovered_areas: list[Area] = []
     discovered_provinces: list[Province] = []
     discovered_regions: list[Region] = []
     dynasty: str = ''
     flag: str = None
     government: Tree  # @TODO: government parsing
+    # government.type: 'GovernmentType'
     include: str = ''
     is_valid_for_release: bool = True
     liturgical_language: 'Language' = None
@@ -758,24 +763,19 @@ class Country(Eu5AdvancedEntity):
     own_core: list[Location] = []
     religious_school: 'ReligiousSchool' = None
     revolt: bool = False
-    scholars: 'ReligiousSchool' = None
+    scholars: list['ReligiousSchool'] = []
     starting_technology_level: int = None
-    timed_modifier: list[Eu5Modifier] = []
+    timed_modifier: list[Tree] = None # TODO implement timed modifiers
     tolerated_cultures: list['Culture'] = []
-    type: 'GovernmentType'
+    type: str = 'location'
     variables: Tree = None
 
     def __init__(self, name: str, display_name: str, **kwargs):
-        if kwargs['setup_data']:
-            for k, v in kwargs['setup_data']:
-                if k in kwargs:
-                    print(f'Error: duplicate key {k} in {name}. Orig_value: "{kwargs[k]}"; setup_value: "{v}"')
-                else:
-                    kwargs[k] = v
-
         super().__init__(name, display_name, **kwargs)
         if self.country_name:
             self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'
+        if isinstance(self.timed_modifier, Tree):
+            self.timed_modifier = [self.timed_modifier]
 
     def has_flag(self, flag: str):
         if self.variables and 'data' in self.variables:
@@ -958,7 +958,7 @@ class Language(Eu5AdvancedEntity):
     descendant_suffix: str = ''
     descendant_suffix_female: str = ''
     descendant_suffix_male: str = ''
-    dialects: Tree = None
+    dialects: 'Language' = None
     dynasty_names: list[str] = []
     dynasty_template_keys: list[str] = []
     fallback: 'Language' = None
@@ -2082,25 +2082,48 @@ class Situation(Eu5AdvancedEntity):
     international_organization_type: InternationalOrganization = None
     is_data_map: bool = False
     legend_key: Any = None
-    map_color: Tree # possible types(out of 22): <class 'common.paradox_parser.Tree'>(22), <class 'eu5.eu5lib.ScriptValue'>(19), <class 'eu5.effect.Effect'>(3)
+    map_color: Tree  # scripted color
     monthly_spawn_chance: ScriptValue
     on_ended: Effect
     on_ending: Effect = None
     on_monthly: Effect
     on_start: Effect
     resolution: Resolution = None
-    secondary_map_color: ScriptValue = None
+    secondary_map_color: Tree = None  # scripted color
     tooltip: Effect = None
     visible: Trigger
     voters: str = ''
     # icon_folder = 'SITUATIONS_ILLUSTRATION_PATH' # 22 / 22 icons found
     icon_folder = 'SITUATION_ICON_PATH' # 22 / 22 icons found
+
+
 class SocietalValue(Eu5AdvancedEntity):
     age: Age = None
     allow: Trigger = None
-    left_modifier: list[Eu5Modifier]
+    left: 'SocietalValueOneSide'
+    right: 'SocietalValueOneSide'
     opinion_importance_multiplier: float = 0
+
+    left_modifier: list[Eu5Modifier]
     right_modifier: list[Eu5Modifier]
+
+
+class SocietalValueOneSide(Eu5AdvancedEntity):
+    name: str  # e.g. centralization_vs_decentralization_left
+    short_name: str # e.g. centralization
+    modifier: list[Eu5Modifier]
+    societal_value: SocietalValue
+    icon_folder = 'SOCIETAL_VALUE_ICON_PATH'
+    # icon_folder = 'SOCIETAL_VALUE_ILLUSTRATION_PATH'
+
+    def get_icon_filename(self, left_or_right: str) -> str:
+        assert left_or_right in ['left', 'right']
+        return f'{self.name}_{left_or_right}.dds'
+
+    def get_wiki_filename(self, left_or_right: str) -> str:
+        assert left_or_right in ['left', 'right']
+        return super().get_wiki_filename()
+
 class SubjectMilitaryStance(Eu5AdvancedEntity):
     army_logistics_priority: int
     blockade_port_priority: int
@@ -2134,7 +2157,7 @@ class SubjectType(Eu5AdvancedEntity):
     allow_declaring_wars: bool = False
     annexation_min_opinion: int = 0
     annexation_min_years_before: int = None
-    annexation_speed: int
+    annexation_speed: float = 1
     annexation_stall_opinion: int = 0
     can_attack: Trigger = None
     can_be_force_broken_in_peace_treaty: bool = True

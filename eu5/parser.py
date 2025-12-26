@@ -322,17 +322,27 @@ class Eu5Parser(JominiParser):
     @cached_property
     @disk_cache(eu5game, classes_to_cache={Country})
     def countries(self) -> dict[str, Country]:
-        return self.parse_advanced_entities('in_game/setup/countries', Country,
+        """countries from in_game/setup/countries with additional data from main_menu/setup """
+
+        countries_from_ingame_setup = self.parser.parse_folder_as_one_file('in_game/setup/countries')
+        tag: str
+        country_data: Tree
+        for tag, country_data in countries_from_ingame_setup:
+            if tag in self.setup_data['countries']['countries']:
+               country_data.update(self.setup_data['countries']['countries'][tag])
+        # set the default rank
+        Country.country_rank = self.country_ranks['rank_county']
+
+        return self.parse_advanced_entities(countries_from_ingame_setup, Country,
                                             transform_value_functions={
+                                                'currency_data': lambda currency_data: [
+                                                    ResourceValue.create_with_hardcoded_resource(key, value) for key, value in
+                                                    currency_data if key in HardcodedResource],
                                                 # @TODO: remove this workaround for duplicate description_category sections
                                                 'description_category': lambda cat: self.country_description_categories[
                                                     cat if isinstance(cat, str) else cat[0]],
                                             },
-                                            extra_data_functions={
-                                                'setup_data': lambda tag, data: self.setup_data['countries']['countries'][tag] if tag in
-                                                                                                                                  self.setup_data['countries'][
-                                                                                                                                      'countries'] else None
-                                            })
+        )
 
     @cached_property
     def countries_including_formables(self): # -> dict[str, Country|FormableCountry]:
@@ -345,6 +355,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     @disk_cache(eu5game)
     def setup_data(self) -> Tree:
+        """main_menu/setup including templates"""
         template_data_without_include = {
             filename.stem: self._fix_law_values(data)
             for filename, data in self.parser.parse_files('main_menu/setup/templates/*.txt')
@@ -515,8 +526,22 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def languages(self) -> dict[str, Language]:
-        return self.parse_advanced_entities('in_game/common/languages', Language)
+        languages = self.parse_advanced_entities('in_game/common/languages', Language)
+        for language in languages.values():
+            if language.dialects:
+                language.dialects = self.parse_advanced_entities(language.dialects, Language, allow_empty_entities=True)
+        return languages
 
+    @cached_property
+    def languages_including_dialects(self) -> dict[str, Language]:
+        results = {}
+
+        for language_name, language in self.languages.items():
+            results[language_name] = language
+            if language.dialects:
+                for dialect_name, dialect in language.dialects.items():
+                    results[dialect_name] = dialect
+        return results
 
     @cached_property
     def laws(self) -> dict[str, Law]:
@@ -1088,11 +1113,27 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='_info', # Used in 6/22 Examples: {'hundred_years_war_info': "This is a conflict that will create [wars|e] between [GetCountry('ENG').GetName] and [GetCountry('FRA').GetName] until one side has reached their goals.", 'great_pestilence_info': "[ROOT.GetVariable('great_pestilence_origin').GetLocation.GetName]"}
                                             # localization_prefix='', localization_suffix='_monthly', # Used in 3/22 Examples: {'hundred_years_war_monthly': 'If there is [peace|e] there is a chance of either side restarting the conflict.', 'black_death_monthly': '• This plague will spread to nearby [locations|e], and across trade-routes\\n• It will kill many [pops|E], [armies|e] and [characters|E] where it has spread'}
                                             )
+
+    def _parse_societal_value_one_side(self, side: str, societal_value_name: str, data: Tree) -> SocietalValueOneSide:
+        name = f'{societal_value_name}_{side}'
+        left, _vs, right = societal_value_name.partition('_vs_')
+        if side == 'left':
+            short_name = left
+        else:
+            short_name = right
+        display_name = self.localize(f'{short_name}_focus')
+        modifier = self.parse_modifier_section(societal_value_name, data, f'{side}_modifier', Eu5Modifier)
+        return SocietalValueOneSide(name, display_name, short_name=short_name, modifier=modifier)
+
     @cached_property
     def societal_values(self) -> dict[str, SocietalValue]:
         return self.parse_advanced_entities('in_game/common/societal_values', SocietalValue,
                                             # localization_prefix='', localization_suffix='', # Used in 16/16 Examples: {'traditionalist_vs_innovative': 'Traditionalist vs Innovative', 'spiritualist_vs_humanist': 'Spiritualist vs Humanist'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 16/16 Examples: {'capital_economy_vs_traditional_economy_desc': 'A [country|e] with a capital economy is more focused on earning money, particularly from [trade|e] and [towns_and_cities|e], while one with a traditional economy is more oriented about living off what the land provides.', 'serfdom_vs_free_subjects_desc': 'A country with high serfdom is about exploiting the peasants as much as possible, whereas a country with free subjects treats peasants as human beings.'}
+                                            extra_data_functions= {
+                                                'left': lambda name, data: self._parse_societal_value_one_side('left', name, data),
+                                                'right': lambda name, data: self._parse_societal_value_one_side('right', name, data),
+                                            }
                                             )
     @cached_property
     def subject_military_stances(self) -> dict[str, SubjectMilitaryStance]:
