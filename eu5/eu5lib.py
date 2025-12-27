@@ -719,6 +719,9 @@ class CountryDescriptionCategory(NameableEntity):
 
 
 class Country(Eu5AdvancedEntity):
+    # tag specific history from game/in_game/common/customizable_localization/country_history.txt
+    description: str = ''
+
     # From in_game/setup/countries
     color: PdxColor
     color2: PdxColor = None
@@ -1593,6 +1596,12 @@ class CountryRank(Eu5AdvancedEntity):
     rank_modifier: list[Eu5Modifier]
     victory_card: bool = False
     icon_folder = 'COUNTRY_RANK_ICON_PATH' # 4 / 4 icons found
+
+class CustomizableLocalizationTextEntry(Eu5AdvancedEntity):
+    # localization_key is used as name
+    fallback: bool = False
+    trigger: Trigger = None
+
 class CustomizableLocalization(Eu5AdvancedEntity):
     if_invalid_loc: str = ''
     log_loc_errors: bool = None

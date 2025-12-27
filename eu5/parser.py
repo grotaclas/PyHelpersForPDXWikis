@@ -309,6 +309,16 @@ class Eu5Parser(JominiParser):
         return self._map_entities[4]
 
     @cached_property
+    def _tag_specific_descriptions(self) -> dict[str, str]:
+        tag_to_description = {}
+        for custom_loc in self.customizable_localization['country_history'].text.values():
+            if not custom_loc.fallback:
+                for tag in custom_loc.trigger.find_all_recursively('tag'):
+                    tag_to_description[tag] = custom_loc.display_name
+
+        return tag_to_description
+
+    @cached_property
     def country_description_categories(self) -> dict[str, CountryDescriptionCategory]:
         return self.parse_nameable_entities('in_game/common/country_description_categories', CountryDescriptionCategory,
                                             allow_empty_entities=True,
@@ -343,7 +353,8 @@ class Eu5Parser(JominiParser):
                                             extra_data_functions={
                                                 # the default rank seems to be county. Pass it as extra data, so that it is set
                                                 # in the object instead of in the class, so that it gets cached correctly
-                                                'default_rank': lambda name, data: self.country_ranks['rank_county']
+                                                'default_rank': lambda name, data: self.country_ranks['rank_county'],
+                                                'description': lambda name, data: self._tag_specific_descriptions.get(name, ''),
                                             }
         )
 
@@ -811,9 +822,24 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='', # Used in 4/4 Examples: {'rank_county': 'County', 'rank_empire': 'Empire'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 4/4 Examples: {'rank_empire_desc': 'This is the highest [country_rank|e] and represents the most prestigious or powerful [countries|e] in the world.', 'rank_duchy_desc': 'This [country_rank|e] represents a small- to medium-sized [country|e], usually with a single [province|e], but it is larger or more populous than a $rank_county$.'}
                                             )
+
+    def _parse_customizable_localization_text_entry(self, data: Tree | list[Tree]) -> dict[
+        str, CustomizableLocalizationTextEntry]:
+        if not isinstance(data, list):
+            data = [data]
+        return self.parse_advanced_entities(
+            Tree({custom_loc_entry['localization_key']: custom_loc_entry for custom_loc_entry in data}),
+            CustomizableLocalizationTextEntry,
+            extra_data_functions={
+                'display_name': lambda name, data: self.formatter.format_localization_text(self.localize(name))
+            })
+
     @cached_property
     def customizable_localization(self) -> dict[str, CustomizableLocalization]:
-        return self.parse_advanced_entities('in_game/common/customizable_localization', CustomizableLocalization)
+        return self.parse_advanced_entities('in_game/common/customizable_localization', CustomizableLocalization,
+                                            transform_value_functions={
+                                                'text': self._parse_customizable_localization_text_entry,
+                                            })
     @cached_property
     def death_reason(self) -> dict[str, DeathReason]:
         return self.parse_advanced_entities('in_game/common/death_reason', DeathReason, allow_empty_entities=True,
