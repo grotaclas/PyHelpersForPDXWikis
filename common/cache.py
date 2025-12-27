@@ -48,11 +48,14 @@ class NoParserUnpickler(pickle.Unpickler):
         if type_tag == 'game.parser':
             return self.game.parser
         else:
-            return self.parser.resolve_entity_reference(type_tag, key_id)
-            # Always raises an error if you cannot return the correct object.
-            # Otherwise, the unpickler will think None is the object referenced
-            # by the persistent ID.
-            raise pickle.UnpicklingError("unsupported persistent object")
+            entity = self.parser.resolve_entity_reference(type_tag, key_id)
+            if type(entity) == str:
+                # Always raises an error if you cannot return the correct object.
+                # Otherwise, the unpickler will think None is the object referenced
+                # by the persistent ID.
+                raise pickle.UnpicklingError("unsupported persistent object")
+            else:
+                return entity
 
 
 class PickleSerializer:
