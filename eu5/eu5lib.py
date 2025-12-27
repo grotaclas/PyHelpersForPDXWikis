@@ -741,7 +741,7 @@ class Country(Eu5AdvancedEntity):
     capital: Location = None
     control: list[Location] = []
     country_name: str = ''
-    country_rank: 'CountryRank'  # default is County, this is set in the parser
+    country_rank: 'CountryRank'  # default is County, this is passed to init by the parser
     court_language: 'Language' = None
     currency_data: list[ResourceValue] = []
     discovered_areas: list[Area] = []
@@ -770,7 +770,9 @@ class Country(Eu5AdvancedEntity):
     type: str = 'location'
     variables: Tree = None
 
-    def __init__(self, name: str, display_name: str, **kwargs):
+    def __init__(self, name: str, display_name: str, default_rank: 'CountryRank', **kwargs):
+        if 'country_rank' not in kwargs:
+            kwargs['country_rank'] = default_rank
         super().__init__(name, display_name, **kwargs)
         if self.country_name:
             self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'

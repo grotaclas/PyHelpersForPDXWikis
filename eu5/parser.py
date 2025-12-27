@@ -330,8 +330,6 @@ class Eu5Parser(JominiParser):
         for tag, country_data in countries_from_ingame_setup:
             if tag in self.setup_data['countries']['countries']:
                country_data.update(self.setup_data['countries']['countries'][tag])
-        # set the default rank
-        Country.country_rank = self.country_ranks['rank_county']
 
         return self.parse_advanced_entities(countries_from_ingame_setup, Country,
                                             transform_value_functions={
@@ -342,6 +340,11 @@ class Eu5Parser(JominiParser):
                                                 'description_category': lambda cat: self.country_description_categories[
                                                     cat if isinstance(cat, str) else cat[0]],
                                             },
+                                            extra_data_functions={
+                                                # the default rank seems to be county. Pass it as extra data, so that it is set
+                                                # in the object instead of in the class, so that it gets cached correctly
+                                                'default_rank': lambda name, data: self.country_ranks['rank_county']
+                                            }
         )
 
     @cached_property
