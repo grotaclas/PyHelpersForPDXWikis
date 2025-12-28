@@ -32,7 +32,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
 
     def apply_localization_formatting(self, text: str) -> str:
         text = super().apply_localization_formatting(text)
-        text = re.sub(r"\[\s*(?P<data_function>(Show|Get)[a-zA-Z_]+)\s*\(\s*'(?P<loc_key>[^']+)'\s*\)(.(?P<name_function>(GetNameWithNoTooltip|GetLongNameWithNoTooltip|GetShortNameWithNoTooltip|GetAdjectiveWithNoTooltip|GetAdjective)))?\s*]",
+        text = re.sub(r"\[\s*(?P<data_function>(Show|Get)[a-zA-Z_]+)\s*\(\s*'(?P<loc_key>[^']+)'\s*\)(.(?P<name_function>(GetNameWithNoTooltip|GetLongNameWithNoTooltip|GetLongName|GetShortNameWithNoTooltip|GetAdjectiveWithNoTooltip|GetAdjective)))?\s*]",
                       lambda match: self._resolve_data_function(match.group('data_function'), match.group('loc_key'), match.group('name_function')), text)
 
         return text
