@@ -49,6 +49,7 @@ class Vic3Parser(JominiParser):
             'mp1_cosmetics': 'Charters of Commerce',
             'ip3_content': 'National Awakening',
             'ip3_cosmetics': 'National Awakening',
+            'ip4_content': 'Iberian Twilight',
         }
         dlcs = []
         for key, value in conditions:
@@ -269,6 +270,20 @@ class Vic3Parser(JominiParser):
                                                 states=[self.states[state_name] for state_name in region_data['states']],
                                                 is_water=(file.name == 'water_strategic_regions.txt'))
         return regions
+    
+    @cached_property
+    def geographic_regions(self) -> dict[str, GeographicRegion]:
+        """returns a dictionary. keys are geographic_region_ strings and values are GeographicRegion objects."""
+        georegions = {}
+        for file, data in self.parser.parse_files('common/geographic_regions/*.txt'):
+            for name, region_data in data:
+                
+                georegions[name] = GeographicRegion(name, self.localize(name),
+                                                short_key=region_data['short_key'],
+                                                states=[self.states[state_name] for state_name in region_data.find_all('state_regions')],
+                                                regions=[self.strategic_regions[region_name.removeprefix('sr:')] for region_name in region_data.find_all('strategic_regions')]
+                                                )
+        return georegions
 
     @cached_property
     def state_to_strategic_region_map(self) -> dict[str, StrategicRegion]:
@@ -276,6 +291,21 @@ class Vic3Parser(JominiParser):
         for region in self.strategic_regions.values():
             for state in region.states:
                 mapping[state.name] = region
+        return mapping
+    
+    @cached_property
+    def state_to_geographic_region_map(self) -> dict[str, list[GeographicRegion]]:
+        mapping = {}
+        for georegion in self.geographic_regions.values():
+            for state in georegion.states:
+                if state.name not in mapping:
+                    mapping[state.name] = []
+                mapping[state.name].append(georegion)
+            for region in georegion.regions:
+                for state in region.states:
+                    if state.name not in mapping:
+                        mapping[state.name] = []
+                    mapping[state.name].append(georegion)
         return mapping
 
     @cached_property

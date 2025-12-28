@@ -77,6 +77,9 @@ class State(NameableEntity):
 
     def get_strategic_region(self):
         return vic3game.parser.state_to_strategic_region_map[self.name]
+    
+    def get_geographic_regions(self) -> list:
+        return vic3game.parser.state_to_geographic_region_map.get(self.name, '')
 
     def is_water(self):
         return self.get_strategic_region().is_water
@@ -108,6 +111,18 @@ class StrategicRegion(NameableEntity):
         all_countries = vic3game.parser.countries
         return sorted({all_countries[country] for state in self.states for country in state.owners}, key=attrgetter('display_name'))
 
+class GeographicRegion(NameableEntity):
+    states: list[State]
+    regions: list[StrategicRegion]
+    short_key: str = ""
+
+    @cached_property
+    def countries(self) -> list['Country']:
+        all_countries = vic3game.parser.countries
+        region_countries = []
+        {region_countries.append(country) for region in self.regions for state in region.states for country in state.owners}
+        {region_countries.append(country) for state in self.states for country in state.owners if country not in region_countries}
+        return sorted({all_countries[country] for country in region_countries}, key=attrgetter('display_name'))
 
 class Country(NameableEntity):
 

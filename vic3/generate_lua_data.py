@@ -29,7 +29,6 @@ class LuaDataGenerator(Vic3FileGenerator):
                 'reqs': [req.name for req in tech.required_technologies],
                 'unlocks': self._get_unlock_lists(tech),
                 'modifiers': self._get_modifier_list(tech.modifier),
-                #'modifiers': [modifier.format_for_lua() for modifier in tech.modifier],
             }
             for tech in self.parser.technologies.values()
         }
@@ -235,13 +234,10 @@ local p = ''' + luadata.serialize(result, indent=' ')
     def _get_law_reqs_blockers(self, req_blocker_dict: dict):
         result = {}
         req_law = None
-        #print(isinstance(req_blocker_dict['law'],list))
         if isinstance(req_blocker_dict['law'],list) and len(req_blocker_dict['law']) > 0:
             req_law = req_blocker_dict['law']
             print(req_blocker_dict['law'])
         #for req in req_blocker_dict:
-            #if req:
-            #    print(req)
             #tech = [tech for tech in req.required_technologies]
         #req_law = [law.name for law in self.parser.laws.values() if law in req_blocker_dict['law']]
         if req_law:
@@ -279,7 +275,7 @@ local NDefines = {luadata.serialize(result, indent=' ')}
         generates https://vic3.paradoxwikis.com/Module:Defines/Comments
 
         """
-        result = self.parser.define_commments.to_dict()
+        result = self.parser.defines_comments.to_dict()
         return f"""
 local NDefines = {luadata.serialize(result, indent=' ')}
 """

@@ -298,9 +298,10 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
 
     def format_key_for_compound_statement(self, key):
         key_mappings = {
-            'OR': 'At least one of',
-            'NOR': 'Neither of',
+            'OR': 'Any of',
+            'NOR': 'None of',
             'AND': 'All of',
+            'NAND': 'Not all of',
             'NOT': 'Not',
         }
         if key in key_mappings:
@@ -353,6 +354,10 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                     value = self.parser.states[value_without_prefix]
                 case 'rel':
                     value = self.parser.religions[value_without_prefix]
+                case 'sr':
+                    value = self.parser.strategic_regions[value_without_prefix]
+                case 'cu':
+                    value = self.parser.cultures[value_without_prefix]
         if isinstance(value, Vic3AdvancedEntity):
             value = value.get_wiki_link_with_icon()
         elif isinstance(value, NameableEntity):

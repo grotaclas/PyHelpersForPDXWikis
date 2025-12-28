@@ -52,7 +52,7 @@ class TableGenerator(Vic3FileGenerator):
             '{{TextTooltip|Rel.|Religion}}': f'{{{{icon|{self.parser.localize(c.religion)}}}}}',
             '{{TextTooltip|E|Exists at&nbsp;start}} !! {{TextTooltip|F|Formable}} !! {{TextTooltip|R|Releasable|style=margin-left:-50px;}} !! {{TextTooltip|S|Event formation or release|style=margin-left:-120px;}}': self.get_country_notes(c),
         } for c in sorted(self.parser.countries.values(), key=attrgetter("display_name"))]
-    
+
         return self.get_SVersion_header() + '\n' + self.make_wiki_table(countries)
 
     def generate_count_countries(self):
@@ -89,8 +89,78 @@ class TableGenerator(Vic3FileGenerator):
                     special_none += 1
         return f"There are {all_countries} countries defined in the game: {exists} of which are present at the 1836 start date. {formable} countries are formable, of which {exists_form} exist at the start (+{special_form} more which can be formed only by effects); {releasable} are releasable, of which {exists_release} exist at the start (+{special_release} more which can be released only by effects). Countries can also appear on the map by culture secession or be generated as part of a revolution ({special_none} can only appear in this way)."
     
+    def _get_states(self, country, region = False):
+        states = [{
+            'state': state,
+            'capital': ' [[File:state status capital.png|link=capital|20px]]' if state == country.capital_state else '',
+            'split': ' [[File:state status split state.png|link=split state|20px]]' if len(state.owners) > 1 else '',
+            'region': self.parser.state_to_strategic_region_map[state.name].display_name
+        } for state in self.parser.states.values() if country in state.owners]
+        if region:
+            region_list = []
+            for state in states:
+                region_name = state.get('region')
+                if region_name not in region_list:
+                    region_list.append(region_name)
+            return region_list
+        else:
+            state_list = []
+            for state in states:
+                name = str(state.get('state'))
+                capital = str(state.get('capital'))
+                split = str(state.get('split'))
+                if capital == '':
+                    state_list.append(name + split)
+                else:
+                    state_list.insert(0,name + capital + split)
+            return state_list
+        
+    def simple_country_table(self, country_list):
+        wiki_lister = self.parser.formatter.create_wiki_list
+        countries = []
+        for country in country_list:
+            if country.exists():
+                countries.append({
+                    'Country': f"[[File:{country.display_name}.png|36px|border]] {country.display_name}",
+                    'Primary cultures': wiki_lister([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
+                    'Starting states': wiki_lister(self._get_states(country), no_list_with_one_element=True),
+                    'Region': wiki_lister(self._get_states(country, region = True), no_list_with_one_element=True),
+                })
+            if not country.exists():
+                countries.append({
+                    'Country': f"[[File:{country.display_name}.png|36px|border]] {country.display_name}",
+                    'Primary cultures': wiki_lister([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
+                    'Region': self.parser.state_to_strategic_region_map[country.capital_state.name].display_name
+                })
+
+        return self.make_wiki_table(countries, table_classes=['wikitable', 'plainlist', 'mw-collapsible'], table_style='margin-right:10px;', one_line_per_cell=True)
+    
+    def generate_decentralized_country_tables(self):
+        section_title = "decentralized nations"
+        tables = []
+        countries = [country for country in sorted(self.parser.countries.values(), key=attrgetter("display_name")) if country.type == "decentralized"]
+        african_countries = [country for country in countries if country.exists() and 'Africa' in country.capital_state.get_geographic_regions()]
+        american_countries = [country for country in countries if country.exists() and 'Americas' in country.capital_state.get_geographic_regions()]
+        other_countries = [country for country in countries if country.exists() and country not in african_countries and country not in american_countries]
+        revoter_countries = [country for country in countries if not country.exists()]
+        tables.append(f'<div>\n=== Africa {section_title} ===')
+        tables.append(self.simple_country_table(african_countries)+'</div>')
+        tables.append(f'<div>\n=== Americas {section_title} ===')
+        tables.append(self.simple_country_table(american_countries)+'</div>')
+        tables.append(f'<div>\n=== Pacific and Asia {section_title} ===')
+        tables.append(self.simple_country_table(other_countries)+'</div>')
+        tables.append(f'<div>\n=== Revolter {section_title} ===')
+        tables.append(self.simple_country_table(revoter_countries)+'</div>')
+        return tables
+    
     def write_country_table(self):
         self._write_text_file('country_table', self.generate_country_table())
+
+    def generate_test_function(self):
+        for state in self.parser.states.values():
+            for georegion in state.get_geographic_regions():
+                print(georegion)
+        return ''
 
     def get_unlocks(self, tech: Technology):
         unlocks = []
@@ -305,6 +375,19 @@ local p = {};
                                      one_line_per_cell=True,
                                          )
 
+        return self.get_SVersion_header('table') + '\n' + table
+    
+    def generate_geographic_region_table(self):
+        georegions = [{
+            'Geographic Region': f'id="{georegion.display_name}" |{georegion.display_name}',
+            'Short key': georegion.short_key,
+            'Regions': f'{{{{MultiColumn|{self.create_wiki_list(sorted(region.display_name for region in georegion.regions))}\n|2}}}}' if len(georegion.regions) > 0 else '',
+            'States': f'{{{{MultiColumn|{self.create_wiki_list(sorted(state.display_name for state in georegion.states))}\n|2}}}}' if len(georegion.states) > 0 else '',
+            'Countries present': f'{{{{Collapse|{{{{MultiColumn|{self.create_wiki_list([country.get_wiki_link_with_icon() for country in georegion.countries])}\n|5}}}}\n}}}}',
+        } for georegion in sorted(self.parser.geographic_regions.values(), key=attrgetter('display_name'))]
+        table = self.make_wiki_table(georegions, table_classes=['wikitable', 'plainlist'],
+                                     one_line_per_cell=True,
+                                         )
         return self.get_SVersion_header('table') + '\n' + table
 
     def iconify(self, what: Any, iconify_param: str = None) -> str:
