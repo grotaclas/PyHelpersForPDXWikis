@@ -7,6 +7,9 @@ output
 # default cache folder
 cache
 
+# default folder for aow4 data
+aow4data
+
 # environment
 .venv
 .venv.old
