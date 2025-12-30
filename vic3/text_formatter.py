@@ -236,11 +236,12 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             new_text = re.sub(r'#(\S+) ([^#]+)#!', self._apply_formatting_markers, previous_text)
 
         text = re.sub(r'@([^!]*)!', self._replace_icons, new_text)
+        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'([^']+)'\s*\).GetTextIcon\s*]", self._replace_icons, text)
         text = re.sub(r"\[\s*GetDefine\s*\(\s*'(?P<category>[^']*)'\s*,\s*'(?P<define>[^']*)'\s*\)\s*(\|\s*(?P<formatting>[-vK0+=%]+))?\s*]",
                       self._replace_defines, text)
-        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetName\s*]",
+        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetName(?:NoFormatting)?\s*]",
                       lambda match: self.parser.localize(match.group('loc_key')), text)
-        text = re.sub(r"\[\s*GetLawType\s*\(\s*'(?P<law_key>[^']+)'\s*\).GetGroup.GetName\s*]",
+        text = re.sub(r"\[\s*GetLawType\s*\(\s*'(?P<law_key>[^']+)'\s*\).GetGroup.GetName(?:NoFormatting)?\s*]",
                       lambda match: self.parser.laws[match.group('law_key')].group.display_name, text)
         text = re.sub(r"\[\s*GetInterestGroupVariant\s*\(\s*'(?P<ig_key>[^']+)'\s*,\s*GetPlayer\s*\).GetNameWithCountryVariant\s*]",
                       lambda match: self.parser.interest_groups[match.group('ig_key')].display_name, text)

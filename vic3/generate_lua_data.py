@@ -94,6 +94,7 @@ class LuaDataGenerator(Vic3FileGenerator):
 
          modifier_script_name = {
            loc = "Modifier localization",
+           script_only=true, if marked as script_only=yes in files
            percent=true, --if marked as percent=yes in files
            boolean=true, --if marked as boolean=yes in files
            positive="green", negative="red", --if marked color=good in files
