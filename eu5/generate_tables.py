@@ -184,7 +184,11 @@ class TableGenerator(Eu5FileGenerator):
     def create_cargo_tenplate_calls(self, data: list[dict[str, Any]], template_name: str):
         lines = []
         for item_data in data:
-            lines.append(f'=== {item_data["display_name"]} ===')
+            if 'display_name' in item_data:
+                display_name = item_data["display_name"]
+            else:
+                display_name = item_data["name"]
+            lines.append(f'=== {display_name} ===')
             lines.append(f'{{{{{template_name}')
             for column, value in item_data.items():
                 lines.append(f'|{column}={value}')
@@ -346,7 +350,7 @@ class TableGenerator(Eu5FileGenerator):
             for country in sorted_countries:
                 countries.append({
                     'tag': country.name,
-                    'display_name': country.display_name,
+                    'name': country.display_name,
 
                     'country_rank': country.country_rank.display_name,
                     'flag': '' if country.flag is None else f'Flag {country.flag}.png',
