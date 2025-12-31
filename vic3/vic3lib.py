@@ -144,14 +144,17 @@ class Country(NameableEntity):
     def is_formable(self):
         return self.tag in vic3game.parser.formable_tags
 
-    def is_event_formable(self):
-        return self.tag in vic3game.parser.event_formed_tags
+    def is_effect_formable(self):
+        return self.tag in vic3game.parser.effect_formable_tags
 
     def is_releasable(self):
         return self.tag in vic3game.parser.releasable_tags
 
-    def is_event_releasable(self):
-        return self.tag in vic3game.parser.event_releasable_tags
+    def is_effect_releasable(self):
+        return self.tag in vic3game.parser.effect_releasable_tags
+    
+    def is_decentralized(self):
+        return self.tag in vic3game.parser.decentralized_tags
 
     def get_wiki_link_with_icon(self):
         return '{{flag|' + self.display_name + '}}'

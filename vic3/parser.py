@@ -108,6 +108,7 @@ class Vic3Parser(JominiParser):
             replacement_regexes = {r'(?m)^\s*//.*$': ''}
         return self.parser.parse_folder_as_one_file('common/defines', workarounds=[DoubleSlashCommentWorkaround()]).merge_duplicate_keys()
     
+    @cached_property
     def defines_comments(self):
         return self.parser.parse_folder_as_one_file('common/defines').merge_duplicate_keys()
 
@@ -133,6 +134,16 @@ class Vic3Parser(JominiParser):
                                          cultures=country_data['cultures'],
                                          religion=religion)
         return countries
+
+    @cached_property
+    def decentralized_tags(self):
+        """returns a set of tags for decentralized nations"""
+        tags = set()
+        for file, data in self.parser.parse_files('common/country_definitions/*.txt'):
+            for tag, country_data in data:
+                if 'country_type' in country_data and country_data['country_type'] == 'decentralized':
+                    tags.add(tag)
+        return tags
 
     @cached_property
     def existing_tags(self):
@@ -163,41 +174,25 @@ class Vic3Parser(JominiParser):
         return tags
 
     @cached_property
-    def event_releasable_tags(self):
+    def effect_releasable_tags(self):
         """tags which get created by create_country"""
+        folders = ['events/**/*.txt','common/decisions/*.txt','common/scripted_*/*.txt']
         tags = set()
-        for file, data in self.parser.parse_files('events/**/*.txt'):
-            for create_country_section in data.find_all_recursively('create_country'):
-                tags.add(create_country_section['tag'])
-        for file, data in self.parser.parse_files('common/decisions/*.txt'):
-            #print(file)
-            for create_country_section in data.find_all_recursively('create_country'):
-                tags.add(create_country_section['tag'])
-        for file, data in self.parser.parse_files('common/scripted_*/*.txt'):
-            #print(file)
-            for create_country_section in data.find_all_recursively('create_country'):
-                tags.add(create_country_section['tag'])
+        for folder in folders:
+            for file, data in self.parser.parse_files(folder):
+                for create_country_section in data.find_all_recursively('create_country'):
+                    tags.add(create_country_section['tag'])
         return tags
 
     @cached_property
-    def event_formed_tags(self):
+    def effect_formable_tags(self):
         """tags which get formed with change_tag"""
+        folders = ['events/**/*.txt','common/journal_entries/*.txt','common/on_actions/*.txt','common/scripted_*/*.txt']
         tags = set()
-        for file, data in self.parser.parse_files('events/**/*.txt'):
-            for tag in data.find_all_recursively('change_tag'):
-                tags.add(tag)
-        for file, data in self.parser.parse_files('common/journal_entries/*.txt'):
-            #print(file)
-            for tag in data.find_all_recursively('change_tag'):
-                tags.add(tag)
-        for file, data in self.parser.parse_files('common/on_actions/*.txt'):
-            #print(file)
-            for tag in data.find_all_recursively('change_tag'):
-                tags.add(tag)
-        for file, data in self.parser.parse_files('common/scripted_*/*.txt'):
-            #print(file)
-            for tag in data.find_all_recursively('change_tag'):
-                tags.add(tag)
+        for folder in folders:
+            for file, data in self.parser.parse_files(folder):
+                for tag in data.find_all_recursively('change_tag'):
+                    tags.add(tag)
         return tags
 
     @cached_property

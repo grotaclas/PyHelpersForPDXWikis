@@ -14,122 +14,90 @@ from vic3.vic3lib import Country, Technology, ProductionMethod, StateTrait, Buil
 
 class TableGenerator(Vic3FileGenerator):
 
-    @staticmethod
-    def get_country_notes(country: Country):
-        notes = []
-        if country.exists():
-            notes.append(' {{icon|yes}} ||')
-        else:
-            notes.append(' {{icon|no}} ||')
-        if country.is_formable():
-            notes.append(' {{icon|yes}} ||')
-        else:
-            notes.append(' {{icon|no}} ||')
-        if country.is_releasable():
-            notes.append(' {{icon|yes}} ||')
-        else:
-            notes.append(' {{icon|no}} ||')
-        if country.is_event_releasable() or country.is_event_formable():
-            notes.append(' {{icon|yes}}')
-        else:
-            notes.append(' {{icon|no}}')
-        return ''.join(notes)
-
     def generate_country_table(self):
-        def get_tier_out(tier):
-            tiers = {'City-State': '1" | City-State', 'Principality':'2" | Principality', 'Grand Principality':'3" | Grand Princ.', 'Kingdom':'4" | Kingdom', 'Empire':'5" | Empire', 'Hegemony':'6" | Hegemony' }
-            return tiers.get(tier)
+        tier_num = {
+            'city_state':1,
+            'principality':2,
+            'grand_principality':3,
+            'kingdom':4,
+            'empire':5,
+            'hegemony':6
+        }
         countries = [{
-            'class="unsortable" style="width:5px;" |': f'id="{c.display_name}" style="background-color: {c.color.css_color_string}"|' + ("".join([f"{{{{anchor|{name}}}}}" for name in self.parser.dynamic_country_names[c.tag]]) if c.tag in self.parser.dynamic_country_names else ""),
+            'class="unsortable" style="width:5px;" |': f'id="{c.display_name}" style="background-color: {c.color.css_color_string}"|' + ("{{anchor|" + "|".join([name for name in self.parser.dynamic_country_names[c.tag]]) + "}}" if c.tag in self.parser.dynamic_country_names else ""),
             'style="width:20%;" | Name<span style="font-size:80%;margin-left:10px;">[[#Top|Return to top]]</span>': f"[[File:{c.display_name}.png|48px|border]] '''{c.display_name}'''" + (f'<br/><small>Other names: {", ".join(self.parser.dynamic_country_names[c.tag])}</small>' if c.tag in self.parser.dynamic_country_names else ""),
             'Tag': f'{c.tag}',
             'Type': self.parser.localize(c.type),
-            'Tier': f'data-sort-value="{get_tier_out(self.parser.localize('country_tier_' + c.tier))}',
+            'Tier': f'data-sort-value="{tier_num[c.tier]}" | {self.parser.localize("country_tier_" + c.tier)}'.replace("Grand Principality", "Grand Princ."), #shortened name for saving column width
             'Capital state': c.capital_state.display_name if c.capital_state is not None else '',
             'Region': c.capital_state.get_strategic_region().display_name if c.capital_state is not None else '',
-            'Capital state': c.capital_state.display_name if c.capital_state is not None else '',
             'style="width:25%;" | Cultures\n': ', '.join(self.parser.localize(culture) for culture in c.cultures) +'\n',
             '{{TextTooltip|Rel.|Religion}}': f'{{{{icon|{self.parser.localize(c.religion)}}}}}',
-            '{{TextTooltip|E|Exists at&nbsp;start}} !! {{TextTooltip|F|Formable}} !! {{TextTooltip|R|Releasable|style=margin-left:-50px;}} !! {{TextTooltip|S|Event formation or release|style=margin-left:-120px;}}': self.get_country_notes(c),
+            '{{TextTooltip|E|Exists at&nbsp;start}}': '{{icon|yes}}' if c.exists() else '{{icon|no}}',
+            '{{TextTooltip|F|Formable}}': '{{icon|yes}}' if c.is_formable() else '{{icon|no}}',
+            '{{TextTooltip|R|Releasable|style=margin-left:-50px;}}': '{{icon|yes}}' if c.is_releasable() else '{{icon|no}}',
+            '{{TextTooltip|S|Event formation or release|style=margin-left:-120px;}}': '{{icon|yes}}' if c.is_effect_releasable() or c.is_effect_formable() else '{{icon|no}}',
         } for c in sorted(self.parser.countries.values(), key=attrgetter("display_name"))]
 
-        return self.get_SVersion_header() + '\n' + self.make_wiki_table(countries)
+        return self.get_SVersion_header() + '\n' + self.make_wiki_table(countries).replace("\n ||","\n|") #'fix' line generation
 
     def generate_count_countries(self):
-        exists = 0
-        formable = 0
         exists_form = 0
-        releasable = 0
         exists_release = 0
-        special = 0
         special_form = 0
         special_release = 0
         special_none = 0
-        all_countries = 0
         for country in self.parser.countries.values():
-            all_countries += 1
             if country.exists():
-                exists += 1
                 if country.is_formable():
                     exists_form += 1
                 if country.is_releasable():
                     exists_release += 1
-            if country.is_formable():
-                formable += 1
-            if country.is_releasable():
-                releasable += 1
-            if country.is_event_releasable() or country.is_event_formable():
-                special += 1
-            if not country.exists():
-                if country.is_event_formable() and not country.is_formable():
+            else:
+                if country.is_effect_formable() and not country.is_formable():
                     special_form += 1
-                if country.is_event_releasable() and not country.is_releasable():
+                if country.is_effect_releasable() and not country.is_releasable():
                     special_release += 1
-                if not country.is_formable() and not country.is_releasable() and not country.is_event_formable() and not country.is_event_releasable():
+                if not country.is_formable() and not country.is_releasable() and not country.is_effect_formable() and not country.is_effect_releasable():
                     special_none += 1
-        return f"There are {all_countries} countries defined in the game: {exists} of which are present at the 1836 start date. {formable} countries are formable, of which {exists_form} exist at the start (+{special_form} more which can be formed only by effects); {releasable} are releasable, of which {exists_release} exist at the start (+{special_release} more which can be released only by effects). Countries can also appear on the map by culture secession or be generated as part of a revolution ({special_none} can only appear in this way)."
+        return f"There are {len(self.parser.countries)} countries defined in the game: {len(self.parser.existing_tags)} of which are present at the 1836 start date. {len(self.parser.formable_tags)} countries are formable, of which {exists_form} exist at the start (+{special_form} more which can be formed only by effects); {len(self.parser.releasable_tags)} are releasable, of which {exists_release} exist at the start (+{special_release} more which can be released only by effects). Countries can also appear on the map by culture secession or be generated as part of a revolution ({special_none} can only appear in this way)."
     
     def _get_states(self, country, region = False):
         states = [{
-            'state': state,
+            'state': state.display_name,
             'capital': ' [[File:state status capital.png|link=capital|20px]]' if state == country.capital_state else '',
             'split': ' [[File:state status split state.png|link=split state|20px]]' if len(state.owners) > 1 else '',
-            'region': self.parser.state_to_strategic_region_map[state.name].display_name
+            'region': state.get_strategic_region().display_name
         } for state in self.parser.states.values() if country in state.owners]
+        region_list = []
+        state_list = []
+        for state in states:
+            if state['capital'] == '':
+                state_list.append(state['state'] + state['split'])
+            else:
+                state_list.insert(0, state['state'] + state['capital'] + state['split'])
+            if state['region'] not in region_list:
+                region_list.append(state['region'])
         if region:
-            region_list = []
-            for state in states:
-                region_name = state.get('region')
-                if region_name not in region_list:
-                    region_list.append(region_name)
             return region_list
         else:
-            state_list = []
-            for state in states:
-                name = str(state.get('state'))
-                capital = str(state.get('capital'))
-                split = str(state.get('split'))
-                if capital == '':
-                    state_list.append(name + split)
-                else:
-                    state_list.insert(0,name + capital + split)
             return state_list
         
     def simple_country_table(self, country_list):
-        wiki_lister = self.parser.formatter.create_wiki_list
+        create_wiki_list = self.parser.formatter.create_wiki_list #need this version to use the no_list_with_one_element parameter, which is not present in the file_generator version
         countries = []
         for country in country_list:
             if country.exists():
                 countries.append({
                     'Country': f"[[File:{country.display_name}.png|36px|border]] {country.display_name}",
-                    'Primary cultures': wiki_lister([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
-                    'Starting states': wiki_lister(self._get_states(country), no_list_with_one_element=True),
-                    'Region': wiki_lister(self._get_states(country, region = True), no_list_with_one_element=True),
+                    'Primary cultures': create_wiki_list([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
+                    'Starting states': create_wiki_list(self._get_states(country), no_list_with_one_element=True),
+                    'Region': create_wiki_list(self._get_states(country, region = True), no_list_with_one_element=True),
                 })
-            if not country.exists():
+            else:
                 countries.append({
                     'Country': f"[[File:{country.display_name}.png|36px|border]] {country.display_name}",
-                    'Primary cultures': wiki_lister([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
+                    'Primary cultures': create_wiki_list([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
                     'Region': self.parser.state_to_strategic_region_map[country.capital_state.name].display_name
                 })
 
@@ -138,7 +106,7 @@ class TableGenerator(Vic3FileGenerator):
     def generate_decentralized_country_tables(self):
         section_title = "decentralized nations"
         tables = []
-        countries = [country for country in sorted(self.parser.countries.values(), key=attrgetter("display_name")) if country.type == "decentralized"]
+        countries = [country for country in sorted(self.parser.countries.values(), key=attrgetter("display_name")) if country.is_decentralized()]
         african_countries = [country for country in countries if country.exists() and 'Africa' in country.capital_state.get_geographic_regions()]
         american_countries = [country for country in countries if country.exists() and 'Americas' in country.capital_state.get_geographic_regions()]
         other_countries = [country for country in countries if country.exists() and country not in african_countries and country not in american_countries]
@@ -155,12 +123,6 @@ class TableGenerator(Vic3FileGenerator):
     
     def write_country_table(self):
         self._write_text_file('country_table', self.generate_country_table())
-
-    def generate_test_function(self):
-        for state in self.parser.states.values():
-            for georegion in state.get_geographic_regions():
-                print(georegion)
-        return ''
 
     def get_unlocks(self, tech: Technology):
         unlocks = []
