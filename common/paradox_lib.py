@@ -329,6 +329,7 @@ class ModifierType(NameableEntity):
     boolean: bool = False
     decimals: int = None
     good: bool = None
+    script_only: bool = None
     neutral: bool = None
     prefix: str = None
     postfix: str = None

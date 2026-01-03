@@ -60,13 +60,18 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                         'g': '{{{{green|{}}}}}',
                         'n': '{{{{red|{}}}}}',
                         'r': '{{{{red|{}}}}}',
+                        'negative_value': '{{{{red|{}}}}}',
                         'bold': "'''{}'''",
                         'b': "'''{}'''",
                         'italic': "''{}''",
+                        'tooltippable': '{}',
                         'v': '{}',  # white
                         'y': '{}',  # zero_value / white
                         'z': '{}',  # zero_value / white
                         'e': '{}',  # explanation_link in ck3 / TODO: this is normally blue, but we don't want to make it blue if it is a normal link, because they are already blue
+                        'indent_newline:2': '\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}',
+                        'indent_newline:3': '\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}',
+                        'indent_newline:4': '\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}',
                         }
         if format_key not in replacements:
             Vic3FileGenerator.warn('ignoring unknown formatting marker {} in "{}"'.format(format_key, match.group(0)))
@@ -231,11 +236,12 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             new_text = re.sub(r'#(\S+) ([^#]+)#!', self._apply_formatting_markers, previous_text)
 
         text = re.sub(r'@([^!]*)!', self._replace_icons, new_text)
+        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'([^']+)'\s*\).GetTextIcon\s*]", self._replace_icons, text)
         text = re.sub(r"\[\s*GetDefine\s*\(\s*'(?P<category>[^']*)'\s*,\s*'(?P<define>[^']*)'\s*\)\s*(\|\s*(?P<formatting>[-vK0+=%]+))?\s*]",
                       self._replace_defines, text)
-        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetName\s*]",
+        text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetName(?:NoFormatting)?\s*]",
                       lambda match: self.parser.localize(match.group('loc_key')), text)
-        text = re.sub(r"\[\s*GetLawType\s*\(\s*'(?P<law_key>[^']+)'\s*\).GetGroup.GetName\s*]",
+        text = re.sub(r"\[\s*GetLawType\s*\(\s*'(?P<law_key>[^']+)'\s*\).GetGroup.GetName(?:NoFormatting)?\s*]",
                       lambda match: self.parser.laws[match.group('law_key')].group.display_name, text)
         text = re.sub(r"\[\s*GetInterestGroupVariant\s*\(\s*'(?P<ig_key>[^']+)'\s*,\s*GetPlayer\s*\).GetNameWithCountryVariant\s*]",
                       lambda match: self.parser.interest_groups[match.group('ig_key')].display_name, text)
@@ -293,9 +299,10 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
 
     def format_key_for_compound_statement(self, key):
         key_mappings = {
-            'OR': 'At least one of',
-            'NOR': 'Neither of',
+            'OR': 'Any of',
+            'NOR': 'None of',
             'AND': 'All of',
+            'NAND': 'Not all of',
             'NOT': 'Not',
         }
         if key in key_mappings:
@@ -348,6 +355,10 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                     value = self.parser.states[value_without_prefix]
                 case 'rel':
                     value = self.parser.religions[value_without_prefix]
+                case 'sr':
+                    value = self.parser.strategic_regions[value_without_prefix]
+                case 'cu':
+                    value = self.parser.cultures[value_without_prefix]
         if isinstance(value, Vic3AdvancedEntity):
             value = value.get_wiki_link_with_icon()
         elif isinstance(value, NameableEntity):

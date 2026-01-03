@@ -359,7 +359,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
     def generate_all_production_methods(self):
         parser = self.parser
         sections = {}
-        sections['production_methods_manufacturing'] = self.generate_building_pms_helper('bg_manufacturing', one_table_per_building=True)
+        sections['production_methods_manufacturing'] = self.generate_building_pms_helper('bg_manufacturing', one_table_per_building=False)
         sections['production_methods_farms'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
                    'bg_agriculture' in b.building_groups_names_with_parents and 'bg_subsistence_agriculture' not in b.building_groups_names_with_parents])
         sections['production_methods_ranching'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
@@ -369,20 +369,20 @@ class BuildingTableGenerator(Vic3FileGenerator):
         sections['production_methods_plantations'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if 'bg_plantations' in b.building_groups_names_with_parents or b.name == 'building_rubber_plantation'])
         sections['production_methods_mining'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
                    'bg_mining' in b.building_groups_names_with_parents and 'building_gold_fields' not in b.name])
-        sections['production_methods_gold_fields'] = self.generate_building_pms_helper('bg_gold_fields', one_table_per_building=True)
-        sections['production_methods_oil_extraction'] = self.generate_building_pms_helper('bg_oil_extraction', one_table_per_building=True)
-        sections['production_methods_logging'] = self.generate_building_pms_helper('bg_logging', one_table_per_building=True)
-        sections['production_methods_whaling'] = self.generate_building_pms_helper('bg_whaling', one_table_per_building=True)
-        sections['production_methods_fishing'] = self.generate_building_pms_helper('bg_fishing', one_table_per_building=True)
+        sections['production_methods_gold_fields'] = self.generate_building_pms_helper('bg_gold_fields', one_table_per_building=False)
+        sections['production_methods_oil_extraction'] = self.generate_building_pms_helper('bg_oil_extraction', one_table_per_building=False)
+        sections['production_methods_logging'] = self.generate_building_pms_helper('bg_logging', one_table_per_building=False)
+        sections['production_methods_whaling'] = self.generate_building_pms_helper('bg_whaling', one_table_per_building=False)
+        sections['production_methods_fishing'] = self.generate_building_pms_helper('bg_fishing', one_table_per_building=False)
 
-        sections['production_methods_service'] = self.generate_building_pms_helper('bg_service', one_table_per_building=True)
-        sections['production_methods_arts'] = self.generate_building_pms_helper('bg_arts', one_table_per_building=True)
-        sections['production_methods_power'] = self.generate_building_pms_helper('bg_power', one_table_per_building=True)
+        sections['production_methods_service'] = self.generate_building_pms_helper('bg_service', one_table_per_building=False)
+        sections['production_methods_arts'] = self.generate_building_pms_helper('bg_arts', one_table_per_building=False)
+        sections['production_methods_power'] = self.generate_building_pms_helper('bg_power', one_table_per_building=False)
         sections['production_methods_government'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
-                   'bg_government' in b.building_groups_names_with_parents and 'bg_monuments' not in b.building_groups_names_with_parents], one_table_per_building=True)
-        sections['production_methods_trade'] = self.generate_building_pms_helper('bg_trade', one_table_per_building=True)
-        sections['production_methods_infrastructure'] = self.generate_building_pms_helper('bg_infrastructure', one_table_per_building=True)
-        sections['production_methods_barracks'] = self.generate_building_pms_helper(buildings=['building_barracks'])
+                   'bg_government' in b.building_groups_names_with_parents and 'bg_monuments' not in b.building_groups_names_with_parents], one_table_per_building=False)
+        sections['production_methods_trade'] = self.generate_building_pms_helper('bg_trade', one_table_per_building=False)
+        sections['production_methods_infrastructure'] = self.generate_building_pms_helper('bg_infrastructure', one_table_per_building=False)
+        sections['production_methods_barracks'] = self.generate_building_pms_helper(buildings=['building_barrack'])
         sections['production_methods_conscription_center'] = self.generate_building_pms_helper(buildings=['building_conscription_center'])
         sections['production_methods_naval_base'] = self.generate_building_pms_helper(buildings=['building_naval_base'])
         sections['production_methods_monuments_basic'] = self.generate_building_pms_for_specific_pms(
