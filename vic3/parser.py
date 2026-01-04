@@ -92,7 +92,7 @@ class Vic3Parser(JominiParser):
             extra_data_functions = {}
         if 'required_technologies' not in extra_data_functions:
             extra_data_functions['required_technologies'] = self.parse_technologies_section
-        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities, parsing_workarounds)
+        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities, parsing_workarounds, localization_suffix)
 
     @cached_property
     def formatter(self):
@@ -134,16 +134,6 @@ class Vic3Parser(JominiParser):
                                          cultures=country_data['cultures'],
                                          religion=religion)
         return countries
-
-    @cached_property
-    def decentralized_tags(self):
-        """returns a set of tags for decentralized nations"""
-        tags = set()
-        for file, data in self.parser.parse_files('common/country_definitions/*.txt'):
-            for tag, country_data in data:
-                if 'country_type' in country_data and country_data['country_type'] == 'decentralized':
-                    tags.add(tag)
-        return tags
 
     @cached_property
     def existing_tags(self):

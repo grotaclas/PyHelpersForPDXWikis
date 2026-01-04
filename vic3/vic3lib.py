@@ -20,7 +20,7 @@ class Vic3AdvancedEntity(AdvancedEntity):
 
 class Vic3ModifierType(ModifierType):
 
-    def _get_fully_localized_display_name_and_desc(self) -> (str, str):
+    def _get_fully_localized_display_name_and_desc(self) -> tuple[str, str]:
         display_name, description = super()._get_fully_localized_display_name_and_desc()
         if display_name == self.name:
             # modifiers which are named like state_catholic_standard_of_living_add
@@ -69,7 +69,7 @@ class State(NameableEntity):
     # arable_resources: list[str]
     # capped_resources: Tree
     provinces: list[str]
-    resources: dict[str, StateResource] = []
+    resources: dict[str, StateResource] = {}
     subsistence_building: str
     traits: list['StateTrait'] = []
     owners: list[str]
@@ -79,7 +79,7 @@ class State(NameableEntity):
         return vic3game.parser.state_to_strategic_region_map[self.name]
     
     def get_geographic_regions(self) -> list:
-        return vic3game.parser.state_to_geographic_region_map.get(self.name, '')
+        return vic3game.parser.state_to_geographic_region_map.get(self.name, [])
 
     def is_water(self):
         return self.get_strategic_region().is_water
@@ -94,7 +94,7 @@ class StateTrait(Vic3AdvancedEntity):
         self.disabling_technologies = disabling_technologies
         self.required_techs_for_colonization = required_techs_for_colonization
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     @cached_property
@@ -154,7 +154,7 @@ class Country(NameableEntity):
         return self.tag in vic3game.parser.effect_releasable_tags
     
     def is_decentralized(self):
-        return self.tag in vic3game.parser.decentralized_tags
+        return self.type == 'decentralized'
 
     def get_wiki_link_with_icon(self):
         return '{{flag|' + self.display_name + '}}'
@@ -202,7 +202,7 @@ class Law(Vic3AdvancedEntity):
     def get_wiki_page_name(self) -> str:
         return self.group.get_wiki_page()
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
 
@@ -218,7 +218,7 @@ class Technology(Vic3AdvancedEntity):
     def get_wiki_filename_prefix(self):
         return 'Invention'
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -288,7 +288,7 @@ class Building(Vic3AdvancedEntity):
     expandable: bool = True
     location: State = None
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -335,7 +335,7 @@ class ProductionMethod(Vic3AdvancedEntity):
         return [building for building in vic3game.parser.buildings.values()
                 if not group_names.isdisjoint(set(building.production_method_groups))]
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_filename_prefix(self) -> str:
@@ -352,7 +352,7 @@ class Decree(Vic3AdvancedEntity):
     state_trigger: Tree = None
     unlocking_laws: list[Law] = []  # currently unused
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -360,7 +360,7 @@ class Decree(Vic3AdvancedEntity):
 
 
 class DiplomaticAction(Vic3AdvancedEntity):
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -370,7 +370,7 @@ class DiplomaticAction(Vic3AdvancedEntity):
         return f'Diplomacy {self.display_name.lower()}.png'
 
 class TreatyArticle(Vic3AdvancedEntity):
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -381,7 +381,7 @@ class TreatyArticle(Vic3AdvancedEntity):
 
 
 class Party(Vic3AdvancedEntity):
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -409,7 +409,7 @@ class InterestGroup(Vic3AdvancedEntity):
 
 class MobilizationOption(Vic3AdvancedEntity):
     possible: Tree
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
 
@@ -422,19 +422,15 @@ class Unit(Vic3AdvancedEntity):
     upgrades: list[Unit] = []
     group: UnitGroup = None
     combat_unit_image: Tree
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
 
-class UnitGroup(NameableEntity):
+class UnitGroup(Vic3AdvancedEntity):
     units: list['Unit']
     unit_type_wiki_pages = {
         'army': 'Land warfare',
         'navy': 'Naval warfare',
-    }
-    unit_type_icon = {
-        'army': 'battalion',
-        'navy': 'flotilla',
     }
 
     def __init__(self, name: str, display_name: str, unit_group_type: str):
@@ -445,8 +441,8 @@ class UnitGroup(NameableEntity):
     def add_unit(self, unit: 'Unit'):
         self.units.append(unit)
 
-    def get_type_icon(self) -> str:
-        return self.unit_type_icon[self.unit_group_type]
+    def get_wiki_icon(self, size: str = '') -> str:
+        return self.get_wiki_file_tag()
     
     def get_wiki_page(self) -> str:
         return self.unit_type_wiki_pages[self.unit_group_type]

@@ -84,20 +84,19 @@ class TableGenerator(Vic3FileGenerator):
             return state_list
         
     def simple_country_table(self, country_list):
-        create_wiki_list = self.parser.formatter.create_wiki_list #need this version to use the no_list_with_one_element parameter, which is not present in the file_generator version
         countries = []
         for country in country_list:
             if country.exists():
                 countries.append({
                     'Country': f"[[File:{country.display_name}.png|36px|border]] {country.display_name}",
-                    'Primary cultures': create_wiki_list([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
-                    'Starting states': create_wiki_list(self._get_states(country), no_list_with_one_element=True),
-                    'Region': create_wiki_list(self._get_states(country, region = True), no_list_with_one_element=True),
+                    'Primary cultures': self.create_wiki_list([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
+                    'Starting states': self.create_wiki_list(self._get_states(country), no_list_with_one_element=True),
+                    'Region': self.create_wiki_list(self._get_states(country, region = True), no_list_with_one_element=True),
                 })
             else:
                 countries.append({
                     'Country': f"[[File:{country.display_name}.png|36px|border]] {country.display_name}",
-                    'Primary cultures': create_wiki_list([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
+                    'Primary cultures': self.create_wiki_list([self.parser.localize(culture) for culture in country.cultures], no_list_with_one_element=True),
                     'Region': self.parser.state_to_strategic_region_map[country.capital_state.name].display_name
                 })
 
