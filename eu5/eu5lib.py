@@ -164,10 +164,11 @@ class Eu5AdvancedEntity(AdvancedEntity):
         filename = self.get_icon_filename().replace('.dds', '.png')
         prefix = self.get_wiki_filename_prefix()
         filename = filename.removeprefix('icon_')
-        if not filename.lower().startswith(prefix.lower()):
-            filename = f'{prefix} {filename}'
         filename = filename.replace(':', '')
         filename = filename.replace('_', ' ')
+        prefix = prefix.replace('_', ' ')
+        if not filename.lower().startswith(prefix.lower()):
+            filename = f'{prefix} {filename}'
         return filename.capitalize()
 
     def get_wiki_icon(self, size: str = '32px') -> str:
