@@ -1152,7 +1152,7 @@ class Eu5Parser(JominiParser):
             short_name = right
         display_name = self.localize(f'{short_name}_focus')
         modifier = self.parse_modifier_section(societal_value_name, data, f'{side}_modifier', Eu5Modifier)
-        return SocietalValueOneSide(name, display_name, short_name=short_name, modifier=modifier)
+        return SocietalValueOneSide(name, display_name, short_name=short_name, modifier=modifier, side=side)
 
     @cached_property
     def societal_values(self) -> dict[str, SocietalValue]:

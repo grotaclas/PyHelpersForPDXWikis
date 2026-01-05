@@ -89,6 +89,24 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
             return ''
         return self.format_trigger(effect)
 
+    def format_key_value_pair(self, key: str, value, indent):
+        comparison_operators = {
+            'LESS_THAN': '<',
+            'LESS_THAN_EQUAL': '≤',
+            '=': '=',
+            'NOT_EQUAL': 'is not',
+            'GREATER_THAN': '>',
+            'GREATER_THAN_EQUAL': '≥'
+        }
+        if isinstance(value, Tree) and len(value) == 1 and list(value.keys())[0] in comparison_operators:
+            for comparison_str, comparison_value in value:
+                comparison_operator = comparison_operators[comparison_str]
+                if key.startswith('societal_value:'):
+                    typ, _, key_without_prefix = key.partition(':')
+                    return self.parser.societal_values[key_without_prefix].format(comparison_value, comparison_operator)
+
+        return super().format_key_value_pair(key, value, indent)
+
     def format_simple_statement(self, key, value):
         return f'{key}: {self.format_RHS(value)}'
 

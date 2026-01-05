@@ -2119,22 +2119,52 @@ class SocietalValue(Eu5AdvancedEntity):
     left_modifier: list[Eu5Modifier]
     right_modifier: list[Eu5Modifier]
 
+    def format(self, value: int|float, comparison_operator: str = '='):
+        flipped_operators = {
+            '<': '>',
+            '≤': '≥',
+            '>': '<',
+            '≥': '≤',
+        }
+        if value < 0:
+            side = self.left
+            value = value * -1
+            comparison_operator = flipped_operators[comparison_operator]
+        elif value == 0:
+            if comparison_operator in ['<', '≤']:
+                side = self.left
+                comparison_operator = flipped_operators[comparison_operator]
+            elif comparison_operator in ['>', '≥']:
+                side = self.right
+            else:
+                side = self
+        else:  # value > 0:
+            side = self.right
+
+        return f'{side.get_wiki_link_with_icon()} {comparison_operator} {value}'
 
 class SocietalValueOneSide(Eu5AdvancedEntity):
     name: str  # e.g. centralization_vs_decentralization_left
     short_name: str # e.g. centralization
     modifier: list[Eu5Modifier]
     societal_value: SocietalValue
+    side: str  # left | right
     icon_folder = 'SOCIETAL_VALUE_ICON_PATH'
     # icon_folder = 'SOCIETAL_VALUE_ILLUSTRATION_PATH'
 
-    def get_icon_filename(self, left_or_right: str) -> str:
-        assert left_or_right in ['left', 'right']
-        return f'{self.name}_{left_or_right}.dds'
+    def __init__(self, name: str, display_name: str, **kwargs):
+        assert kwargs['side'] in ['left', 'right']
+        super().__init__(name, display_name, **kwargs)
 
-    def get_wiki_filename(self, left_or_right: str) -> str:
-        assert left_or_right in ['left', 'right']
-        return super().get_wiki_filename()
+    def get_icon_filename(self) -> str:
+        return f'{self.name}_{self.side}.dds'
+
+    def get_wiki_filename(self) -> str:
+        return f'Societal value {self.short_name}.png'
+
+    def get_wiki_page_name(self) -> str:
+        return 'Societal Value'
+
 
 class SubjectMilitaryStance(Eu5AdvancedEntity):
     army_logistics_priority: int
