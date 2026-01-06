@@ -178,7 +178,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
 
     def get_possible_table_columns(self, assets: list[Eu5AdvancedEntity]):
         column_types = get_type_hints(assets[0].__class__)
-        if 'modifier' in column_types:
+        if 'modifier' in column_types and get_origin(column_types['modifier']) == list:
             modifier_is_filled = False
             for item in assets:
                 if item.modifier and len(item.modifier) > 0:
