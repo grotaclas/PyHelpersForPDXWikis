@@ -37,19 +37,25 @@ class JominiParser(metaclass=ABCMeta):
                         localization_dict[match.group(1)] = match.group(2)
         return localization_dict
 
-    def localize(self, key: str, default: str = None) -> str:
+    def localize(self, key: str, default: str = None, return_none_instead_of_default=False) -> str|None:
         """localize the key from the english localization files
 
-        if the key is not found, the default is returned
-        unless it is None in which case the key is returned
+        if the key is not found, the behavior depends on return_none_instead_of_default:
+            if it is true, None is returned
+            if it is false, the default is returned unless it is None in which case the key is returned
         """
-        if default is None:
-            default = key
 
         if key in self.localizationOverrides:
             return self.localizationOverrides[key]
+        elif key in self._localization_dict:
+            return self._localization_dict[key]
         else:
-            return self._localization_dict.get(key, default)
+            if return_none_instead_of_default:
+                return None
+            elif default is None:
+                return key
+            else:
+                return default
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE],
                                 extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,

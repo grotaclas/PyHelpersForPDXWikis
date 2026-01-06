@@ -28,6 +28,8 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
             return self.parser.localize(f'{parameter}_focus')
         if data_function == 'GetCountry' and name_function in ['GetAdjectiveWithNoTooltip', 'GetAdjective']:
             return self.parser.localize(f'{parameter}_ADJ')
+        if data_function == 'GetCountry' and name_function in ['GetLongName', 'GetLongNameWithNoTooltip'] and parameter in self.parser.countries:
+            return self.parser.countries[parameter].long_name
         return self.parser.localize(parameter)
 
     def apply_localization_formatting(self, text: str) -> str:

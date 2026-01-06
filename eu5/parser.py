@@ -61,11 +61,13 @@ class Eu5Parser(JominiParser):
                                 ) -> dict[str, AE]:
         if extra_data_functions is None:
             extra_data_functions = {}
-        if 'description' not in extra_data_functions:
+        if '_unformatted_description' not in extra_data_functions and 'description' not in extra_data_functions:
             if description_localization_prefix is None:
                 description_localization_prefix = localization_prefix
-            extra_data_functions['description'] = lambda name, data: self.formatter.format_localization_text(self.localize(description_localization_prefix + name + description_localization_suffix, default=''))
-        return super().parse_advanced_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix, allow_empty_entities, parsing_workarounds, localization_suffix)
+            extra_data_functions['_unformatted_description'] = lambda name, data: self.localize(description_localization_prefix + name + description_localization_suffix, default='')
+        if '_formatter' not in extra_data_functions:
+            extra_data_functions['_formatter'] = lambda name, data: self.formatter
+        return self.parse_nameable_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix=localization_prefix, allow_empty_entities=allow_empty_entities, parsing_workarounds=parsing_workarounds, localization_suffix=localization_suffix)
 
     @cached_property
     def modifier_icons(self) -> Tree:
@@ -91,15 +93,16 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def named_modifiers(self) -> dict[str, Eu5NamedModifier]:
-        return self.parse_nameable_entities('main_menu/common/static_modifiers', Eu5NamedModifier,
+        return self.parse_advanced_entities('main_menu/common/static_modifiers', Eu5NamedModifier,
                                             localization_prefix='STATIC_MODIFIER_NAME_',
+                                            description_localization_prefix='STATIC_MODIFIER_DESC_',
+                                            description_localization_suffix='',
                                             extra_data_functions={
                                                 'modifier': lambda name, data: self._parse_modifier_data(
                                                     Tree({name: value for name, value in data if name not in ['category', 'decaying', 'game_data']}),
                                                     modifier_class=Eu5Modifier),
                                                 'category': lambda name, data: data['game_data']['category'],
                                                 'decaying': lambda name, data: data['game_data']['decaying'] if 'decaying' in data['game_data'] else False,
-                                                'description': lambda name, data: self.formatter.format_localization_text(self.localize('STATIC_MODIFIER_DESC_' + name, default='')),
                                             })
 
     def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
@@ -309,7 +312,7 @@ class Eu5Parser(JominiParser):
         return self._map_entities[4]
 
     @cached_property
-    def _tag_specific_descriptions(self) -> dict[str, str]:
+    def tag_specific_descriptions(self) -> dict[str, str]:
         tag_to_description = {}
         for custom_loc in self.customizable_localization['country_history'].text.values():
             if not custom_loc.fallback:
@@ -354,7 +357,6 @@ class Eu5Parser(JominiParser):
                                                 # the default rank seems to be county. Pass it as extra data, so that it is set
                                                 # in the object instead of in the class, so that it gets cached correctly
                                                 'default_rank': lambda name, data: self.country_ranks['rank_county'],
-                                                'description': lambda name, data: self._tag_specific_descriptions.get(name, ''),
                                             }
         )
 
@@ -493,7 +495,12 @@ class Eu5Parser(JominiParser):
     @cached_property
     def game_concepts(self) -> dict[str, Eu5GameConcept]:
         """Includes the aliases as well"""
-        concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept, localization_prefix='game_concept_', allow_empty_entities=True)
+        concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept,
+                                                localization_prefix='game_concept_',
+                                                allow_empty_entities=True,
+                                                extra_data_functions={
+                                                    'description': lambda name, data: self.localize('game_concept_' + name + '_desc', default='')
+                                                })
         for name in list(concepts.keys()):  # iterate over a new list so that we can add to the concepts variable during the iteration
             concept = concepts[name]
             aliases = []

@@ -89,32 +89,20 @@ class Eu5Modifier(Modifier):
         return f'[[File:{self.modifier_type.get_wiki_filename()}|32px]] {value_and_name}'
 
 
-class Eu5NamedModifier(NameableEntity):
-    """Modifier describes several related concepts.
-    This class is for entities from the common/modifiers folder which groups together multiple modifiers and
-    gives them a name, category and description
-    For the individual modifiers see the class Eu5Modifier
-    For the possible types of these modifiers see Eu5ModifierType"""
-
-    category: str
-    description: str = ''
-    decaying: bool = False
-    modifier: list[Eu5Modifier]
-
-    def format_for_wiki(self, time_limit_weeks: int = None) -> str:
-        """@TODO: use wiki template"""
-        return "Modifier ''“{}”''{} giving:\n* {}".format(
-                                                       self.display_name,
-                                                       ' for {} weeks'.format(time_limit_weeks) if time_limit_weeks is not None else '',
-                                                       '\n* '.join([modifier.format_for_wiki() for modifier in self.modifier]))
-
-
 class Eu5AdvancedEntity(AdvancedEntity):
+    _unformatted_description: str = ''
+    _formatter = None
+    """Set in Eu5Parser.parse_advanced_entities()
+    :type: eu5.text_formatter.Eu5WikiTextFormatter"""
 
     icon_folder: str = None
     "either the name of the define in NGameIcons or the folder name relative to game/main_menu/gfx/interface/icons"
 
     base_icon_folder = eu5game.game_path / 'game/main_menu/gfx/interface/icons'
+
+    @cached_property
+    def description(self) -> str:
+        return self._formatter.format_localization_text(self._unformatted_description)
 
     def get_icon_filename(self) -> str:
         if self.icon:
@@ -175,6 +163,25 @@ class Eu5AdvancedEntity(AdvancedEntity):
         if not self.has_wiki_icon():
             return ''
         return self.get_wiki_file_tag(size, link='self')
+
+
+class Eu5NamedModifier(Eu5AdvancedEntity):
+    """Modifier describes several related concepts.
+    This class is for entities from the common/modifiers folder which groups together multiple modifiers and
+    gives them a name, category and description
+    For the individual modifiers see the class Eu5Modifier
+    For the possible types of these modifiers see Eu5ModifierType"""
+
+    category: str
+    decaying: bool = False
+    modifier: list[Eu5Modifier]
+
+    def format_for_wiki(self, time_limit_weeks: int = None) -> str:
+        """@TODO: use wiki template"""
+        return "Modifier ''“{}”''{} giving:\n* {}".format(
+                                                       self.display_name,
+                                                       ' for {} weeks'.format(time_limit_weeks) if time_limit_weeks is not None else '',
+                                                       '\n* '.join([modifier.format_for_wiki() for modifier in self.modifier]))
 
 
 class ScriptValue(NameableEntity):  # can't have a name, but we want to use logic of the parent class
@@ -720,9 +727,6 @@ class CountryDescriptionCategory(NameableEntity):
 
 
 class Country(Eu5AdvancedEntity):
-    # tag specific history from game/in_game/common/customizable_localization/country_history.txt
-    description: str = ''
-
     # From in_game/setup/countries
     color: PdxColor
     color2: PdxColor = None
@@ -782,6 +786,31 @@ class Country(Eu5AdvancedEntity):
             self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'
         if isinstance(self.timed_modifier, Tree):
             self.timed_modifier = [self.timed_modifier]
+
+    @cached_property
+    def description(self) -> str:
+        """tag specific history
+         from game/in_game/common/customizable_localization/country_history.txt
+
+         Can't be done during parsing, because the localization references other countries
+        """
+        return eu5game.parser.tag_specific_descriptions.get(self.name, '')
+
+    @cached_property
+    def long_name(self) -> str:
+        """from _LONG localization.
+        "Rank of Name" if loc is not set
+
+        Can't be done during parsing, because it needs
+        the resolved country_rank and display_name
+
+         @TODO: possibly get the long name from the game
+        """
+        from_loc = eu5game.parser.localize(f'{self.name}_LONG', return_none_instead_of_default=True)
+        if from_loc is None:
+            return f'{self.country_rank.display_name} of {self.display_name}'
+        else:
+            return from_loc
 
     def has_flag(self, flag: str):
         if self.variables and 'data' in self.variables:
