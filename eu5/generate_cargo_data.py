@@ -8,7 +8,7 @@ from eu5.eu5lib import Country
 
 
 class CargoDataGenerator(Eu5FileGenerator):
-    def create_cargo_tenplate_calls(self, template_name: str, data: list[dict[str, Any]]):
+    def create_cargo_template_calls(self, template_name: str, data: list[dict[str, Any]]):
         lines = []
         for item_data in data:
             lines.append(self.create_cargo_template_call(template_name, item_data, include_header_level=3))
@@ -92,7 +92,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             # unique_production_methods: list[list[eu5.eu5lib.ProductionMethod]]
             'notes': self.get_building_notes(building),
         } for building in sorted_buildings]
-        return self.create_cargo_tenplate_calls('Building', buildings)
+        return self.create_cargo_template_calls('Building', buildings)
 
     def generate_building_categories_cargo(self):
         sorted_categories = sorted(
@@ -105,7 +105,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             'description': category.description,
             'icon': category.get_wiki_filename(),
         } for category in sorted_categories]
-        return self.create_cargo_tenplate_calls('Building_category', categories)
+        return self.create_cargo_template_calls('Building_category', categories)
 
     def generate_countries_cargo(self):
         result = []
