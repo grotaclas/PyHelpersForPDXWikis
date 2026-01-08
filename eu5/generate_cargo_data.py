@@ -8,18 +8,25 @@ from eu5.eu5lib import Country
 
 
 class CargoDataGenerator(Eu5FileGenerator):
-    def create_cargo_tenplate_calls(self, data: list[dict[str, Any]], template_name: str):
+    def create_cargo_tenplate_calls(self, template_name: str, data: list[dict[str, Any]]):
         lines = []
         for item_data in data:
+            lines.append(self.create_cargo_template_call(template_name, item_data, include_header_level=3))
+        return '\n'.join(lines)
+
+    def create_cargo_template_call(self, template_name: str, item_data: dict[str, Any], include_header_level: int = None):
+        lines = []
+        if include_header_level is not None:
             if 'display_name' in item_data:
                 display_name = item_data["display_name"]
             else:
                 display_name = item_data["name"]
-            lines.append(f'=== {display_name} ===')
-            lines.append(f'{{{{{template_name}')
-            for column, value in item_data.items():
-                lines.append(f'|{column}={value}')
-            lines.append('}}')
+
+            lines.append(self.formatter.create_section_heading(display_name, include_header_level))
+        lines.append(f'{{{{{template_name}')
+        for column, value in item_data.items():
+            lines.append(f'|{column}={value}')
+        lines.append('}}')
         return '\n'.join(lines)
 
     def generate_building_table_cargo(self):
@@ -85,7 +92,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             # unique_production_methods: list[list[eu5.eu5lib.ProductionMethod]]
             'notes': self.get_building_notes(building),
         } for building in sorted_buildings]
-        return self.create_cargo_tenplate_calls(buildings, 'Building')
+        return self.create_cargo_tenplate_calls('Building', buildings)
 
     def generate_building_categories_cargo(self):
         sorted_categories = sorted(
@@ -98,13 +105,13 @@ class CargoDataGenerator(Eu5FileGenerator):
             'description': category.description,
             'icon': category.get_wiki_filename(),
         } for category in sorted_categories]
-        return self.create_cargo_tenplate_calls(categories, 'Building_category')
+        return self.create_cargo_tenplate_calls('Building_category', categories)
 
     def generate_countries_cargo(self):
         result = []
-        for initial, cargo_date in self.get_countries_cargo_by_initials().items():
+        for initial, cargo_data in self.get_countries_cargo_by_initials().items():
             result.append(f'== {initial} ==')
-            result.append(cargo_date)
+            result.append(cargo_data)
         return result
 
     def get_countries_cargo_by_initials(self):
@@ -116,83 +123,87 @@ class CargoDataGenerator(Eu5FileGenerator):
             # countries = [{
             countries = []
             for country in sorted_countries:
-                countries.append({
-                    'tag': country.name,
-                    'name': country.display_name,
-
-                    'country_rank': country.country_rank.display_name,
-                    'flag': '' if country.flag is None else f'Flag {country.flag}.png',
-                    'type': self.localize(country.type),
-                    'government': country.government['type'],
-                    'culture': '' if country.culture_definition is None else country.culture_definition.display_name if country.culture_definition else '',
-                    # culture_definition: <class 'eu5.eu5lib.Culture'>
-                    'religion': '' if country.religion_definition is None else country.religion_definition.get_wiki_link_with_icon() if country.religion_definition else '',
-                    # religion_definition: <class 'eu5.eu5lib.Religion'>
-                    'capital': '' if country.capital is None else country.capital.display_name if country.capital else '',
-                    # capital: <class 'eu5.eu5lib.Location'>
-
-                    'country_name': country.country_name,  # country_name: <class 'str'>
-                    'description_category': '' if country.description_category is None else country.description_category.display_name if country.description_category else '',
-                    # description_category: <class 'eu5.eu5lib.CountryDescriptionCategory'>
-                    'description': country.description,
-                    'map_color': country.color.css_color_string,
-
-                    'accepted_cultures': ';'.join(
-                        [accepted_cultures.display_name if accepted_cultures else '' for accepted_cultures in
-                         country.accepted_cultures]),  # accepted_cultures: list[eu5.eu5lib.Culture]
-                    'control': ';'.join([control.display_name if control else '' for control in
-                                         country.control]),  # control: list[eu5.eu5lib.Location]
-                    'court_language': '' if country.court_language is None else country.court_language.display_name if country.court_language else '',
-                    # court_language: <class 'eu5.eu5lib.Language'>
-                    'currency_data': ';'.join([currency_value.format() for currency_value in country.currency_data]),
-                    'difficulty': country.difficulty,  # difficulty: <class 'int'>
-                    'dynasty': country.dynasty,  # dynasty: <class 'str'>
-                    'formable_level': country.formable_level,  # formable_level: <class 'int'>
-                    'is_historic': 1 if country.is_historic else 0,  # is_historic: <class 'bool'>
-
-                    'liturgical_language': '' if country.liturgical_language is None else country.liturgical_language.display_name if country.liturgical_language else '',
-                    # liturgical_language: <class 'eu5.eu5lib.Language'>
-                    'our_cores_conquered_by_others': ';'.join(
-                        [our_cores_conquered_by_others.display_name if our_cores_conquered_by_others else '' for
-                         our_cores_conquered_by_others in
-                         country.our_cores_conquered_by_others]),
-                    # our_cores_conquered_by_others: list[eu5.eu5lib.Location]
-                    'own_conquered': ';'.join([own_conquered.display_name if own_conquered else '' for own_conquered in
-                                               country.own_conquered]),  # own_conquered: list[eu5.eu5lib.Location]
-                    'own_control_colony': ';'.join(
-                        [own_control_colony.display_name if own_control_colony else '' for own_control_colony in
-                         country.own_control_colony]),  # own_control_colony: list[eu5.eu5lib.Location]
-                    'own_control_conquered': ';'.join(
-                        [own_control_conquered.display_name if own_control_conquered else '' for own_control_conquered
-                         in
-                         country.own_control_conquered]),  # own_control_conquered: list[eu5.eu5lib.Location]
-                    'own_control_core': ';'.join(
-                        [own_control_core.display_name if own_control_core else '' for own_control_core in
-                         country.own_control_core]),  # own_control_core: list[eu5.eu5lib.Location]
-                    'own_control_integrated': ';'.join(
-                        [own_control_integrated.display_name if own_control_integrated else '' for
-                         own_control_integrated in
-                         country.own_control_integrated]),  # own_control_integrated: list[eu5.eu5lib.Location]
-                    'own_core': ';'.join([own_core.display_name if own_core else '' for own_core in
-                                          country.own_core]),  # own_core: list[eu5.eu5lib.Location]
-                    'religious_school': '' if country.religious_school is None else country.religious_school.get_wiki_link_with_icon() if country.religious_school else '',
-                    # religious_school: <class 'eu5.eu5lib.ReligiousSchool'>
-                    'revolt': 1 if country.revolt else 0,  # revolt: <class 'bool'>
-                    'scholars': ';'.join(
-                        [scholars.get_wiki_link_with_icon() if scholars else '' for scholars in country.scholars]),
-                    # scholars: list[eu5.eu5lib.ReligiousSchool]
-                    'starting_technology_level': '' if country.starting_technology_level is None else country.starting_technology_level,
-                    # starting_technology_level: <class 'int'>
-                    'timed_modifier': self.create_wiki_list([[f'{k}: v' for k, v in mod] for mod in
-                                                             country.timed_modifier]) if country.timed_modifier else '',
-                    'tolerated_cultures': ';'.join(
-                        [tolerated_cultures.display_name if tolerated_cultures else '' for tolerated_cultures in
-                         country.tolerated_cultures]),  # tolerated_cultures: list[eu5.eu5lib.Culture]
-
-                })
-                # for country in sorted_countries if country.name not in ['DUMMY', 'PIR', 'MER']]
-            cargo_data[initial] = self.create_cargo_tenplate_calls(countries, 'CountryCargo')
+                countries.append(self.get_country_cargo(country, 3))
+            cargo_data[initial] = '\n'.join(countries)
         return cargo_data
+
+    def get_country_cargo(self, country: Country, include_header_level: int = None) -> str:
+        country_data_for_cargo = {
+            'tag': country.name,
+            'name': country.display_name,
+
+            'country_rank': country.country_rank.display_name,
+            'flag': '' if country.flag is None else f'Flag {country.flag}.png',
+            'type': self.localize(country.type),
+            'government': country.government['type'],
+            'culture': '' if country.culture_definition is None else country.culture_definition.display_name if country.culture_definition else '',
+            # culture_definition: <class 'eu5.eu5lib.Culture'>
+            'religion': '' if country.religion_definition is None else country.religion_definition.get_wiki_link_with_icon() if country.religion_definition else '',
+            # religion_definition: <class 'eu5.eu5lib.Religion'>
+            'capital': '' if country.capital is None else country.capital.display_name if country.capital else '',
+            # capital: <class 'eu5.eu5lib.Location'>
+
+            'country_name': country.country_name,  # country_name: <class 'str'>
+            'description_category': '' if country.description_category is None else country.description_category.display_name if country.description_category else '',
+            # description_category: <class 'eu5.eu5lib.CountryDescriptionCategory'>
+            'description': country.description,
+            'map_color': country.color.css_color_string,
+
+            'accepted_cultures': ';'.join(
+                [accepted_cultures.display_name if accepted_cultures else '' for accepted_cultures in
+                 country.accepted_cultures]),  # accepted_cultures: list[eu5.eu5lib.Culture]
+            'control': ';'.join([control.display_name if control else '' for control in
+                                 country.control]),  # control: list[eu5.eu5lib.Location]
+            'court_language': '' if country.court_language is None else country.court_language.display_name if country.court_language else '',
+            # court_language: <class 'eu5.eu5lib.Language'>
+            'currency_data': ';'.join([currency_value.format() for currency_value in country.currency_data]),
+            'difficulty': country.difficulty,  # difficulty: <class 'int'>
+            'dynasty': country.dynasty,  # dynasty: <class 'str'>
+            'formable_level': country.formable_level,  # formable_level: <class 'int'>
+            'is_historic': 1 if country.is_historic else 0,  # is_historic: <class 'bool'>
+
+            'liturgical_language': '' if country.liturgical_language is None else country.liturgical_language.display_name if country.liturgical_language else '',
+            # liturgical_language: <class 'eu5.eu5lib.Language'>
+            'our_cores_conquered_by_others': ';'.join(
+                [our_cores_conquered_by_others.display_name if our_cores_conquered_by_others else '' for
+                 our_cores_conquered_by_others in
+                 country.our_cores_conquered_by_others]),
+            # our_cores_conquered_by_others: list[eu5.eu5lib.Location]
+            'own_conquered': ';'.join([own_conquered.display_name if own_conquered else '' for own_conquered in
+                                       country.own_conquered]),  # own_conquered: list[eu5.eu5lib.Location]
+            'own_control_colony': ';'.join(
+                [own_control_colony.display_name if own_control_colony else '' for own_control_colony in
+                 country.own_control_colony]),  # own_control_colony: list[eu5.eu5lib.Location]
+            'own_control_conquered': ';'.join(
+                [own_control_conquered.display_name if own_control_conquered else '' for own_control_conquered
+                 in
+                 country.own_control_conquered]),  # own_control_conquered: list[eu5.eu5lib.Location]
+            'own_control_core': ';'.join(
+                [own_control_core.display_name if own_control_core else '' for own_control_core in
+                 country.own_control_core]),  # own_control_core: list[eu5.eu5lib.Location]
+            'own_control_integrated': ';'.join(
+                [own_control_integrated.display_name if own_control_integrated else '' for
+                 own_control_integrated in
+                 country.own_control_integrated]),  # own_control_integrated: list[eu5.eu5lib.Location]
+            'own_core': ';'.join([own_core.display_name if own_core else '' for own_core in
+                                  country.own_core]),  # own_core: list[eu5.eu5lib.Location]
+            'religious_school': '' if country.religious_school is None else country.religious_school.get_wiki_link_with_icon() if country.religious_school else '',
+            # religious_school: <class 'eu5.eu5lib.ReligiousSchool'>
+            'revolt': 1 if country.revolt else 0,  # revolt: <class 'bool'>
+            'scholars': ';'.join(
+                [scholars.get_wiki_link_with_icon() if scholars else '' for scholars in country.scholars]),
+            # scholars: list[eu5.eu5lib.ReligiousSchool]
+            'starting_technology_level': '' if country.starting_technology_level is None else country.starting_technology_level,
+            # starting_technology_level: <class 'int'>
+            'timed_modifier': self.create_wiki_list([[f'{k}: v' for k, v in mod] for mod in
+                                                     country.timed_modifier]) if country.timed_modifier else '',
+            'tolerated_cultures': ';'.join(
+                [tolerated_cultures.display_name if tolerated_cultures else '' for tolerated_cultures in
+                 country.tolerated_cultures]),  # tolerated_cultures: list[eu5.eu5lib.Culture]
+
+        }
+        return self.create_cargo_template_call('CountryCargo', country_data_for_cargo, include_header_level)
+
 
 if __name__ == '__main__':
     CargoDataGenerator().run(sys.argv)
