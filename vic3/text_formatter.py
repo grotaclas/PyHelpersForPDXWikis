@@ -231,7 +231,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             new_text = re.sub(r'#(\S+) ([^#]+)#!', self._apply_formatting_markers, previous_text)
 
         text = re.sub(r'@([^!]*)!', self._replace_icons, new_text)
-        text = re.sub(r"\[\s*GetDefine\s*\(\s*'(?P<category>[^']*)'\s*,\s*'(?P<define>[^']*)'\s*\)\s*(\|\s*(?P<formatting>[-vK0+=%]+))?\s*]",
+        text = re.sub(r"\[\s*GetDefine\s*\(\s*'(?P<category>[^']*)'\s*,\s*'(?P<define>[^']*)'\s*\)\s*(\|\s*(?P<formatting>[-vK0+=%W]+))?\s*]",
                       self._replace_defines, text)
         text = re.sub(r"\[\s*Get[a-zA-Z_]+\s*\(\s*'(?P<loc_key>[^']+)'\s*\).GetName\s*]",
                       lambda match: self.parser.localize(match.group('loc_key')), text)
