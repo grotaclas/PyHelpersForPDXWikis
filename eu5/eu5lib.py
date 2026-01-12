@@ -1564,7 +1564,15 @@ class CasusBelli(Eu5AdvancedEntity):
     war_goal_type: 'Wargoal'
     icon_folder = 'CASUS_BELLI_ICON_PATH' # 30 / 92 icons found
 class CoatOfArms(Eu5AdvancedEntity):
-    pass
+    color1: PdxColor = None
+    color2: PdxColor = None
+    color3: PdxColor = None
+    color4: PdxColor = None
+    color5: PdxColor = None
+    colored_emblem: list[Tree] = []
+    pattern: str = ''
+    sub: Tree = None
+    textured_emblem: list[Tree] = []
 class CharacterInteraction(Eu5AdvancedEntity):
     ai_tick: Any = None # possible types(out of 27): <class 'str'>(26), list[str](1)
     ai_tick_frequency: int = 0
