@@ -394,7 +394,6 @@ class Eu5OneTypeHelper(OneTypeHelper):
             cargo_preview_lines.append('|}')
             print('\n'.join(cargo_preview_lines))
         else:
-            print(f'{base_indent_str}}} for {var_name} in {source_var_name}]')
             print(f"""{base_indent_str}return self.make_wiki_table({result_var_name}, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
@@ -538,10 +537,11 @@ def advanced_parsing():
         # 'in_game/common/artist_work'
         # 'in_game/common/auto_modifiers',
         # 'main_menu/common/static_modifiers',
-        'in_game/common/parliament_issues',
+        # 'in_game/common/parliament_issues',
+        'main_menu/common/coat_of_arms/coat_of_arms',
         # depth=2,
         # ignored_keys=list(eu5game.parser.modifier_types.keys())
-        # ignored_toplevel_keys=['current_age', 'road_network'],
+        ignored_toplevel_keys=['template'],
 
     ).print_examples_and_code()
 
@@ -744,9 +744,10 @@ def generate_tables_all():
 
 if __name__ == '__main__':
     #     ('in_game/common/estate_privileges', 'privilege', 'estate_privileges'),
-    generate_tables_all()
-    exit()
-    do_advanced = True
+    # table_generators([('in_game/setup/locations', 'location', 'locations'),], cargo=True)
+    # generate_tables_all()
+    # exit()
+    do_advanced = False
     if do_advanced or len(sys.argv) > 1:
         advanced_parsing_multiple()
     else:
