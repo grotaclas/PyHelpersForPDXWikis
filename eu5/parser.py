@@ -178,7 +178,9 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def age(self) -> dict[str, Age]:
-        return self.parse_advanced_entities('in_game/common/age', Age)
+        return self.parse_advanced_entities('in_game/common/age', Age, extra_data_functions={
+            'long_name': lambda name, data: self.formatter.strip_formatting(self.localize(f'age_format_{name}'))
+        })
 
     @cached_property
     def building_category(self) -> dict[str, BuildingCategory]:

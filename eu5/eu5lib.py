@@ -355,7 +355,7 @@ class Continent(NameableEntity):
 
 
 class Advance(Eu5AdvancedEntity):
-    age: str
+    age: 'Age'
     ai_preference_tags: list = [str]
     ai_weight: Tree = None
     allow: Trigger = None
@@ -638,6 +638,7 @@ class ProductionMethod(NameableEntity):
         return [self.display_name, data]
 
 class Age(Eu5AdvancedEntity):
+    long_name: str  # e.g. Age of Traditions
     efficiency: float
     hegemons_allowed: bool = False
     max_ai_privilege_per_estate: Tree
