@@ -1,6 +1,7 @@
 import copy
 import numbers
 import re
+from dataclasses import dataclass, field
 from enum import StrEnum
 from functools import cached_property, lru_cache
 from pathlib import Path
@@ -1723,12 +1724,30 @@ class Ethnicity(Eu5AdvancedEntity):
     skin_color: Tree
     template: 'Ethnicity' = None
 class FlagDefinition(Eu5AdvancedEntity):
-    flag_definition: list[Tree] = []
+    allow_overlord_canton: bool = False
+    coa: CoatOfArms
+    coa_with_overlord_canton: str = None  # should be CoatOfArms, but the only case where it is used references a non-existing coa
+    overlord_canton_scale: list[float] = []
+    priority: int
+    subject_canton: CoatOfArms = None
+    trigger: Trigger = None
 
-    def __init__(self, name: str, display_name: str, **kwargs):
-        if isinstance(kwargs['flag_definition'], Tree):
-            kwargs['flag_definition'] = [kwargs['flag_definition']]
-        super().__init__(name, display_name, **kwargs)
+    parent: 'FlagDefinitionList'
+    dummy: bool = False  # for countries which don't have a flag definition and instead use the coa for their tag
+
+    @cached_property
+    def country(self) -> Country:
+        return self.parser.countries_including_formables[self.parent.tag]
+
+
+@dataclass
+class FlagDefinitionList:
+    tag: str
+    flag_definitions: list[FlagDefinition] = field(default_factory=list)
+
+    def __post_init__(self):
+        for flag_def in self.flag_definitions:
+            flag_def.parent = self
 
 class FormableCountry(Eu5AdvancedEntity):
     adjective: str = '' # possible types(out of 129): <class 'str'>(129), <class 'eu5.eu5lib.CustomizableLocalization'>(12)

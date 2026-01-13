@@ -52,7 +52,7 @@ class Eu5Parser(JominiParser):
         return super().parse_nameable_entities(folder, entity_class, extra_data_functions, transform_value_functions, entity_level, level_headings_keys,
                                                parsing_workarounds, localization_prefix, allow_empty_entities, localization_suffix)
 
-    def parse_advanced_entities(self, folder: str, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
+    def parse_advanced_entities(self, folder: str|Tree, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
                                 transform_value_functions: dict[str, Callable[[Any], Any]] = None, localization_prefix: str = '', allow_empty_entities=False,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
                                 description_localization_prefix: str = None,
@@ -64,7 +64,7 @@ class Eu5Parser(JominiParser):
         if '_unformatted_description' not in extra_data_functions and 'description' not in extra_data_functions:
             if description_localization_prefix is None:
                 description_localization_prefix = localization_prefix
-            extra_data_functions['_unformatted_description'] = lambda name, data: self.localize(description_localization_prefix + name + description_localization_suffix, default='')
+            extra_data_functions['_unformatted_description'] = lambda name, data: self.localize(f'{description_localization_prefix}{name}{description_localization_suffix}', default='')
         if '_formatter' not in extra_data_functions:
             extra_data_functions['_formatter'] = lambda name, data: self.formatter
         return self.parse_nameable_entities(folder, entity_class, extra_data_functions, transform_value_functions, localization_prefix=localization_prefix, allow_empty_entities=allow_empty_entities, parsing_workarounds=parsing_workarounds, localization_suffix=localization_suffix)
@@ -495,6 +495,48 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/estate_privileges', EstatePrivilege)
 
     @cached_property
+    def flag_definitions(self) -> dict[str, FlagDefinitionList]:
+        """Includes dummy flag definitions for countries which use the coa which has the same name as their tag"""
+        result = {}
+        for tag, flag_definitions_data in self.parser.parse_folder_as_one_file('main_menu/common/flag_definitions').merge_duplicate_keys():
+            if tag == 'DEFAULT':
+                continue  # default is special and would need different handling
+            flag_definitions = flag_definitions_data['flag_definition']
+            if isinstance(flag_definitions, Tree):
+                flag_definitions = [flag_definitions]
+            result[tag] = FlagDefinitionList(
+                tag=tag,
+                flag_definitions=list(
+                    self.parse_advanced_entities(
+                        Tree({
+                            f'{tag}_flag_definition_{i}': flag_def
+                            for i, flag_def in enumerate(flag_definitions)
+                        }),
+                        FlagDefinition,
+                        extra_data_functions={
+                            'tag': lambda _name, _data: tag
+                        }
+                    ).values()
+                )
+            )
+        tags_with_coas_without_flag_def = (set(self.countries_including_formables.keys()) & set(
+            self.coat_of_arms.keys())) - set(result.keys())
+        for tag in tags_with_coas_without_flag_def:
+            result[tag] = FlagDefinitionList(
+                tag=tag,
+                flag_definitions=[
+                    FlagDefinition(
+                        f'{tag}_dummy_flag_definition',
+                        f'{tag}_dummy_flag_definition',
+                        coa=self.coat_of_arms[tag],
+                        priority=1,
+                        dummy=True,
+                    ),
+                ]
+            )
+        return result
+
+    @cached_property
     def game_concepts(self) -> dict[str, Eu5GameConcept]:
         """Includes the aliases as well"""
         concepts = self.parse_advanced_entities('main_menu/common/game_concepts', Eu5GameConcept,
@@ -892,9 +934,6 @@ class Eu5Parser(JominiParser):
     @cached_property
     def ethnicities(self) -> dict[str, Ethnicity]:
         return self.parse_advanced_entities('in_game/common/ethnicities', Ethnicity)
-    @cached_property
-    def flag_definitions(self) -> dict[str, FlagDefinition]:
-        return self.parse_advanced_entities('main_menu/common/flag_definitions', FlagDefinition)
     @cached_property
     def formable_countries(self) -> dict[str, FormableCountry]:
         return self.parse_advanced_entities('in_game/common/formable_countries', FormableCountry,
