@@ -482,6 +482,25 @@ class Eu5Parser(JominiParser):
         return result
 
     @cached_property
+    def dynasties(self) -> dict[str, Dynasty]:
+        """Only scripted dynasties from setup, but not from the dynasty names"""
+        return self.parse_advanced_entities(self.setup_data['dynasty_manager'], Dynasty, extra_data_functions={
+                                            'display_name': lambda entity_name, entity_data: self.formatter.strip_formatting(
+                                                self.localize(entity_data['name']['name']),
+                                                strip_newlines=True)
+                                            })
+
+    @cached_property
+    def dynasty_names(self) -> dict[str, Dynasty|Language]:
+        """Includes dynasty names from setup (with their Dynasty)
+         and from the languages and dialects(with their Language)"""
+        names = {dynasty_name: language
+                 for language in self.languages_including_dialects.values()
+                 for dynasty_name in language.dynasty_names}
+        names.update(self.dynasties)
+        return names
+
+    @cached_property
     def earthquakes(self) -> dict[str, Location]:
         """earthquake zone locations from the earthquakes list in game/in_game/map_data/default.map """
         return {name: self.locations[name] for name in self.default_map['earthquakes']}
@@ -605,7 +624,10 @@ class Eu5Parser(JominiParser):
             results[language_name] = language
             if language.dialects:
                 for dialect_name, dialect in language.dialects.items():
-                    results[dialect_name] = dialect
+                    if dialect_name in results:
+                        print(f'Error {dialect_name} already defined {results[dialect_name]}')
+                    else:
+                        results[dialect_name] = dialect
         return results
 
     @cached_property

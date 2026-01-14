@@ -883,6 +883,14 @@ class Estate(Eu5AdvancedEntity):
         return super().get_wiki_filename().replace(' estate.png', '.png')
 
 
+class Dynasty(Eu5AdvancedEntity):
+    dynasty_name_type: str = ''
+    female_names: list[str] = []
+    home: Location
+    important: bool = False
+    male_names: list[str] = []
+
+
 class EstatePrivilege(Eu5AdvancedEntity):
     estate: Estate
 
@@ -995,7 +1003,7 @@ class Language(Eu5AdvancedEntity):
     descendant_suffix: str = ''
     descendant_suffix_female: str = ''
     descendant_suffix_male: str = ''
-    dialects: 'Language' = None
+    dialects: dict[str, 'Language'] = None
     dynasty_names: list[str] = []
     dynasty_template_keys: list[str] = []
     fallback: 'Language' = None
