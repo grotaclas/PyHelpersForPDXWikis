@@ -525,6 +525,7 @@ class Eu5Parser(JominiParser):
                 flag_definitions = [flag_definitions]
             result[tag] = FlagDefinitionList(
                 tag=tag,
+                parser=self,
                 flag_definitions=list(
                     self.parse_advanced_entities(
                         Tree({
@@ -543,6 +544,7 @@ class Eu5Parser(JominiParser):
         for tag in tags_with_coas_without_flag_def:
             result[tag] = FlagDefinitionList(
                 tag=tag,
+                parser=self,
                 flag_definitions=[
                     FlagDefinition(
                         f'{tag}_dummy_flag_definition',

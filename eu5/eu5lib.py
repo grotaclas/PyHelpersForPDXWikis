@@ -1746,18 +1746,26 @@ class FlagDefinition(Eu5AdvancedEntity):
     dummy: bool = False  # for countries which don't have a flag definition and instead use the coa for their tag
 
     @cached_property
-    def country(self) -> Country:
-        return self.parser.countries_including_formables[self.parent.tag]
+    def country(self) -> Country|None:
+        return self.parent.country
 
 
 @dataclass
 class FlagDefinitionList:
     tag: str
     flag_definitions: list[FlagDefinition] = field(default_factory=list)
+    parser: Any = None
 
     def __post_init__(self):
         for flag_def in self.flag_definitions:
             flag_def.parent = self
+
+    @cached_property
+    def country(self) -> Country|None:
+        if self.tag in self.parser.countries_including_formables:
+            return self.parser.countries_including_formables[self.tag]
+        else:
+            return None
 
 class FormableCountry(Eu5AdvancedEntity):
     adjective: str = '' # possible types(out of 129): <class 'str'>(129), <class 'eu5.eu5lib.CustomizableLocalization'>(12)
