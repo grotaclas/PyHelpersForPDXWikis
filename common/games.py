@@ -178,6 +178,7 @@ class HeartsofIron4(Game):
     """Never construct this object manually. Use the variable hoi4game instead.
     This way all data can be cached without having to pass on references to the game or the parser"""
     name = 'Hearts of Iron 4'
+    alternative_name = 'Hearts of Iron IV'
     short_game_name = 'hoi4'
     wiki_domain = 'hoi4.paradoxwikis.com'
     game_path = eu4dir / '../Hearts of Iron IV'

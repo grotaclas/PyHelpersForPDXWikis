@@ -46,6 +46,7 @@ class Game:
     # these properties have to be set by the subclasses
     name: str
     short_game_name: str
+    alternative_name: str = None
     game_path: Path
     documents_path: Path
     launcher_settings: Path

@@ -11,6 +11,7 @@ class CitiesSkylines2(Game):
     """Never construct this object manually. Use the variable cs2game instead.
     This way all data can be cached without having to pass on references to the game or the parser"""
     name = 'Cities: Skylines II'
+    alternative_name = 'Cities: Skylines 2'
     short_game_name = 'cs2'
     game_path = CS2DIR
     launcher_settings = game_path / 'Launcher/launcher-settings.json'
