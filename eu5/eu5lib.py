@@ -776,7 +776,7 @@ class Country(Eu5AdvancedEntity):
     religious_school: 'ReligiousSchool' = None
     revolt: bool = False
     scholars: list['ReligiousSchool'] = []
-    starting_technology_level: int = None
+    starting_technology_level: int = 0
     timed_modifier: list[Tree] = None # TODO implement timed modifiers
     tolerated_cultures: list['Culture'] = []
     type: str = 'location'
