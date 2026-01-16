@@ -116,15 +116,14 @@ class CargoDataGenerator(Eu5FileGenerator):
 
     def get_countries_cargo_by_initials(self):
         cargo_data = {}
-        sorted_countries: list[Country]
-        for initial, sorted_countries in unsorted_groupby(
+        countries: list[Country]
+        for initial, countries in unsorted_groupby(
                 filter(lambda c: c.name not in ['DUMMY', 'PIR', 'MER'], self.parser.countries.values()),
                 key=lambda c: c.display_name[0]):
-            # countries = [{
-            countries = []
-            for country in sorted_countries:
-                countries.append(self.get_country_cargo(country, 3))
-            cargo_data[initial] = '\n'.join(countries)
+            country_cargo_templates = []
+            for country in sorted(countries, key=attrgetter('display_name')):
+                country_cargo_templates.append(self.get_country_cargo(country, 3))
+            cargo_data[initial] = '\n'.join(country_cargo_templates)
         return cargo_data
 
     def get_country_cargo(self, country: Country, include_header_level: int = None) -> str:
