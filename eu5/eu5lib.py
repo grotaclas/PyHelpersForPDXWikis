@@ -87,6 +87,8 @@ class Eu5Modifier(Modifier):
         elif self.name == 'scale':
             return 'generating of triggers not supported yet'  # @TODO
         value_and_name = super().format_for_wiki()
+        if self.modifier_type.ai:
+            value_and_name = f"''{value_and_name}''<ref name=\"{self.modifier_type.name}_only_ai\">The modifier {self.modifier_type.parser.formatter.quote(self.display_name)} is only used for AI decision making and has no impact on countries played by human players</ref>"
         return f'[[File:{self.modifier_type.get_wiki_filename()}|32px]] {value_and_name}'
 
 
