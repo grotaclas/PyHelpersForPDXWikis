@@ -760,7 +760,7 @@ class Country(Eu5AdvancedEntity):
     discovered_provinces: list[Province] = []
     discovered_regions: list[Region] = []
     dynasty: str = ''
-    flag: str = None
+    flag: 'CoatOfArms' = None
     government: Tree  # @TODO: government parsing
     # government.type: 'GovernmentType'
     include: str = ''
@@ -786,7 +786,7 @@ class Country(Eu5AdvancedEntity):
         if 'country_rank' not in kwargs:
             kwargs['country_rank'] = default_rank
         super().__init__(name, display_name, **kwargs)
-        if self.country_name:
+        if self.country_name and self.country_name != self.name:
             self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'
         if isinstance(self.timed_modifier, Tree):
             self.timed_modifier = [self.timed_modifier]
