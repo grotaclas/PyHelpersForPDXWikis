@@ -132,7 +132,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             'name': country.display_name,
 
             'country_rank': country.country_rank.display_name,
-            'flag': '' if country.flag is None else f'Flag {country.flag}.png',
+            'flag': '' if country.flag is None else f'Flag {country.flag}.png' if isinstance(country.flag, str) else f'Flag {country.flag.name}.png',
             'type': self.localize(country.type),
             'government': country.government['type'],
             'culture': '' if country.culture_definition is None else country.culture_definition.display_name if country.culture_definition else '',
@@ -194,7 +194,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             # scholars: list[eu5.eu5lib.ReligiousSchool]
             'starting_technology_level': '' if country.starting_technology_level is None else country.starting_technology_level,
             # starting_technology_level: <class 'int'>
-            'timed_modifier': self.create_wiki_list([[f'{k}: v' for k, v in mod] for mod in
+            'timed_modifier': self.create_wiki_list([[f'{k}: {v}' for k, v in mod] for mod in
                                                      country.timed_modifier]) if country.timed_modifier else '',
             'tolerated_cultures': ';'.join(
                 [tolerated_cultures.display_name if tolerated_cultures else '' for tolerated_cultures in
