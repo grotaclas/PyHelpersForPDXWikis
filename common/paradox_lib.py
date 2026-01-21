@@ -60,7 +60,7 @@ class Game:
         return json_object['rawVersion'].removeprefix('v')
 
     @cached_property
-    def full_version(self):
+    def full_version(self) -> str:
         json_object = json.load(open(self.launcher_settings, encoding='utf-8'))
         self.version = json_object['rawVersion'].removeprefix('v')
         return json_object['version']
@@ -83,6 +83,18 @@ class Game:
         path = CACHEPATH / self.short_game_name / re.sub(r'[^a-zA-Z0-9._]', '_', self.full_version)
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @cached_property
+    def checksum(self) -> str | None:
+        checksum_file = self.game_path / 'binaries/checksum.txt'
+        if checksum_file.exists():
+            full_checksum = checksum_file.read_text().strip()
+            return full_checksum[-4:]
+        version_extra = re.search(r'\((.*?)\)$', self.full_version)
+        if version_extra is None:
+            return None
+        else:
+            return version_extra.group(1)
 
 
 class PdxColor(sRGBColor):
