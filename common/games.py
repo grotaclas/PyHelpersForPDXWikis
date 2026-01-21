@@ -1,3 +1,4 @@
+from PyHelpersForPDXWikis.localsettings import STELLARISDIR, CK3DIR
 from aow4.game import aow4game
 from common.paradox_lib import Game
 from cs2.game import cs2game
@@ -169,6 +170,8 @@ class CrusaderKings3(Game):
     name = 'Crusader Kings 3'
     short_game_name = 'ck3'
     wiki_domain = 'ck3.paradoxwikis.com'
+    game_path = CK3DIR
+    launcher_settings = game_path / 'launcher/launcher-settings.json'
 
 
 ck3game = CrusaderKings3()
@@ -216,6 +219,8 @@ class Stellaris(Game):
     name = 'Stellaris'
     short_game_name = 'stellaris'
     wiki_domain = 'stellaris.paradoxwikis.com'
+    game_path = STELLARISDIR
+    launcher_settings = game_path / 'launcher-settings.json'
 
 
 stellarisgame = Stellaris()

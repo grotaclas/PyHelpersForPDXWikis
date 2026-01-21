@@ -59,6 +59,18 @@ EU5DIR_DOCUMENTS = Path('~/Documents/Paradox Interactive/Europa Universalis V').
 # optional, can be used to change which localisation is read from the game files
 # EU5_LANGUAGE = 'english'
 
+# the folder where Crusader Kings III is installed
+CK3DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Crusader Kings III')            # windows
+# CK3DIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Crusader Kings III') # cygwin
+# CK3DIR = Path('~/.steam/steam/steamapps/common/Crusader Kings III').expanduser()           # linux
+# CK3DIR = Path('~/Library/Application Support/Steam/steamapps/common/Crusader Kings III').expanduser() # macOS
+
+# the folder where Stellaris is installed
+STELLARISDIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Stellaris')            # windows
+# STELLARISDIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Stellaris') # cygwin
+# STELLARISDIR = Path('~/.steam/steam/steamapps/common/Stellaris').expanduser()           # linux
+# STELLARISDIR = Path('~/Library/Application Support/Steam/steamapps/common/Stellaris').expanduser() # macOS
+
 # generated files will be stored in a game/version subfolder of this folder
 # per default we just use output in the base folder of the project
 OUTPATH = Path(__file__).absolute().parents[1] / 'output'
