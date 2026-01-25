@@ -43,7 +43,7 @@ class FileGenerator:
     def _write_text_file(self, name: str, content: str | list | dict):
         if isinstance(content, dict):
             for name_suffix, data in content.items():
-                self._really_write_file(f'{name}_{name_suffix}', data)
+                self._write_text_file(f'{name}_{name_suffix}', data)
         elif isinstance(content, list):
             self._really_write_file(name, '\n'.join(content))
         else:
