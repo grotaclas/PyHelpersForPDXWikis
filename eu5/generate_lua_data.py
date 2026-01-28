@@ -34,6 +34,7 @@ local NDefines = {luadata.serialize(result, indent=' ')}
                 mod_data['format'] = mod_type.format
             mod_data['color'] = mod_type.color
             mod_data['decimals'] = mod_type.decimals
+            mod_data['category'] = mod_type.category
 
             if mod_type.icon_file != self.parser.default_modifier_icon:
                 mod_data['icon'] = mod_type.get_wiki_filename().removesuffix('.png')
