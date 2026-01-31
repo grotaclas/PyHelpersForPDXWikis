@@ -621,30 +621,30 @@ class TableGenerator(Eu5FileGenerator):
                                         remove_empty_columns=True,
                                         )
     def generate_cabinet_actions_table(self):
-        cabinet_actionss = self.parser.cabinet_actions.values()
+        cabinet_actions = self.parser.cabinet_actions.values()
         cabinet_actions_table_data = [{
-            'Name': f'{{{{iconbox|{cabinet_actions.display_name}|{cabinet_actions.description}|w=300px|image={cabinet_actions.get_wiki_filename()}}}}}',
-            'Ability': cabinet_actions.ability,  # ability: <class 'str'>
-            'Ai Will Do': '' if cabinet_actions.ai_will_do is None else cabinet_actions.ai_will_do.format() if hasattr(cabinet_actions.ai_will_do, 'format') else cabinet_actions.ai_will_do,  # ai_will_do: <class 'eu5.eu5lib.ScriptValue'>
-            'Allow': self.formatter.format_trigger(cabinet_actions.allow),  # allow: <class 'eu5.trigger.Trigger'>
-            'Allow Multiple': '' if cabinet_actions.allow_multiple is None else '[[File:Yes.png|20px|Allow Multiple]]' if cabinet_actions.allow_multiple else '[[File:No.png|20px|Not Allow Multiple]]',  # allow_multiple: <class 'bool'>
-            'Country Modifier': self.format_modifier_section('country_modifier', cabinet_actions),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Days': cabinet_actions.days,  # days: <class 'int'>
-            'Forbid For Automation': '[[File:Yes.png|20px|Forbid For Automation]]' if cabinet_actions.forbid_for_automation else '[[File:No.png|20px|Not Forbid For Automation]]',  # forbid_for_automation: <class 'bool'>
-            'Is Finished': self.formatter.format_trigger(cabinet_actions.is_finished),  # is_finished: <class 'eu5.trigger.Trigger'>
-            'Location Modifier': self.format_modifier_section('location_modifier', cabinet_actions),  # location_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Map Marker': '' if cabinet_actions.map_marker is None else self.create_wiki_list([f'{k}: ...' for k in cabinet_actions.map_marker.keys()]) if cabinet_actions.map_marker else '',  # map_marker: <class 'common.paradox_parser.Tree'>
-            'Min': '' if cabinet_actions.min is None else cabinet_actions.min,  # min: <class 'int'>
-            'On Activate': self.formatter.format_effect(cabinet_actions.on_activate),  # on_activate: <class 'eu5.effect.Effect'>
-            'On Deactivate': self.formatter.format_effect(cabinet_actions.on_deactivate),  # on_deactivate: <class 'eu5.effect.Effect'>
-            'On Fully Activated': self.formatter.format_effect(cabinet_actions.on_fully_activated),  # on_fully_activated: <class 'eu5.effect.Effect'>
-            'Potential': self.formatter.format_trigger(cabinet_actions.potential),  # potential: <class 'eu5.trigger.Trigger'>
-            'Progress': '' if cabinet_actions.progress is None else cabinet_actions.progress.format() if hasattr(cabinet_actions.progress, 'format') else cabinet_actions.progress,  # progress: <class 'eu5.eu5lib.ScriptValue'>
-            'Province Modifier': self.format_modifier_section('province_modifier', cabinet_actions),  # province_modifier: list[eu5.eu5lib.Eu5Modifier]
-            # 'Select Trigger': '' if cabinet_actions.select_trigger is None else self.create_wiki_list([f'{k}: ...' for k in cabinet_actions.select_trigger.keys()]) if cabinet_actions.select_trigger else '',  # select_trigger: <class 'common.paradox_parser.Tree'>
-            'Societal Values': cabinet_actions.societal_values,  # societal_values: <class 'float'>
-            'Years': cabinet_actions.years,  # years: <class 'int'>
-        } for cabinet_actions in cabinet_actionss]
+            'Name': f'{{{{iconbox|{cabinet_action.display_name}|{cabinet_action.description}|w=300px|image={cabinet_action.get_wiki_filename()}}}}}',
+            'Ability': cabinet_action.ability,  # ability: <class 'str'>
+            'Ai Will Do': '' if cabinet_action.ai_will_do is None else cabinet_action.ai_will_do.format() if hasattr(cabinet_action.ai_will_do, 'format') else cabinet_action.ai_will_do,  # ai_will_do: <class 'eu5.eu5lib.ScriptValue'>
+            'Allow': self.formatter.format_trigger(cabinet_action.allow),  # allow: <class 'eu5.trigger.Trigger'>
+            'Allow Multiple': '' if cabinet_action.allow_multiple is None else '[[File:Yes.png|20px|Allow Multiple]]' if cabinet_action.allow_multiple else '[[File:No.png|20px|Not Allow Multiple]]',  # allow_multiple: <class 'bool'>
+            'Country Modifier': self.format_modifier_section('country_modifier', cabinet_action),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Days': cabinet_action.days,  # days: <class 'int'>
+            'Forbid For Automation': '[[File:Yes.png|20px|Forbid For Automation]]' if cabinet_action.forbid_for_automation else '[[File:No.png|20px|Not Forbid For Automation]]',  # forbid_for_automation: <class 'bool'>
+            'Is Finished': self.formatter.format_trigger(cabinet_action.is_finished),  # is_finished: <class 'eu5.trigger.Trigger'>
+            'Location Modifier': self.format_modifier_section('location_modifier', cabinet_action),  # location_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Map Marker': '' if cabinet_action.map_marker is None else self.create_wiki_list([f'{k}: ...' for k in cabinet_action.map_marker.keys()]) if cabinet_action.map_marker else '',  # map_marker: <class 'common.paradox_parser.Tree'>
+            'Min': '' if cabinet_action.min is None else cabinet_action.min,  # min: <class 'int'>
+            'On Activate': self.formatter.format_effect(cabinet_action.on_activate),  # on_activate: <class 'eu5.effect.Effect'>
+            'On Deactivate': self.formatter.format_effect(cabinet_action.on_deactivate),  # on_deactivate: <class 'eu5.effect.Effect'>
+            'On Fully Activated': self.formatter.format_effect(cabinet_action.on_fully_activated),  # on_fully_activated: <class 'eu5.effect.Effect'>
+            'Potential': self.formatter.format_trigger(cabinet_action.potential),  # potential: <class 'eu5.trigger.Trigger'>
+            'Progress': '' if cabinet_action.progress is None else cabinet_action.progress.format() if hasattr(cabinet_action.progress, 'format') else cabinet_action.progress,  # progress: <class 'eu5.eu5lib.ScriptValue'>
+            'Province Modifier': self.format_modifier_section('province_modifier', cabinet_action),  # province_modifier: list[eu5.eu5lib.Eu5Modifier]
+            # 'Select Trigger': '' if cabinet_action.select_trigger is None else self.create_wiki_list([f'{k}: ...' for k in cabinet_action.select_trigger.keys()]) if cabinet_action.select_trigger else '',  # select_trigger: <class 'common.paradox_parser.Tree'>
+            'Societal Values': cabinet_action.societal_values,  # societal_values: <class 'float'>
+            'Years': cabinet_action.years,  # years: <class 'int'>
+        } for cabinet_action in cabinet_actions]
         return self.make_wiki_table(cabinet_actions_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
@@ -681,158 +681,158 @@ class TableGenerator(Eu5FileGenerator):
                                         remove_empty_columns=True,
                                         )
     def generate_cultures_table(self):
-        culturess = sorted(self.parser.cultures.values(), key=lambda culture: (culture.culture_groups, culture.display_name))
+        cultures = sorted(self.parser.cultures.values(), key=lambda culture: (culture.culture_groups, culture.display_name))
         cultures_table_data = [{
-            'Name': f' style="background-color: {cultures.color.get_css_color_string() if cultures.color else "white"}" | ' + cultures.display_name,
-            'Adjective Keys': self.create_wiki_list([adjective_keys for adjective_keys in cultures.adjective_keys]),  # adjective_keys: list[str]
-            'Character Modifier': self.format_modifier_section('character_modifier', cultures),  # character_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Country Modifier': self.format_modifier_section('country_modifier', cultures),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Culture Groups': self.create_wiki_list([culture_groups.display_name if culture_groups else '' for culture_groups in cultures.culture_groups]),  # culture_groups: list[eu5.eu5lib.CultureGroup]
-            'Dynasty Name Type': cultures.dynasty_name_type,  # dynasty_name_type: <class 'str'>
-            'Language': cultures.language if isinstance(cultures.language, str) else cultures.language.display_name if cultures.language else '',  # language: <class 'eu5.eu5lib.Language'>
-            'Location Modifier': self.format_modifier_section('location_modifier', cultures),  # location_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Noun Keys': self.create_wiki_list([noun_keys for noun_keys in cultures.noun_keys]),  # noun_keys: list[str]
-            'Opinions': '' if cultures.opinions is None else self.create_wiki_list([f'{k}: ...' for k in cultures.opinions.keys()]) if cultures.opinions else '',  # opinions: <class 'common.paradox_parser.Tree'>
-            'Tags': self.create_wiki_list([tags for tags in cultures.tags]),  # tags: list[str]
-            'Use Patronym': '[[File:Yes.png|20px|Use Patronym]]' if cultures.use_patronym else '[[File:No.png|20px|Not Use Patronym]]',  # use_patronym: <class 'bool'>
-        } for cultures in culturess]
+            'Name': f' style="background-color: {culture.color.get_css_color_string() if culture.color else "white"}" | ' + culture.display_name,
+            'Adjective Keys': self.create_wiki_list([adjective_keys for adjective_keys in culture.adjective_keys]),  # adjective_keys: list[str]
+            'Character Modifier': self.format_modifier_section('character_modifier', culture),  # character_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Country Modifier': self.format_modifier_section('country_modifier', culture),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Culture Groups': self.create_wiki_list([culture_groups.display_name if culture_groups else '' for culture_groups in culture.culture_groups]),  # culture_groups: list[eu5.eu5lib.CultureGroup]
+            'Dynasty Name Type': culture.dynasty_name_type,  # dynasty_name_type: <class 'str'>
+            'Language': culture.language if isinstance(culture.language, str) else culture.language.display_name if culture.language else '',  # language: <class 'eu5.eu5lib.Language'>
+            'Location Modifier': self.format_modifier_section('location_modifier', culture),  # location_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Noun Keys': self.create_wiki_list([noun_keys for noun_keys in culture.noun_keys]),  # noun_keys: list[str]
+            'Opinions': '' if culture.opinions is None else self.create_wiki_list([f'{k}: ...' for k in culture.opinions.keys()]) if culture.opinions else '',  # opinions: <class 'common.paradox_parser.Tree'>
+            'Tags': self.create_wiki_list([tags for tags in culture.tags]),  # tags: list[str]
+            'Use Patronym': '[[File:Yes.png|20px|Use Patronym]]' if culture.use_patronym else '[[File:No.png|20px|Not Use Patronym]]',  # use_patronym: <class 'bool'>
+        } for culture in cultures]
         return self.make_wiki_table(cultures_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_government_reforms_table(self):
-        government_reformss = self.parser.government_reforms.values()
+        government_reforms = self.parser.government_reforms.values()
         government_reforms_table_data = [{
-            'Name': f'{{{{iconbox|{government_reforms.display_name}|{government_reforms.description}|w=300px|image={government_reforms.get_wiki_filename()}}}}}',
-            'Age': '' if government_reforms.age is None else government_reforms.age.get_wiki_link_with_icon() if government_reforms.age else '',  # age: <class 'eu5.eu5lib.Age'>
-            'Allow': self.formatter.format_trigger(government_reforms.allow),  # allow: <class 'eu5.trigger.Trigger'>
-            'Block For Rebel': '[[File:Yes.png|20px|Block For Rebel]]' if government_reforms.block_for_rebel else '[[File:No.png|20px|Not Block For Rebel]]',  # block_for_rebel: <class 'bool'>
-            'Country Modifier': self.format_modifier_section('country_modifier', government_reforms),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Government': '' if government_reforms.government is None else government_reforms.government.get_wiki_link_with_icon() if government_reforms.government else '',  # government: <class 'eu5.eu5lib.GovernmentType'>
-            'Location Modifier': self.format_modifier_section('location_modifier', government_reforms),  # location_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Locked': self.formatter.format_trigger(government_reforms.locked),  # locked: <class 'eu5.trigger.Trigger'>
-            'Major': '[[File:Yes.png|20px|Major]]' if government_reforms.major else '[[File:No.png|20px|Not Major]]',  # major: <class 'bool'>
-            'Male Regnal Names': self.create_wiki_list([male_regnal_names for male_regnal_names in government_reforms.male_regnal_names]),  # male_regnal_names: list[str]
-            'Months': government_reforms.months,  # months: <class 'int'>
-            'On Activate': self.formatter.format_effect(government_reforms.on_activate),  # on_activate: <class 'eu5.effect.Effect'>
-            'On Deactivate': self.formatter.format_effect(government_reforms.on_deactivate),  # on_deactivate: <class 'eu5.effect.Effect'>
-            'Potential': self.formatter.format_trigger(government_reforms.potential),  # potential: <class 'eu5.trigger.Trigger'>
-            'Societal Values': self.create_wiki_list([societal_values for societal_values in government_reforms.societal_values]),  # societal_values: list[str]
-            'Unique': '[[File:Yes.png|20px|Unique]]' if government_reforms.unique else '[[File:No.png|20px|Not Unique]]',  # unique: <class 'bool'>
-            'Years': '' if government_reforms.years is None else government_reforms.years,  # years: <class 'float'>
-        } for government_reforms in government_reformss]
+            'Name': f'{{{{iconbox|{government_reform.display_name}|{government_reform.description}|w=300px|image={government_reform.get_wiki_filename()}}}}}',
+            'Age': '' if government_reform.age is None else government_reform.age.get_wiki_link_with_icon() if government_reform.age else '',  # age: <class 'eu5.eu5lib.Age'>
+            'Allow': self.formatter.format_trigger(government_reform.allow),  # allow: <class 'eu5.trigger.Trigger'>
+            'Block For Rebel': '[[File:Yes.png|20px|Block For Rebel]]' if government_reform.block_for_rebel else '[[File:No.png|20px|Not Block For Rebel]]',  # block_for_rebel: <class 'bool'>
+            'Country Modifier': self.format_modifier_section('country_modifier', government_reform),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Government': '' if government_reform.government is None else government_reform.government.get_wiki_link_with_icon() if government_reform.government else '',  # government: <class 'eu5.eu5lib.GovernmentType'>
+            'Location Modifier': self.format_modifier_section('location_modifier', government_reform),  # location_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Locked': self.formatter.format_trigger(government_reform.locked),  # locked: <class 'eu5.trigger.Trigger'>
+            'Major': '[[File:Yes.png|20px|Major]]' if government_reform.major else '[[File:No.png|20px|Not Major]]',  # major: <class 'bool'>
+            'Male Regnal Names': self.create_wiki_list([male_regnal_names for male_regnal_names in government_reform.male_regnal_names]),  # male_regnal_names: list[str]
+            'Months': government_reform.months,  # months: <class 'int'>
+            'On Activate': self.formatter.format_effect(government_reform.on_activate),  # on_activate: <class 'eu5.effect.Effect'>
+            'On Deactivate': self.formatter.format_effect(government_reform.on_deactivate),  # on_deactivate: <class 'eu5.effect.Effect'>
+            'Potential': self.formatter.format_trigger(government_reform.potential),  # potential: <class 'eu5.trigger.Trigger'>
+            'Societal Values': self.create_wiki_list([societal_values for societal_values in government_reform.societal_values]),  # societal_values: list[str]
+            'Unique': '[[File:Yes.png|20px|Unique]]' if government_reform.unique else '[[File:No.png|20px|Not Unique]]',  # unique: <class 'bool'>
+            'Years': '' if government_reform.years is None else government_reform.years,  # years: <class 'float'>
+        } for government_reform in government_reforms]
         return self.make_wiki_table(government_reforms_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_holy_sites_table(self):
-        holy_sitess = self.parser.holy_sites.values()
+        holy_sites = self.parser.holy_sites.values()
         holy_sites_table_data = [{
-            'Name': holy_sites.display_name,
-            'Avatar': '' if holy_sites.avatar is None else holy_sites.avatar.get_wiki_link_with_icon() if holy_sites.avatar else '',  # avatar: <class 'eu5.eu5lib.Avatar'>
-            'God': '' if holy_sites.god is None else holy_sites.god.get_wiki_link_with_icon() if holy_sites.god else '',  # god: <class 'eu5.eu5lib.God'>
-            'Importance': holy_sites.importance,  # importance: <class 'int'>
-            'Location': holy_sites.location.display_name if holy_sites.location else '',  # location: <class 'eu5.eu5lib.Location'>
-            'Religions': self.create_wiki_list([religions.get_wiki_link_with_icon() if religions else '' for religions in holy_sites.religions]),  # religions: list[eu5.eu5lib.Religion]
-            'Type': holy_sites.type.get_wiki_link_with_icon() if holy_sites.type else '',  # type: <class 'eu5.eu5lib.HolySiteType'>
-        } for holy_sites in holy_sitess]
+            'Name': holy_site.display_name,
+            'Avatar': '' if holy_site.avatar is None else holy_site.avatar.get_wiki_link_with_icon() if holy_site.avatar else '',  # avatar: <class 'eu5.eu5lib.Avatar'>
+            'God': '' if holy_site.god is None else holy_site.god.get_wiki_link_with_icon() if holy_site.god else '',  # god: <class 'eu5.eu5lib.God'>
+            'Importance': holy_site.importance,  # importance: <class 'int'>
+            'Location': holy_site.location.display_name if holy_site.location else '',  # location: <class 'eu5.eu5lib.Location'>
+            'Religions': self.create_wiki_list([religions.get_wiki_link_with_icon() if religions else '' for religions in holy_site.religions]),  # religions: list[eu5.eu5lib.Religion]
+            'Type': holy_site.type.get_wiki_link_with_icon() if holy_site.type else '',  # type: <class 'eu5.eu5lib.HolySiteType'>
+        } for holy_site in holy_sites]
         return self.make_wiki_table(holy_sites_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_languages_table(self):
-        languagess = self.parser.languages.values()
+        languages = self.parser.languages.values()
         languages_table_data = [{
-            'Name': f' style="background-color: {languages.color.get_css_color_string() if languages.color else "white"}" | ' + languages.display_name,
-            'Character Name Order': languages.character_name_order,  # character_name_order: <class 'str'>
-            'Character Name Short Regnal Number': languages.character_name_short_regnal_number,  # character_name_short_regnal_number: <class 'str'>
-            'Descendant Prefix': languages.descendant_prefix,  # descendant_prefix: <class 'str'>
-            'Descendant Prefix Female': languages.descendant_prefix_female,  # descendant_prefix_female: <class 'str'>
-            'Descendant Prefix Male': languages.descendant_prefix_male,  # descendant_prefix_male: <class 'str'>
-            'Descendant Suffix': languages.descendant_suffix,  # descendant_suffix: <class 'str'>
-            'Descendant Suffix Female': languages.descendant_suffix_female,  # descendant_suffix_female: <class 'str'>
-            'Descendant Suffix Male': languages.descendant_suffix_male,  # descendant_suffix_male: <class 'str'>
-            'Dialects': '' if languages.dialects is None else self.create_wiki_list([f'{k}: ...' for k in languages.dialects.keys()]) if languages.dialects else '',  # dialects: <class 'common.paradox_parser.Tree'>
-            'Dynasty Names': self.create_wiki_list([dynasty_names for dynasty_names in languages.dynasty_names]),  # dynasty_names: list[str]
-            'Dynasty Template Keys': self.create_wiki_list([dynasty_template_keys for dynasty_template_keys in languages.dynasty_template_keys]),  # dynasty_template_keys: list[str]
-            'Fallback': languages.fallback if isinstance(languages.fallback, str) else '' if languages.fallback is None else languages.fallback.display_name if languages.fallback else '',  # fallback: <class 'eu5.eu5lib.Language'>
-            'Family': '' if languages.family is None else languages.family.display_name if languages.family else '',  # family: <class 'eu5.eu5lib.LanguageFamily'>
-            'Female Names': self.create_wiki_list([female_names for female_names in languages.female_names]),  # female_names: list[str]
-            'First Name Conjoiner': languages.first_name_conjoiner,  # first_name_conjoiner: <class 'str'>
-            'Location Prefix': languages.location_prefix,  # location_prefix: <class 'str'>
-            'Location Prefix Ancient': languages.location_prefix_ancient,  # location_prefix_ancient: <class 'str'>
-            'Location Prefix Ancient Vowel': languages.location_prefix_ancient_vowel,  # location_prefix_ancient_vowel: <class 'str'>
-            'Location Prefix Elision': self.create_wiki_list([location_prefix_elision for location_prefix_elision in languages.location_prefix_elision]),  # location_prefix_elision: list[str]
-            'Location Prefix Vowel': languages.location_prefix_vowel,  # location_prefix_vowel: <class 'str'>
-            'Location Suffix': languages.location_suffix,  # location_suffix: <class 'str'>
-            'Lowborn': self.create_wiki_list([lowborn for lowborn in languages.lowborn]),  # lowborn: list[str]
-            'Male Names': self.create_wiki_list([male_names for male_names in languages.male_names]),  # male_names: list[str]
-            'Patronym Prefix Daughter': languages.patronym_prefix_daughter,  # patronym_prefix_daughter: <class 'str'>
-            'Patronym Prefix Daughter Vowel': languages.patronym_prefix_daughter_vowel,  # patronym_prefix_daughter_vowel: <class 'str'>
-            'Patronym Prefix Son': languages.patronym_prefix_son,  # patronym_prefix_son: <class 'str'>
-            'Patronym Prefix Son Vowel': languages.patronym_prefix_son_vowel,  # patronym_prefix_son_vowel: <class 'str'>
-            'Patronym Suffix': languages.patronym_suffix,  # patronym_suffix: <class 'str'>
-            'Patronym Suffix Daughter': languages.patronym_suffix_daughter,  # patronym_suffix_daughter: <class 'str'>
-            'Patronym Suffix Son': languages.patronym_suffix_son,  # patronym_suffix_son: <class 'str'>
-            'Require Genitive Location Names': '[[File:Yes.png|20px|Require Genitive Location Names]]' if languages.require_genitive_location_names else '[[File:No.png|20px|Not Require Genitive Location Names]]',  # require_genitive_location_names: <class 'bool'>
-            'Ship Names': self.create_wiki_list([ship_names for ship_names in languages.ship_names]),  # ship_names: list[str]
-        } for languages in languagess]
+            'Name': f' style="background-color: {language.color.get_css_color_string() if language.color else "white"}" | ' + language.display_name,
+            'Character Name Order': language.character_name_order,  # character_name_order: <class 'str'>
+            'Character Name Short Regnal Number': language.character_name_short_regnal_number,  # character_name_short_regnal_number: <class 'str'>
+            'Descendant Prefix': language.descendant_prefix,  # descendant_prefix: <class 'str'>
+            'Descendant Prefix Female': language.descendant_prefix_female,  # descendant_prefix_female: <class 'str'>
+            'Descendant Prefix Male': language.descendant_prefix_male,  # descendant_prefix_male: <class 'str'>
+            'Descendant Suffix': language.descendant_suffix,  # descendant_suffix: <class 'str'>
+            'Descendant Suffix Female': language.descendant_suffix_female,  # descendant_suffix_female: <class 'str'>
+            'Descendant Suffix Male': language.descendant_suffix_male,  # descendant_suffix_male: <class 'str'>
+            'Dialects': '' if language.dialects is None else self.create_wiki_list([f'{k}: ...' for k in language.dialects.keys()]) if language.dialects else '',  # dialects: <class 'common.paradox_parser.Tree'>
+            'Dynasty Names': self.create_wiki_list([dynasty_names for dynasty_names in language.dynasty_names]),  # dynasty_names: list[str]
+            'Dynasty Template Keys': self.create_wiki_list([dynasty_template_keys for dynasty_template_keys in language.dynasty_template_keys]),  # dynasty_template_keys: list[str]
+            'Fallback': language.fallback if isinstance(language.fallback, str) else '' if language.fallback is None else language.fallback.display_name if language.fallback else '',  # fallback: <class 'eu5.eu5lib.Language'>
+            'Family': '' if language.family is None else language.family.display_name if language.family else '',  # family: <class 'eu5.eu5lib.LanguageFamily'>
+            'Female Names': self.create_wiki_list([female_names for female_names in language.female_names]),  # female_names: list[str]
+            'First Name Conjoiner': language.first_name_conjoiner,  # first_name_conjoiner: <class 'str'>
+            'Location Prefix': language.location_prefix,  # location_prefix: <class 'str'>
+            'Location Prefix Ancient': language.location_prefix_ancient,  # location_prefix_ancient: <class 'str'>
+            'Location Prefix Ancient Vowel': language.location_prefix_ancient_vowel,  # location_prefix_ancient_vowel: <class 'str'>
+            'Location Prefix Elision': self.create_wiki_list([location_prefix_elision for location_prefix_elision in language.location_prefix_elision]),  # location_prefix_elision: list[str]
+            'Location Prefix Vowel': language.location_prefix_vowel,  # location_prefix_vowel: <class 'str'>
+            'Location Suffix': language.location_suffix,  # location_suffix: <class 'str'>
+            'Lowborn': self.create_wiki_list([lowborn for lowborn in language.lowborn]),  # lowborn: list[str]
+            'Male Names': self.create_wiki_list([male_names for male_names in language.male_names]),  # male_names: list[str]
+            'Patronym Prefix Daughter': language.patronym_prefix_daughter,  # patronym_prefix_daughter: <class 'str'>
+            'Patronym Prefix Daughter Vowel': language.patronym_prefix_daughter_vowel,  # patronym_prefix_daughter_vowel: <class 'str'>
+            'Patronym Prefix Son': language.patronym_prefix_son,  # patronym_prefix_son: <class 'str'>
+            'Patronym Prefix Son Vowel': language.patronym_prefix_son_vowel,  # patronym_prefix_son_vowel: <class 'str'>
+            'Patronym Suffix': language.patronym_suffix,  # patronym_suffix: <class 'str'>
+            'Patronym Suffix Daughter': language.patronym_suffix_daughter,  # patronym_suffix_daughter: <class 'str'>
+            'Patronym Suffix Son': language.patronym_suffix_son,  # patronym_suffix_son: <class 'str'>
+            'Require Genitive Location Names': '[[File:Yes.png|20px|Require Genitive Location Names]]' if language.require_genitive_location_names else '[[File:No.png|20px|Not Require Genitive Location Names]]',  # require_genitive_location_names: <class 'bool'>
+            'Ship Names': self.create_wiki_list([ship_names for ship_names in language.ship_names]),  # ship_names: list[str]
+        } for language in languages]
         return self.make_wiki_table(languages_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_levies_table(self):
-        leviess = self.parser.levies.values()
+        levies = self.parser.levies.values()
         levies_table_data = [{
-            'Name': levies.display_name,
-            'Allow': self.formatter.format_trigger(levies.allow),  # allow: <class 'eu5.trigger.Trigger'>
-            'Allow As Crew': self.formatter.format_trigger(levies.allow_as_crew),  # allow_as_crew: <class 'eu5.trigger.Trigger'>
-            'Allowed Culture': self.create_wiki_list([allowed_culture.display_name if allowed_culture else '' for allowed_culture in levies.allowed_culture]),  # allowed_culture: list[eu5.eu5lib.Culture]
-            'Allowed Pop Type': self.create_wiki_list([allowed_pop_type.get_wiki_link_with_icon() if allowed_pop_type else '' for allowed_pop_type in levies.allowed_pop_type]),  # allowed_pop_type: list[eu5.eu5lib.PopType]
-            'Country Allow': self.formatter.format_trigger(levies.country_allow),  # country_allow: <class 'eu5.trigger.Trigger'>
-            'Size': levies.size,  # size: <class 'float'>
-            'Unit': levies.unit.get_wiki_link_with_icon() if levies.unit else '',  # unit: <class 'eu5.eu5lib.UnitType'>
-        } for levies in leviess]
+            'Name': levy.display_name,
+            'Allow': self.formatter.format_trigger(levy.allow),  # allow: <class 'eu5.trigger.Trigger'>
+            'Allow As Crew': self.formatter.format_trigger(levy.allow_as_crew),  # allow_as_crew: <class 'eu5.trigger.Trigger'>
+            'Allowed Culture': self.create_wiki_list([allowed_culture.display_name if allowed_culture else '' for allowed_culture in levy.allowed_culture]),  # allowed_culture: list[eu5.eu5lib.Culture]
+            'Allowed Pop Type': self.create_wiki_list([allowed_pop_type.get_wiki_link_with_icon() if allowed_pop_type else '' for allowed_pop_type in levy.allowed_pop_type]),  # allowed_pop_type: list[eu5.eu5lib.PopType]
+            'Country Allow': self.formatter.format_trigger(levy.country_allow),  # country_allow: <class 'eu5.trigger.Trigger'>
+            'Size': levy.size,  # size: <class 'float'>
+            'Unit': levy.unit.get_wiki_link_with_icon() if levy.unit else '',  # unit: <class 'eu5.eu5lib.UnitType'>
+        } for levy in levies]
         return self.make_wiki_table(levies_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_parliament_agendas_table(self):
-        parliament_agendass = self.parser.parliament_agendas.values()
+        parliament_agendas = self.parser.parliament_agendas.values()
         parliament_agendas_table_data = [{
-            'Name': parliament_agendas.display_name,
-            'Ai Will Do': '' if parliament_agendas.ai_will_do is None else parliament_agendas.ai_will_do.format() if hasattr(parliament_agendas.ai_will_do, 'format') else parliament_agendas.ai_will_do,  # ai_will_do: <class 'eu5.eu5lib.ScriptValue'>
-            'Allow': self.formatter.format_trigger(parliament_agendas.allow),  # allow: <class 'eu5.trigger.Trigger'>
-            'Can Bribe': self.formatter.format_trigger(parliament_agendas.can_bribe),  # can_bribe: <class 'eu5.trigger.Trigger'>
-            'Chance': parliament_agendas.chance,  # chance: <class 'int'>
-            'Estate': self.create_wiki_list([estate.get_wiki_link_with_icon() if estate else '' for estate in parliament_agendas.estate]),  # estate: list[eu5.eu5lib.Estate]
-            'Importance': parliament_agendas.importance,  # importance: <class 'float'>
-            'On Accept': self.formatter.format_effect(parliament_agendas.on_accept),  # on_accept: <class 'eu5.effect.Effect'>
-            'On Bribe': self.formatter.format_effect(parliament_agendas.on_bribe),  # on_bribe: <class 'eu5.effect.Effect'>
-            'Potential': self.formatter.format_trigger(parliament_agendas.potential),  # potential: <class 'eu5.trigger.Trigger'>
-            'Special Status': '' if parliament_agendas.special_status is None else parliament_agendas.special_status,  # special_status: typing.Any
-            'Type': parliament_agendas.type,  # type: <class 'str'>
-        } for parliament_agendas in parliament_agendass]
+            'Name': parliament_agenda.display_name,
+            'Ai Will Do': '' if parliament_agenda.ai_will_do is None else parliament_agenda.ai_will_do.format() if hasattr(parliament_agenda.ai_will_do, 'format') else parliament_agenda.ai_will_do,  # ai_will_do: <class 'eu5.eu5lib.ScriptValue'>
+            'Allow': self.formatter.format_trigger(parliament_agenda.allow),  # allow: <class 'eu5.trigger.Trigger'>
+            'Can Bribe': self.formatter.format_trigger(parliament_agenda.can_bribe),  # can_bribe: <class 'eu5.trigger.Trigger'>
+            'Chance': parliament_agenda.chance,  # chance: <class 'int'>
+            'Estate': self.create_wiki_list([estate.get_wiki_link_with_icon() if estate else '' for estate in parliament_agenda.estate]),  # estate: list[eu5.eu5lib.Estate]
+            'Importance': parliament_agenda.importance,  # importance: <class 'float'>
+            'On Accept': self.formatter.format_effect(parliament_agenda.on_accept),  # on_accept: <class 'eu5.effect.Effect'>
+            'On Bribe': self.formatter.format_effect(parliament_agenda.on_bribe),  # on_bribe: <class 'eu5.effect.Effect'>
+            'Potential': self.formatter.format_trigger(parliament_agenda.potential),  # potential: <class 'eu5.trigger.Trigger'>
+            'Special Status': '' if parliament_agenda.special_status is None else parliament_agenda.special_status,  # special_status: typing.Any
+            'Type': parliament_agenda.type,  # type: <class 'str'>
+        } for parliament_agenda in parliament_agendas]
         return self.make_wiki_table(parliament_agendas_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_peace_treaties_table(self):
-        peace_treatiess = self.parser.peace_treaties.values()
+        peace_treaties = self.parser.peace_treaties.values()
         peace_treaties_table_data = [{
-            'Name': f'{{{{iconbox|{peace_treaties.display_name}|{peace_treaties.description}|w=300px|image={peace_treaties.get_wiki_filename()}}}}}',
-            'Ai Desire': '' if peace_treaties.ai_desire is None else peace_treaties.ai_desire.format() if hasattr(peace_treaties.ai_desire, 'format') else peace_treaties.ai_desire,  # ai_desire: <class 'eu5.eu5lib.ScriptValue'>
-            'Allow': self.formatter.format_trigger(peace_treaties.allow),  # allow: <class 'eu5.trigger.Trigger'>
-            'Antagonism Type': '' if peace_treaties.antagonism_type is None else peace_treaties.antagonism_type.display_name if peace_treaties.antagonism_type else '',  # antagonism_type: <class 'eu5.eu5lib.Bias'>
-            'Are Targets Exclusive': '[[File:Yes.png|20px|Are Targets Exclusive]]' if peace_treaties.are_targets_exclusive else '[[File:No.png|20px|Not Are Targets Exclusive]]',  # are_targets_exclusive: <class 'bool'>
-            'Base Antagonism': '' if peace_treaties.base_antagonism is None else peace_treaties.base_antagonism.format() if hasattr(peace_treaties.base_antagonism, 'format') else peace_treaties.base_antagonism,  # base_antagonism: <class 'eu5.eu5lib.ScriptValue'>
-            'Blocks Full Annexation': '[[File:Yes.png|20px|Blocks Full Annexation]]' if peace_treaties.blocks_full_annexation else '[[File:No.png|20px|Not Blocks Full Annexation]]',  # blocks_full_annexation: <class 'bool'>
-            'Category': peace_treaties.category,  # category: <class 'str'>
-            'Cost': peace_treaties.cost.format() if hasattr(peace_treaties.cost, 'format') else peace_treaties.cost,  # cost: <class 'eu5.eu5lib.ScriptValue'>
-            'Effect': self.formatter.format_effect(peace_treaties.effect),  # effect: <class 'eu5.effect.Effect'>
-            'Potential': self.formatter.format_trigger(peace_treaties.potential),  # potential: <class 'eu5.trigger.Trigger'>
-            'Select Trigger': '' if peace_treaties.select_trigger is None else self.create_wiki_list([f'{k}: ...' for k in peace_treaties.select_trigger.keys()]) if peace_treaties.select_trigger else '',  # select_trigger: <class 'common.paradox_parser.Tree'>
-        } for peace_treaties in peace_treatiess]
+            'Name': f'{{{{iconbox|{peace_treaty.display_name}|{peace_treaty.description}|w=300px|image={peace_treaty.get_wiki_filename()}}}}}',
+            'Ai Desire': '' if peace_treaty.ai_desire is None else peace_treaty.ai_desire.format() if hasattr(peace_treaty.ai_desire, 'format') else peace_treaty.ai_desire,  # ai_desire: <class 'eu5.eu5lib.ScriptValue'>
+            'Allow': self.formatter.format_trigger(peace_treaty.allow),  # allow: <class 'eu5.trigger.Trigger'>
+            'Antagonism Type': '' if peace_treaty.antagonism_type is None else peace_treaty.antagonism_type.display_name if peace_treaty.antagonism_type else '',  # antagonism_type: <class 'eu5.eu5lib.Bias'>
+            'Are Targets Exclusive': '[[File:Yes.png|20px|Are Targets Exclusive]]' if peace_treaty.are_targets_exclusive else '[[File:No.png|20px|Not Are Targets Exclusive]]',  # are_targets_exclusive: <class 'bool'>
+            'Base Antagonism': '' if peace_treaty.base_antagonism is None else peace_treaty.base_antagonism.format() if hasattr(peace_treaty.base_antagonism, 'format') else peace_treaty.base_antagonism,  # base_antagonism: <class 'eu5.eu5lib.ScriptValue'>
+            'Blocks Full Annexation': '[[File:Yes.png|20px|Blocks Full Annexation]]' if peace_treaty.blocks_full_annexation else '[[File:No.png|20px|Not Blocks Full Annexation]]',  # blocks_full_annexation: <class 'bool'>
+            'Category': peace_treaty.category,  # category: <class 'str'>
+            'Cost': peace_treaty.cost.format() if hasattr(peace_treaty.cost, 'format') else peace_treaty.cost,  # cost: <class 'eu5.eu5lib.ScriptValue'>
+            'Effect': self.formatter.format_effect(peace_treaty.effect),  # effect: <class 'eu5.effect.Effect'>
+            'Potential': self.formatter.format_trigger(peace_treaty.potential),  # potential: <class 'eu5.trigger.Trigger'>
+            'Select Trigger': '' if peace_treaty.select_trigger is None else self.create_wiki_list([f'{k}: ...' for k in peace_treaty.select_trigger.keys()]) if peace_treaty.select_trigger else '',  # select_trigger: <class 'common.paradox_parser.Tree'>
+        } for peace_treaty in peace_treaties]
         return self.make_wiki_table(peace_treaties_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
@@ -845,137 +845,137 @@ class TableGenerator(Eu5FileGenerator):
             sections[f'traits_{category}'] = self.get_trait_table(traits)
 
     def generate_religions_table(self):
-        religionss = self.parser.religions.values()
+        religions = self.parser.religions.values()
         religions_table_data = [{
-            'Name': f' style="background-color: {religions.color.get_css_color_string() if religions.color else "white"}" | ' + f'{{{{iconbox|{religions.display_name}|{religions.description}|w=300px|image={religions.get_wiki_filename()}}}}}',
-            'Ai Wants Convert': '[[File:Yes.png|20px|Ai Wants Convert]]' if religions.ai_wants_convert else '[[File:No.png|20px|Not Ai Wants Convert]]',  # ai_wants_convert: <class 'bool'>
-            'Culture Locked': '[[File:Yes.png|20px|Culture Locked]]' if religions.culture_locked else '[[File:No.png|20px|Not Culture Locked]]',  # culture_locked: <class 'bool'>
-            'Custom Tags': self.create_wiki_list([custom_tags for custom_tags in religions.custom_tags]),  # custom_tags: list[str]
-            'Definition Modifier': self.format_modifier_section('definition_modifier', religions),  # definition_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Enable': religions.enable,  # enable: <class 'str'>
-            'Factions': self.create_wiki_list([factions.get_wiki_link_with_icon() if factions else '' for factions in religions.factions]),  # factions: list[eu5.eu5lib.ReligiousFaction]
-            'Group': '' if religions.group is None else religions.group.display_name if religions.group else '',  # group: <class 'eu5.eu5lib.ReligionGroup'>
-            'Has Autocephalous Patriarchates': '[[File:Yes.png|20px|Has Autocephalous Patriarchates]]' if religions.has_autocephalous_patriarchates else '[[File:No.png|20px|Not Has Autocephalous Patriarchates]]',  # has_autocephalous_patriarchates: <class 'bool'>
-            'Has Avatars': '[[File:Yes.png|20px|Has Avatars]]' if religions.has_avatars else '[[File:No.png|20px|Not Has Avatars]]',  # has_avatars: <class 'bool'>
-            'Has Canonization': '[[File:Yes.png|20px|Has Canonization]]' if religions.has_canonization else '[[File:No.png|20px|Not Has Canonization]]',  # has_canonization: <class 'bool'>
-            'Has Cardinals': '[[File:Yes.png|20px|Has Cardinals]]' if religions.has_cardinals else '[[File:No.png|20px|Not Has Cardinals]]',  # has_cardinals: <class 'bool'>
-            'Has Doom': '[[File:Yes.png|20px|Has Doom]]' if religions.has_doom else '[[File:No.png|20px|Not Has Doom]]',  # has_doom: <class 'bool'>
-            'Has Honor': '[[File:Yes.png|20px|Has Honor]]' if religions.has_honor else '[[File:No.png|20px|Not Has Honor]]',  # has_honor: <class 'bool'>
-            'Has Karma': '[[File:Yes.png|20px|Has Karma]]' if religions.has_karma else '[[File:No.png|20px|Not Has Karma]]',  # has_karma: <class 'bool'>
-            'Has Patriarchs': '[[File:Yes.png|20px|Has Patriarchs]]' if religions.has_patriarchs else '[[File:No.png|20px|Not Has Patriarchs]]',  # has_patriarchs: <class 'bool'>
-            'Has Purity': '[[File:Yes.png|20px|Has Purity]]' if religions.has_purity else '[[File:No.png|20px|Not Has Purity]]',  # has_purity: <class 'bool'>
-            'Has Religious Head': '[[File:Yes.png|20px|Has Religious Head]]' if religions.has_religious_head else '[[File:No.png|20px|Not Has Religious Head]]',  # has_religious_head: <class 'bool'>
-            'Has Religious Influence': '[[File:Yes.png|20px|Has Religious Influence]]' if religions.has_religious_influence else '[[File:No.png|20px|Not Has Religious Influence]]',  # has_religious_influence: <class 'bool'>
-            'Has Rite Power': '[[File:Yes.png|20px|Has Rite Power]]' if religions.has_rite_power else '[[File:No.png|20px|Not Has Rite Power]]',  # has_rite_power: <class 'bool'>
-            'Has Yanantin': '[[File:Yes.png|20px|Has Yanantin]]' if religions.has_yanantin else '[[File:No.png|20px|Not Has Yanantin]]',  # has_yanantin: <class 'bool'>
-            'Important Country': religions.important_country.get_wiki_link_with_icon() if religions.important_country else '',  # important_country: <class 'eu5.eu5lib.Country'>
-            'Language': religions.language if isinstance(religions.language, str) else '' if religions.language is None else religions.language.display_name if religions.language else '',  # language: <class 'eu5.eu5lib.Language'>
-            'Max Religious Figures For Religion': '' if religions.max_religious_figures_for_religion is None else religions.max_religious_figures_for_religion.format() if hasattr(religions.max_religious_figures_for_religion, 'format') else religions.max_religious_figures_for_religion,  # max_religious_figures_for_religion: <class 'eu5.eu5lib.ScriptValue'>
-            'Max Sects': religions.max_sects,  # max_sects: <class 'int'>
-            'Needs Reform': '[[File:Yes.png|20px|Needs Reform]]' if religions.needs_reform else '[[File:No.png|20px|Not Needs Reform]]',  # needs_reform: <class 'bool'>
-            'Num Religious Focuses Needed For Reform': religions.num_religious_focuses_needed_for_reform,  # num_religious_focuses_needed_for_reform: <class 'int'>
-            'Opinions': '' if religions.opinions is None else self.create_wiki_list([f'{k}: ...' for k in religions.opinions.keys()]) if religions.opinions else '',  # opinions: <class 'common.paradox_parser.Tree'>
-            'Religious Aspects': religions.religious_aspects,  # religious_aspects: <class 'int'>
-            'Religious Focuses': self.create_wiki_list([religious_focuses.get_wiki_link_with_icon() if religious_focuses else '' for religious_focuses in religions.religious_focuses]),  # religious_focuses: list[eu5.eu5lib.ReligiousFocus]
-            '[RELIGIOUS_SCHOOL.GetName]': self.create_wiki_list([religious_school.get_wiki_link_with_icon() if religious_school else '' for religious_school in religions.religious_school]),  # religious_school: list[eu5.eu5lib.ReligiousSchool]
-            'Tags': self.create_wiki_list([tags for tags in religions.tags]),  # tags: list[str]
-            'Tithe': religions.tithe,  # tithe: <class 'float'>
-            'Unique Names': self.create_wiki_list([unique_names for unique_names in religions.unique_names]),  # unique_names: list[str]
-            'Use Icons': '[[File:Yes.png|20px|Use Icons]]' if religions.use_icons else '[[File:No.png|20px|Not Use Icons]]',  # use_icons: <class 'bool'>
-        } for religions in religionss]
+            'Name': f' style="background-color: {religion.color.get_css_color_string() if religion.color else "white"}" | ' + f'{{{{iconbox|{religion.display_name}|{religion.description}|w=300px|image={religion.get_wiki_filename()}}}}}',
+            'Ai Wants Convert': '[[File:Yes.png|20px|Ai Wants Convert]]' if religion.ai_wants_convert else '[[File:No.png|20px|Not Ai Wants Convert]]',  # ai_wants_convert: <class 'bool'>
+            'Culture Locked': '[[File:Yes.png|20px|Culture Locked]]' if religion.culture_locked else '[[File:No.png|20px|Not Culture Locked]]',  # culture_locked: <class 'bool'>
+            'Custom Tags': self.create_wiki_list([custom_tags for custom_tags in religion.custom_tags]),  # custom_tags: list[str]
+            'Definition Modifier': self.format_modifier_section('definition_modifier', religion),  # definition_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Enable': religion.enable,  # enable: <class 'str'>
+            'Factions': self.create_wiki_list([factions.get_wiki_link_with_icon() if factions else '' for factions in religion.factions]),  # factions: list[eu5.eu5lib.ReligiousFaction]
+            'Group': '' if religion.group is None else religion.group.display_name if religion.group else '',  # group: <class 'eu5.eu5lib.ReligionGroup'>
+            'Has Autocephalous Patriarchates': '[[File:Yes.png|20px|Has Autocephalous Patriarchates]]' if religion.has_autocephalous_patriarchates else '[[File:No.png|20px|Not Has Autocephalous Patriarchates]]',  # has_autocephalous_patriarchates: <class 'bool'>
+            'Has Avatars': '[[File:Yes.png|20px|Has Avatars]]' if religion.has_avatars else '[[File:No.png|20px|Not Has Avatars]]',  # has_avatars: <class 'bool'>
+            'Has Canonization': '[[File:Yes.png|20px|Has Canonization]]' if religion.has_canonization else '[[File:No.png|20px|Not Has Canonization]]',  # has_canonization: <class 'bool'>
+            'Has Cardinals': '[[File:Yes.png|20px|Has Cardinals]]' if religion.has_cardinals else '[[File:No.png|20px|Not Has Cardinals]]',  # has_cardinals: <class 'bool'>
+            'Has Doom': '[[File:Yes.png|20px|Has Doom]]' if religion.has_doom else '[[File:No.png|20px|Not Has Doom]]',  # has_doom: <class 'bool'>
+            'Has Honor': '[[File:Yes.png|20px|Has Honor]]' if religion.has_honor else '[[File:No.png|20px|Not Has Honor]]',  # has_honor: <class 'bool'>
+            'Has Karma': '[[File:Yes.png|20px|Has Karma]]' if religion.has_karma else '[[File:No.png|20px|Not Has Karma]]',  # has_karma: <class 'bool'>
+            'Has Patriarchs': '[[File:Yes.png|20px|Has Patriarchs]]' if religion.has_patriarchs else '[[File:No.png|20px|Not Has Patriarchs]]',  # has_patriarchs: <class 'bool'>
+            'Has Purity': '[[File:Yes.png|20px|Has Purity]]' if religion.has_purity else '[[File:No.png|20px|Not Has Purity]]',  # has_purity: <class 'bool'>
+            'Has Religious Head': '[[File:Yes.png|20px|Has Religious Head]]' if religion.has_religious_head else '[[File:No.png|20px|Not Has Religious Head]]',  # has_religious_head: <class 'bool'>
+            'Has Religious Influence': '[[File:Yes.png|20px|Has Religious Influence]]' if religion.has_religious_influence else '[[File:No.png|20px|Not Has Religious Influence]]',  # has_religious_influence: <class 'bool'>
+            'Has Rite Power': '[[File:Yes.png|20px|Has Rite Power]]' if religion.has_rite_power else '[[File:No.png|20px|Not Has Rite Power]]',  # has_rite_power: <class 'bool'>
+            'Has Yanantin': '[[File:Yes.png|20px|Has Yanantin]]' if religion.has_yanantin else '[[File:No.png|20px|Not Has Yanantin]]',  # has_yanantin: <class 'bool'>
+            'Important Country': religion.important_country.get_wiki_link_with_icon() if religion.important_country else '',  # important_country: <class 'eu5.eu5lib.Country'>
+            'Language': religion.language if isinstance(religion.language, str) else '' if religion.language is None else religion.language.display_name if religion.language else '',  # language: <class 'eu5.eu5lib.Language'>
+            'Max Religious Figures For Religion': '' if religion.max_religious_figures_for_religion is None else religion.max_religious_figures_for_religion.format() if hasattr(religion.max_religious_figures_for_religion, 'format') else religion.max_religious_figures_for_religion,  # max_religious_figures_for_religion: <class 'eu5.eu5lib.ScriptValue'>
+            'Max Sects': religion.max_sects,  # max_sects: <class 'int'>
+            'Needs Reform': '[[File:Yes.png|20px|Needs Reform]]' if religion.needs_reform else '[[File:No.png|20px|Not Needs Reform]]',  # needs_reform: <class 'bool'>
+            'Num Religious Focuses Needed For Reform': religion.num_religious_focuses_needed_for_reform,  # num_religious_focuses_needed_for_reform: <class 'int'>
+            'Opinions': '' if religion.opinions is None else self.create_wiki_list([f'{k}: ...' for k in religion.opinions.keys()]) if religion.opinions else '',  # opinions: <class 'common.paradox_parser.Tree'>
+            'Religious Aspects': religion.religious_aspects,  # religious_aspects: <class 'int'>
+            'Religious Focuses': self.create_wiki_list([religious_focuses.get_wiki_link_with_icon() if religious_focuses else '' for religious_focuses in religion.religious_focuses]),  # religious_focuses: list[eu5.eu5lib.ReligiousFocus]
+            '[RELIGIOUS_SCHOOL.GetName]': self.create_wiki_list([religious_school.get_wiki_link_with_icon() if religious_school else '' for religious_school in religion.religious_school]),  # religious_school: list[eu5.eu5lib.ReligiousSchool]
+            'Tags': self.create_wiki_list([tags for tags in religion.tags]),  # tags: list[str]
+            'Tithe': religion.tithe,  # tithe: <class 'float'>
+            'Unique Names': self.create_wiki_list([unique_names for unique_names in religion.unique_names]),  # unique_names: list[str]
+            'Use Icons': '[[File:Yes.png|20px|Use Icons]]' if religion.use_icons else '[[File:No.png|20px|Not Use Icons]]',  # use_icons: <class 'bool'>
+        } for religion in religions]
         return self.make_wiki_table(religions_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_religious_aspects_table(self):
-        religious_aspectss = self.parser.religious_aspects.values()
+        religious_aspects = self.parser.religious_aspects.values()
         religious_aspects_table_data = [{
-            'Name': f'{{{{iconbox|{religious_aspects.display_name}|{religious_aspects.description}|w=300px|image={religious_aspects.get_wiki_filename()}}}}}',
-            'Modifier': self.format_modifier_section('modifier', religious_aspects),  # modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Enabled': self.formatter.format_trigger(religious_aspects.enabled),  # enabled: <class 'eu5.trigger.Trigger'>
-            'Opinions': '' if religious_aspects.opinions is None else self.create_wiki_list([f'{k}: ...' for k in religious_aspects.opinions.keys()]) if religious_aspects.opinions else '',  # opinions: <class 'common.paradox_parser.Tree'>
-            'Religion': self.create_wiki_list([religion.get_wiki_link_with_icon() if religion else '' for religion in religious_aspects.religion]),  # religion: list[eu5.eu5lib.Religion]
-            'Visible': self.formatter.format_trigger(religious_aspects.visible),  # visible: <class 'eu5.trigger.Trigger'>
-        } for religious_aspects in religious_aspectss]
+            'Name': f'{{{{iconbox|{religious_aspect.display_name}|{religious_aspect.description}|w=300px|image={religious_aspect.get_wiki_filename()}}}}}',
+            'Modifier': self.format_modifier_section('modifier', religious_aspect),  # modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Enabled': self.formatter.format_trigger(religious_aspect.enabled),  # enabled: <class 'eu5.trigger.Trigger'>
+            'Opinions': '' if religious_aspect.opinions is None else self.create_wiki_list([f'{k}: ...' for k in religious_aspect.opinions.keys()]) if religious_aspect.opinions else '',  # opinions: <class 'common.paradox_parser.Tree'>
+            'Religion': self.create_wiki_list([religion.get_wiki_link_with_icon() if religion else '' for religion in religious_aspect.religion]),  # religion: list[eu5.eu5lib.Religion]
+            'Visible': self.formatter.format_trigger(religious_aspect.visible),  # visible: <class 'eu5.trigger.Trigger'>
+        } for religious_aspect in religious_aspects]
         return self.make_wiki_table(religious_aspects_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_religious_schools_table(self):
-        religious_schoolss = self.parser.religious_schools.values()
+        religious_schools = self.parser.religious_schools.values()
         religious_schools_table_data = [{
-            'Name': f'{{{{iconbox|{religious_schools.display_name}|{religious_schools.description}|w=300px|image={religious_schools.get_wiki_filename()}}}}}',
-            'Modifier': self.format_modifier_section('modifier', religious_schools),  # modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Enabled For Character': self.formatter.format_trigger(religious_schools.enabled_for_character),  # enabled_for_character: <class 'eu5.trigger.Trigger'>
-            'Enabled For Country': self.formatter.format_trigger(religious_schools.enabled_for_country),  # enabled_for_country: <class 'eu5.trigger.Trigger'>
-        } for religious_schools in religious_schoolss]
+            'Name': f'{{{{iconbox|{religious_school.display_name}|{religious_school.description}|w=300px|image={religious_school.get_wiki_filename()}}}}}',
+            'Modifier': self.format_modifier_section('modifier', religious_school),  # modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Enabled For Character': self.formatter.format_trigger(religious_school.enabled_for_character),  # enabled_for_character: <class 'eu5.trigger.Trigger'>
+            'Enabled For Country': self.formatter.format_trigger(religious_school.enabled_for_country),  # enabled_for_country: <class 'eu5.trigger.Trigger'>
+        } for religious_school in religious_schools]
         return self.make_wiki_table(religious_schools_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_subject_types_table(self):
-        subject_typess = self.parser.subject_types.values()
+        subject_types = self.parser.subject_types.values()
         subject_types_table_data = [{
-            'Name': f' style="background-color: {subject_types.color.get_css_color_string() if subject_types.color else "white"}" | ' + f'{{{{iconbox|{subject_types.display_name}|{subject_types.description}|w=300px|image={subject_types.get_wiki_filename()}}}}}',
-            'Ai Wants To Be Overlord': '' if subject_types.ai_wants_to_be_overlord is None else subject_types.ai_wants_to_be_overlord.format() if hasattr(subject_types.ai_wants_to_be_overlord, 'format') else subject_types.ai_wants_to_be_overlord,  # ai_wants_to_be_overlord: <class 'eu5.eu5lib.ScriptValue'>
-            'Allow Declaring Wars': '[[File:Yes.png|20px|Allow Declaring Wars]]' if subject_types.allow_declaring_wars else '[[File:No.png|20px|Not Allow Declaring Wars]]',  # allow_declaring_wars: <class 'bool'>
-            'Annexation Min Opinion': subject_types.annexation_min_opinion,  # annexation_min_opinion: <class 'int'>
-            'Annexation Min Years Before': '' if subject_types.annexation_min_years_before is None else subject_types.annexation_min_years_before,  # annexation_min_years_before: <class 'int'>
-            'Annexation Speed': subject_types.annexation_speed,  # annexation_speed: <class 'int'>
-            'Annexation Stall Opinion': subject_types.annexation_stall_opinion,  # annexation_stall_opinion: <class 'int'>
-            'Can Attack': self.formatter.format_trigger(subject_types.can_attack),  # can_attack: <class 'eu5.trigger.Trigger'>
-            'Can Be Force Broken In Peace Treaty': '[[File:Yes.png|20px|Can Be Force Broken In Peace Treaty]]' if subject_types.can_be_force_broken_in_peace_treaty else '[[File:No.png|20px|Not Can Be Force Broken In Peace Treaty]]',  # can_be_force_broken_in_peace_treaty: <class 'bool'>
-            'Can Change Heir Selection': '[[File:Yes.png|20px|Can Change Heir Selection]]' if subject_types.can_change_heir_selection else '[[File:No.png|20px|Not Can Change Heir Selection]]',  # can_change_heir_selection: <class 'bool'>
-            'Can Change Rank': '[[File:Yes.png|20px|Can Change Rank]]' if subject_types.can_change_rank else '[[File:No.png|20px|Not Can Change Rank]]',  # can_change_rank: <class 'bool'>
-            'Can Overlord Build Buildings': '[[File:Yes.png|20px|Can Overlord Build Buildings]]' if subject_types.can_overlord_build_buildings else '[[File:No.png|20px|Not Can Overlord Build Buildings]]',  # can_overlord_build_buildings: <class 'bool'>
-            'Can Overlord Build Rgos': '[[File:Yes.png|20px|Can Overlord Build Rgos]]' if subject_types.can_overlord_build_rgos else '[[File:No.png|20px|Not Can Overlord Build Rgos]]',  # can_overlord_build_rgos: <class 'bool'>
-            'Can Overlord Build Roads': '[[File:Yes.png|20px|Can Overlord Build Roads]]' if subject_types.can_overlord_build_roads else '[[File:No.png|20px|Not Can Overlord Build Roads]]',  # can_overlord_build_roads: <class 'bool'>
-            'Can Overlord Build Ships': '[[File:Yes.png|20px|Can Overlord Build Ships]]' if subject_types.can_overlord_build_ships else '[[File:No.png|20px|Not Can Overlord Build Ships]]',  # can_overlord_build_ships: <class 'bool'>
-            'Can Overlord Recruit Regiments': '[[File:Yes.png|20px|Can Overlord Recruit Regiments]]' if subject_types.can_overlord_recruit_regiments else '[[File:No.png|20px|Not Can Overlord Recruit Regiments]]',  # can_overlord_recruit_regiments: <class 'bool'>
-            'Can Rival': self.formatter.format_trigger(subject_types.can_rival),  # can_rival: <class 'eu5.trigger.Trigger'>
-            'Creation Visible': self.formatter.format_trigger(subject_types.creation_visible),  # creation_visible: <class 'eu5.trigger.Trigger'>
-            'Diplo Chance Accept Overlord': '' if subject_types.diplo_chance_accept_overlord is None else self.create_wiki_list([f'{k}: ...' for k in subject_types.diplo_chance_accept_overlord.keys()]) if subject_types.diplo_chance_accept_overlord else '',  # diplo_chance_accept_overlord: <class 'common.paradox_parser.Tree'>
-            'Diplo Chance Accept Subject': '' if subject_types.diplo_chance_accept_subject is None else self.create_wiki_list([f'{k}: ...' for k in subject_types.diplo_chance_accept_subject.keys()]) if subject_types.diplo_chance_accept_subject else '',  # diplo_chance_accept_subject: <class 'common.paradox_parser.Tree'>
-            'Diplomatic Capacity Cost Scale': subject_types.diplomatic_capacity_cost_scale,  # diplomatic_capacity_cost_scale: <class 'float'>
-            'Enabled Through Diplomacy': self.formatter.format_trigger(subject_types.enabled_through_diplomacy),  # enabled_through_diplomacy: <class 'eu5.trigger.Trigger'>
-            'Fleet Basing Rights': '[[File:Yes.png|20px|Fleet Basing Rights]]' if subject_types.fleet_basing_rights else '[[File:No.png|20px|Not Fleet Basing Rights]]',  # fleet_basing_rights: <class 'bool'>
-            'Food Access': '[[File:Yes.png|20px|Food Access]]' if subject_types.food_access else '[[File:No.png|20px|Not Food Access]]',  # food_access: <class 'bool'>
-            'Government': '' if subject_types.government is None else subject_types.government.get_wiki_link_with_icon() if subject_types.government else '',  # government: <class 'eu5.eu5lib.GovernmentType'>
-            'Great Power Score Transfer': subject_types.great_power_score_transfer,  # great_power_score_transfer: <class 'float'>
-            'Has Limited Diplomacy': '[[File:Yes.png|20px|Has Limited Diplomacy]]' if subject_types.has_limited_diplomacy else '[[File:No.png|20px|Not Has Limited Diplomacy]]',  # has_limited_diplomacy: <class 'bool'>
-            'Has Overlords Ruler': '[[File:Yes.png|20px|Has Overlords Ruler]]' if subject_types.has_overlords_ruler else '[[File:No.png|20px|Not Has Overlords Ruler]]',  # has_overlords_ruler: <class 'bool'>
-            'Institution Spread To Overlord': subject_types.institution_spread_to_overlord.format() if hasattr(subject_types.institution_spread_to_overlord, 'format') else subject_types.institution_spread_to_overlord,  # institution_spread_to_overlord: <class 'eu5.eu5lib.ScriptValue'>
-            'Institution Spread To Subject': subject_types.institution_spread_to_subject.format() if hasattr(subject_types.institution_spread_to_subject, 'format') else subject_types.institution_spread_to_subject,  # institution_spread_to_subject: <class 'eu5.eu5lib.ScriptValue'>
-            'Is Colonial Subject': '[[File:Yes.png|20px|Is Colonial Subject]]' if subject_types.is_colonial_subject else '[[File:No.png|20px|Not Is Colonial Subject]]',  # is_colonial_subject: <class 'bool'>
-            'Join Defensive Wars Always': self.formatter.format_trigger(subject_types.join_defensive_wars_always),  # join_defensive_wars_always: <class 'eu5.trigger.Trigger'>
-            'Join Offensive Wars Always': self.formatter.format_trigger(subject_types.join_offensive_wars_always),  # join_offensive_wars_always: <class 'eu5.trigger.Trigger'>
-            'Level': subject_types.level,  # level: <class 'int'>
-            'Merchants To Overlord Fraction': subject_types.merchants_to_overlord_fraction,  # merchants_to_overlord_fraction: <class 'float'>
-            'Minimum Opinion For Offer': subject_types.minimum_opinion_for_offer,  # minimum_opinion_for_offer: <class 'int'>
-            'On Disable': self.formatter.format_effect(subject_types.on_disable),  # on_disable: <class 'eu5.effect.Effect'>
-            'On Enable': self.formatter.format_effect(subject_types.on_enable),  # on_enable: <class 'eu5.effect.Effect'>
-            'Only Overlord Court Language': '[[File:Yes.png|20px|Only Overlord Court Language]]' if subject_types.only_overlord_court_language else '[[File:No.png|20px|Not Only Overlord Court Language]]',  # only_overlord_court_language: <class 'bool'>
-            'Only Overlord Culture': '[[File:Yes.png|20px|Only Overlord Culture]]' if subject_types.only_overlord_culture else '[[File:No.png|20px|Not Only Overlord Culture]]',  # only_overlord_culture: <class 'bool'>
-            'Only Overlord Or Kindred Culture': '[[File:Yes.png|20px|Only Overlord Or Kindred Culture]]' if subject_types.only_overlord_or_kindred_culture else '[[File:No.png|20px|Not Only Overlord Or Kindred Culture]]',  # only_overlord_or_kindred_culture: <class 'bool'>
-            'Overlord Can Cancel': '[[File:Yes.png|20px|Overlord Can Cancel]]' if subject_types.overlord_can_cancel else '[[File:No.png|20px|Not Overlord Can Cancel]]',  # overlord_can_cancel: <class 'bool'>
-            'Overlord Can Enforce Peace On Subject': '[[File:Yes.png|20px|Overlord Can Enforce Peace On Subject]]' if subject_types.overlord_can_enforce_peace_on_subject else '[[File:No.png|20px|Not Overlord Can Enforce Peace On Subject]]',  # overlord_can_enforce_peace_on_subject: <class 'bool'>
-            'Overlord Inherit If No Heir': '[[File:Yes.png|20px|Overlord Inherit If No Heir]]' if subject_types.overlord_inherit_if_no_heir else '[[File:No.png|20px|Not Overlord Inherit If No Heir]]',  # overlord_inherit_if_no_heir: <class 'bool'>
-            'Overlord Modifier': self.format_modifier_section('overlord_modifier', subject_types),  # overlord_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Overlord Share Exploration': '[[File:Yes.png|20px|Overlord Share Exploration]]' if subject_types.overlord_share_exploration else '[[File:No.png|20px|Not Overlord Share Exploration]]',  # overlord_share_exploration: <class 'bool'>
-            'Release Country Enabled': self.formatter.format_trigger(subject_types.release_country_enabled),  # release_country_enabled: <class 'eu5.trigger.Trigger'>
-            'Strength Vs Overlord': subject_types.strength_vs_overlord,  # strength_vs_overlord: <class 'float'>
-            'Subject Can Cancel': '' if subject_types.subject_can_cancel is None else '[[File:Yes.png|20px|Subject Can Cancel]]' if subject_types.subject_can_cancel else '[[File:No.png|20px|Not Subject Can Cancel]]',  # subject_can_cancel: <class 'bool'>
-            'Subject Creation Enabled': self.formatter.format_trigger(subject_types.subject_creation_enabled),  # subject_creation_enabled: <class 'eu5.trigger.Trigger'>
-            'Subject Modifier': self.format_modifier_section('subject_modifier', subject_types),  # subject_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Subject Pays': subject_types.subject_pays.format(icon_only=True) if hasattr(subject_types.subject_pays, 'format') else subject_types.subject_pays,  # subject_pays: <class 'eu5.eu5lib.Price'>
-            'Type': '' if subject_types.type is None else subject_types.type.display_name if subject_types.type else '',  # type: <class 'eu5.eu5lib.Eu5GameConcept'>
-            'Use Overlord Laws': '[[File:Yes.png|20px|Use Overlord Laws]]' if subject_types.use_overlord_laws else '[[File:No.png|20px|Not Use Overlord Laws]]',  # use_overlord_laws: <class 'bool'>
-            'Use Overlord Map Color': '' if subject_types.use_overlord_map_color is None else '[[File:Yes.png|20px|Use Overlord Map Color]]' if subject_types.use_overlord_map_color else '[[File:No.png|20px|Not Use Overlord Map Color]]',  # use_overlord_map_color: <class 'bool'>
-            'Use Overlord Map Name': '[[File:Yes.png|20px|Use Overlord Map Name]]' if subject_types.use_overlord_map_name else '[[File:No.png|20px|Not Use Overlord Map Name]]',  # use_overlord_map_name: <class 'bool'>
-            'Visible Through Diplomacy': self.formatter.format_trigger(subject_types.visible_through_diplomacy),  # visible_through_diplomacy: <class 'eu5.trigger.Trigger'>
-            'Visible Through Treaty': self.formatter.format_trigger(subject_types.visible_through_treaty),  # visible_through_treaty: <class 'eu5.trigger.Trigger'>
-            'War Score Cost': subject_types.war_score_cost,  # war_score_cost: <class 'float'>
-        } for subject_types in subject_typess]
+            'Name': f' style="background-color: {subject_type.color.get_css_color_string() if subject_type.color else "white"}" | ' + f'{{{{iconbox|{subject_type.display_name}|{subject_type.description}|w=300px|image={subject_type.get_wiki_filename()}}}}}',
+            'Ai Wants To Be Overlord': '' if subject_type.ai_wants_to_be_overlord is None else subject_type.ai_wants_to_be_overlord.format() if hasattr(subject_type.ai_wants_to_be_overlord, 'format') else subject_type.ai_wants_to_be_overlord,  # ai_wants_to_be_overlord: <class 'eu5.eu5lib.ScriptValue'>
+            'Allow Declaring Wars': '[[File:Yes.png|20px|Allow Declaring Wars]]' if subject_type.allow_declaring_wars else '[[File:No.png|20px|Not Allow Declaring Wars]]',  # allow_declaring_wars: <class 'bool'>
+            'Annexation Min Opinion': subject_type.annexation_min_opinion,  # annexation_min_opinion: <class 'int'>
+            'Annexation Min Years Before': '' if subject_type.annexation_min_years_before is None else subject_type.annexation_min_years_before,  # annexation_min_years_before: <class 'int'>
+            'Annexation Speed': subject_type.annexation_speed,  # annexation_speed: <class 'int'>
+            'Annexation Stall Opinion': subject_type.annexation_stall_opinion,  # annexation_stall_opinion: <class 'int'>
+            'Can Attack': self.formatter.format_trigger(subject_type.can_attack),  # can_attack: <class 'eu5.trigger.Trigger'>
+            'Can Be Force Broken In Peace Treaty': '[[File:Yes.png|20px|Can Be Force Broken In Peace Treaty]]' if subject_type.can_be_force_broken_in_peace_treaty else '[[File:No.png|20px|Not Can Be Force Broken In Peace Treaty]]',  # can_be_force_broken_in_peace_treaty: <class 'bool'>
+            'Can Change Heir Selection': '[[File:Yes.png|20px|Can Change Heir Selection]]' if subject_type.can_change_heir_selection else '[[File:No.png|20px|Not Can Change Heir Selection]]',  # can_change_heir_selection: <class 'bool'>
+            'Can Change Rank': '[[File:Yes.png|20px|Can Change Rank]]' if subject_type.can_change_rank else '[[File:No.png|20px|Not Can Change Rank]]',  # can_change_rank: <class 'bool'>
+            'Can Overlord Build Buildings': '[[File:Yes.png|20px|Can Overlord Build Buildings]]' if subject_type.can_overlord_build_buildings else '[[File:No.png|20px|Not Can Overlord Build Buildings]]',  # can_overlord_build_buildings: <class 'bool'>
+            'Can Overlord Build Rgos': '[[File:Yes.png|20px|Can Overlord Build Rgos]]' if subject_type.can_overlord_build_rgos else '[[File:No.png|20px|Not Can Overlord Build Rgos]]',  # can_overlord_build_rgos: <class 'bool'>
+            'Can Overlord Build Roads': '[[File:Yes.png|20px|Can Overlord Build Roads]]' if subject_type.can_overlord_build_roads else '[[File:No.png|20px|Not Can Overlord Build Roads]]',  # can_overlord_build_roads: <class 'bool'>
+            'Can Overlord Build Ships': '[[File:Yes.png|20px|Can Overlord Build Ships]]' if subject_type.can_overlord_build_ships else '[[File:No.png|20px|Not Can Overlord Build Ships]]',  # can_overlord_build_ships: <class 'bool'>
+            'Can Overlord Recruit Regiments': '[[File:Yes.png|20px|Can Overlord Recruit Regiments]]' if subject_type.can_overlord_recruit_regiments else '[[File:No.png|20px|Not Can Overlord Recruit Regiments]]',  # can_overlord_recruit_regiments: <class 'bool'>
+            'Can Rival': self.formatter.format_trigger(subject_type.can_rival),  # can_rival: <class 'eu5.trigger.Trigger'>
+            'Creation Visible': self.formatter.format_trigger(subject_type.creation_visible),  # creation_visible: <class 'eu5.trigger.Trigger'>
+            'Diplo Chance Accept Overlord': '' if subject_type.diplo_chance_accept_overlord is None else self.create_wiki_list([f'{k}: ...' for k in subject_type.diplo_chance_accept_overlord.keys()]) if subject_type.diplo_chance_accept_overlord else '',  # diplo_chance_accept_overlord: <class 'common.paradox_parser.Tree'>
+            'Diplo Chance Accept Subject': '' if subject_type.diplo_chance_accept_subject is None else self.create_wiki_list([f'{k}: ...' for k in subject_type.diplo_chance_accept_subject.keys()]) if subject_type.diplo_chance_accept_subject else '',  # diplo_chance_accept_subject: <class 'common.paradox_parser.Tree'>
+            'Diplomatic Capacity Cost Scale': subject_type.diplomatic_capacity_cost_scale,  # diplomatic_capacity_cost_scale: <class 'float'>
+            'Enabled Through Diplomacy': self.formatter.format_trigger(subject_type.enabled_through_diplomacy),  # enabled_through_diplomacy: <class 'eu5.trigger.Trigger'>
+            'Fleet Basing Rights': '[[File:Yes.png|20px|Fleet Basing Rights]]' if subject_type.fleet_basing_rights else '[[File:No.png|20px|Not Fleet Basing Rights]]',  # fleet_basing_rights: <class 'bool'>
+            'Food Access': '[[File:Yes.png|20px|Food Access]]' if subject_type.food_access else '[[File:No.png|20px|Not Food Access]]',  # food_access: <class 'bool'>
+            'Government': '' if subject_type.government is None else subject_type.government.get_wiki_link_with_icon() if subject_type.government else '',  # government: <class 'eu5.eu5lib.GovernmentType'>
+            'Great Power Score Transfer': subject_type.great_power_score_transfer,  # great_power_score_transfer: <class 'float'>
+            'Has Limited Diplomacy': '[[File:Yes.png|20px|Has Limited Diplomacy]]' if subject_type.has_limited_diplomacy else '[[File:No.png|20px|Not Has Limited Diplomacy]]',  # has_limited_diplomacy: <class 'bool'>
+            'Has Overlords Ruler': '[[File:Yes.png|20px|Has Overlords Ruler]]' if subject_type.has_overlords_ruler else '[[File:No.png|20px|Not Has Overlords Ruler]]',  # has_overlords_ruler: <class 'bool'>
+            'Institution Spread To Overlord': subject_type.institution_spread_to_overlord.format() if hasattr(subject_type.institution_spread_to_overlord, 'format') else subject_type.institution_spread_to_overlord,  # institution_spread_to_overlord: <class 'eu5.eu5lib.ScriptValue'>
+            'Institution Spread To Subject': subject_type.institution_spread_to_subject.format() if hasattr(subject_type.institution_spread_to_subject, 'format') else subject_type.institution_spread_to_subject,  # institution_spread_to_subject: <class 'eu5.eu5lib.ScriptValue'>
+            'Is Colonial Subject': '[[File:Yes.png|20px|Is Colonial Subject]]' if subject_type.is_colonial_subject else '[[File:No.png|20px|Not Is Colonial Subject]]',  # is_colonial_subject: <class 'bool'>
+            'Join Defensive Wars Always': self.formatter.format_trigger(subject_type.join_defensive_wars_always),  # join_defensive_wars_always: <class 'eu5.trigger.Trigger'>
+            'Join Offensive Wars Always': self.formatter.format_trigger(subject_type.join_offensive_wars_always),  # join_offensive_wars_always: <class 'eu5.trigger.Trigger'>
+            'Level': subject_type.level,  # level: <class 'int'>
+            'Merchants To Overlord Fraction': subject_type.merchants_to_overlord_fraction,  # merchants_to_overlord_fraction: <class 'float'>
+            'Minimum Opinion For Offer': subject_type.minimum_opinion_for_offer,  # minimum_opinion_for_offer: <class 'int'>
+            'On Disable': self.formatter.format_effect(subject_type.on_disable),  # on_disable: <class 'eu5.effect.Effect'>
+            'On Enable': self.formatter.format_effect(subject_type.on_enable),  # on_enable: <class 'eu5.effect.Effect'>
+            'Only Overlord Court Language': '[[File:Yes.png|20px|Only Overlord Court Language]]' if subject_type.only_overlord_court_language else '[[File:No.png|20px|Not Only Overlord Court Language]]',  # only_overlord_court_language: <class 'bool'>
+            'Only Overlord Culture': '[[File:Yes.png|20px|Only Overlord Culture]]' if subject_type.only_overlord_culture else '[[File:No.png|20px|Not Only Overlord Culture]]',  # only_overlord_culture: <class 'bool'>
+            'Only Overlord Or Kindred Culture': '[[File:Yes.png|20px|Only Overlord Or Kindred Culture]]' if subject_type.only_overlord_or_kindred_culture else '[[File:No.png|20px|Not Only Overlord Or Kindred Culture]]',  # only_overlord_or_kindred_culture: <class 'bool'>
+            'Overlord Can Cancel': '[[File:Yes.png|20px|Overlord Can Cancel]]' if subject_type.overlord_can_cancel else '[[File:No.png|20px|Not Overlord Can Cancel]]',  # overlord_can_cancel: <class 'bool'>
+            'Overlord Can Enforce Peace On Subject': '[[File:Yes.png|20px|Overlord Can Enforce Peace On Subject]]' if subject_type.overlord_can_enforce_peace_on_subject else '[[File:No.png|20px|Not Overlord Can Enforce Peace On Subject]]',  # overlord_can_enforce_peace_on_subject: <class 'bool'>
+            'Overlord Inherit If No Heir': '[[File:Yes.png|20px|Overlord Inherit If No Heir]]' if subject_type.overlord_inherit_if_no_heir else '[[File:No.png|20px|Not Overlord Inherit If No Heir]]',  # overlord_inherit_if_no_heir: <class 'bool'>
+            'Overlord Modifier': self.format_modifier_section('overlord_modifier', subject_type),  # overlord_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Overlord Share Exploration': '[[File:Yes.png|20px|Overlord Share Exploration]]' if subject_type.overlord_share_exploration else '[[File:No.png|20px|Not Overlord Share Exploration]]',  # overlord_share_exploration: <class 'bool'>
+            'Release Country Enabled': self.formatter.format_trigger(subject_type.release_country_enabled),  # release_country_enabled: <class 'eu5.trigger.Trigger'>
+            'Strength Vs Overlord': subject_type.strength_vs_overlord,  # strength_vs_overlord: <class 'float'>
+            'Subject Can Cancel': '' if subject_type.subject_can_cancel is None else '[[File:Yes.png|20px|Subject Can Cancel]]' if subject_type.subject_can_cancel else '[[File:No.png|20px|Not Subject Can Cancel]]',  # subject_can_cancel: <class 'bool'>
+            'Subject Creation Enabled': self.formatter.format_trigger(subject_type.subject_creation_enabled),  # subject_creation_enabled: <class 'eu5.trigger.Trigger'>
+            'Subject Modifier': self.format_modifier_section('subject_modifier', subject_type),  # subject_modifier: list[eu5.eu5lib.Eu5Modifier]
+            'Subject Pays': subject_type.subject_pays.format(icon_only=True) if hasattr(subject_type.subject_pays, 'format') else subject_type.subject_pays,  # subject_pays: <class 'eu5.eu5lib.Price'>
+            'Type': '' if subject_type.type is None else subject_type.type.display_name if subject_type.type else '',  # type: <class 'eu5.eu5lib.Eu5GameConcept'>
+            'Use Overlord Laws': '[[File:Yes.png|20px|Use Overlord Laws]]' if subject_type.use_overlord_laws else '[[File:No.png|20px|Not Use Overlord Laws]]',  # use_overlord_laws: <class 'bool'>
+            'Use Overlord Map Color': '' if subject_type.use_overlord_map_color is None else '[[File:Yes.png|20px|Use Overlord Map Color]]' if subject_type.use_overlord_map_color else '[[File:No.png|20px|Not Use Overlord Map Color]]',  # use_overlord_map_color: <class 'bool'>
+            'Use Overlord Map Name': '[[File:Yes.png|20px|Use Overlord Map Name]]' if subject_type.use_overlord_map_name else '[[File:No.png|20px|Not Use Overlord Map Name]]',  # use_overlord_map_name: <class 'bool'>
+            'Visible Through Diplomacy': self.formatter.format_trigger(subject_type.visible_through_diplomacy),  # visible_through_diplomacy: <class 'eu5.trigger.Trigger'>
+            'Visible Through Treaty': self.formatter.format_trigger(subject_type.visible_through_treaty),  # visible_through_treaty: <class 'eu5.trigger.Trigger'>
+            'War Score Cost': subject_type.war_score_cost,  # war_score_cost: <class 'float'>
+        } for subject_type in subject_types]
         return self.make_wiki_table(subject_types_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
@@ -1009,69 +1009,69 @@ class TableGenerator(Eu5FileGenerator):
                                         remove_empty_columns=True,
                                         )
     def generate_unit_types_table(self):
-        unit_typess = self.parser.unit_types.values()
+        unit_types = self.parser.unit_types.values()
         unit_types_table_data = [{
-            'Name': f' style="background-color: {unit_types.color.get_css_color_string() if unit_types.color else "white"}" | ' + f'{{{{iconbox|{unit_types.display_name}|{unit_types.description}|w=300px|image={unit_types.get_wiki_filename()}}}}}',
-            'Age': '' if unit_types.age is None else unit_types.age.get_wiki_link_with_icon() if unit_types.age else '',  # age: <class 'eu5.eu5lib.Age'>
-            'Artillery Barrage': unit_types.artillery_barrage,  # artillery_barrage: <class 'int'>
-            'Attrition Loss': unit_types.attrition_loss,  # attrition_loss: <class 'float'>
-            'Blockade Capacity': unit_types.blockade_capacity,  # blockade_capacity: <class 'float'>
-            'Bombard Efficiency': unit_types.bombard_efficiency,  # bombard_efficiency: <class 'float'>
-            'Build Time Modifier': unit_types.build_time_modifier,  # build_time_modifier: <class 'float'>
-            'Buildable': '' if unit_types.buildable is None else '[[File:Yes.png|20px|Buildable]]' if unit_types.buildable else '[[File:No.png|20px|Not Buildable]]',  # buildable: <class 'bool'>
-            'Cannon': '' if unit_types.cannons is None else unit_types.cannons,  # cannons: <class 'int'>
-            'Category': unit_types.category.get_wiki_link_with_icon() if unit_types.category else '',  # category: <class 'eu5.eu5lib.UnitCategory'>
-            'Combat': '' if unit_types.combat is None else self.create_wiki_list([f'{k}: ...' for k in unit_types.combat.keys()]) if unit_types.combat else '',  # combat: <class 'common.paradox_parser.Tree'>
-            'Combat Power': unit_types.combat_power,  # combat_power: <class 'float'>
-            'Combat Speed': unit_types.combat_speed,  # combat_speed: <class 'float'>
-            'Construction Demand': '' if unit_types.construction_demand is None else unit_types.construction_demand.format(icon_only=True) if hasattr(unit_types.construction_demand, 'format') else unit_types.construction_demand,  # construction_demand: <class 'eu5.eu5lib.GoodsDemand'>
-            'Copy From': unit_types.copy_from.get_wiki_link_with_icon() if unit_types.copy_from else '',  # copy_from: <class 'eu5.eu5lib.UnitType'>
-            'Country Potential': self.formatter.format_trigger(unit_types.country_potential),  # country_potential: <class 'eu5.trigger.Trigger'>
-            'Crew Size': unit_types.crew_size,  # crew_size: <class 'float'>
-            'Default': '[[File:Yes.png|20px|Default]]' if unit_types.default else '[[File:No.png|20px|Not Default]]',  # default: <class 'bool'>
-            'Flanking Ability': unit_types.flanking_ability,  # flanking_ability: <class 'float'>
-            'Food Consumption Per Strength': unit_types.food_consumption_per_strength,  # food_consumption_per_strength: <class 'float'>
-            'Food Storage Per Strength': unit_types.food_storage_per_strength,  # food_storage_per_strength: <class 'float'>
-            'Frontage': unit_types.frontage,  # frontage: <class 'float'>
-            'Gfx Tags': '' if unit_types.gfx_tags is None else unit_types.gfx_tags,  # gfx_tags: typing.Any
-            'Hull Size': unit_types.hull_size,  # hull_size: <class 'int'>
-            'Impact': '' if unit_types.impact is None else self.create_wiki_list([f'{k}: ...' for k in unit_types.impact.keys()]) if unit_types.impact else '',  # impact: <class 'common.paradox_parser.Tree'>
-            'Initiative': unit_types.initiative,  # initiative: <class 'float'>
-            'Levy': '[[File:Yes.png|20px|Levy]]' if unit_types.levy else '[[File:No.png|20px|Not Levy]]',  # levy: <class 'bool'>
-            'Light': '' if unit_types.light is None else unit_types.light,  # light: typing.Any
-            'Limit': '' if unit_types.limit is None else unit_types.limit.format() if hasattr(unit_types.limit, 'format') else unit_types.limit,  # limit: <class 'eu5.eu5lib.ScriptValue'>
-            'Location Potential': self.formatter.format_trigger(unit_types.location_potential),  # location_potential: <class 'eu5.trigger.Trigger'>
-            'Location Trigger': self.formatter.format_trigger(unit_types.location_trigger),  # location_trigger: <class 'eu5.trigger.Trigger'>
-            'Maintenance Demand': '' if unit_types.maintenance_demand is None else unit_types.maintenance_demand.format(icon_only=True) if hasattr(unit_types.maintenance_demand, 'format') else unit_types.maintenance_demand,  # maintenance_demand: <class 'eu5.eu5lib.GoodsDemand'>
-            'Maritime Presence': '' if unit_types.maritime_presence is None else unit_types.maritime_presence.format() if hasattr(unit_types.maritime_presence, 'format') else unit_types.maritime_presence,  # maritime_presence: <class 'eu5.eu5lib.ScriptValue'>
-            'Max Strength': unit_types.max_strength,  # max_strength: <class 'float'>
-            'Mercenaries Per Location': self.create_wiki_list([f'{self.formatter.format_percent(factor)} {pop_type.get_wiki_icon()}' for m in unit_types.mercenaries_per_location for pop_type, factor in m.items()]),
-            'Morale Damage Done': unit_types.morale_damage_done,  # morale_damage_done: <class 'float'>
-            'Morale Damage Taken': unit_types.morale_damage_taken,  # morale_damage_taken: <class 'float'>
-            'Movement Speed': unit_types.movement_speed,  # movement_speed: <class 'float'>
-            'Strength Damage Done': unit_types.strength_damage_done,  # strength_damage_done: <class 'float'>
-            'Strength Damage Taken': '' if unit_types.strength_damage_taken is None else unit_types.strength_damage_taken,  # strength_damage_taken: typing.Any
-            'Supply Weight': unit_types.supply_weight,  # supply_weight: <class 'float'>
-            'Transport Capacity': unit_types.transport_capacity,  # transport_capacity: <class 'float'>
-            'Upgrades To': '' if unit_types.upgrades_to is None else unit_types.upgrades_to,  # upgrades_to: typing.Any
-            'Upgrades To Only': unit_types.upgrades_to_only.get_wiki_link_with_icon() if unit_types.upgrades_to_only else '',  # upgrades_to_only: <class 'eu5.eu5lib.UnitType'>
-            'Use Ship Names': '' if unit_types.use_ship_names is None else '[[File:Yes.png|20px|Use Ship Names]]' if unit_types.use_ship_names else '[[File:No.png|20px|Not Use Ship Names]]',  # use_ship_names: <class 'bool'>
-        } for unit_types in unit_typess]
+            'Name': f' style="background-color: {unit_type.color.get_css_color_string() if unit_type.color else "white"}" | ' + f'{{{{iconbox|{unit_type.display_name}|{unit_type.description}|w=300px|image={unit_type.get_wiki_filename()}}}}}',
+            'Age': '' if unit_type.age is None else unit_type.age.get_wiki_link_with_icon() if unit_type.age else '',  # age: <class 'eu5.eu5lib.Age'>
+            'Artillery Barrage': unit_type.artillery_barrage,  # artillery_barrage: <class 'int'>
+            'Attrition Loss': unit_type.attrition_loss,  # attrition_loss: <class 'float'>
+            'Blockade Capacity': unit_type.blockade_capacity,  # blockade_capacity: <class 'float'>
+            'Bombard Efficiency': unit_type.bombard_efficiency,  # bombard_efficiency: <class 'float'>
+            'Build Time Modifier': unit_type.build_time_modifier,  # build_time_modifier: <class 'float'>
+            'Buildable': '' if unit_type.buildable is None else '[[File:Yes.png|20px|Buildable]]' if unit_type.buildable else '[[File:No.png|20px|Not Buildable]]',  # buildable: <class 'bool'>
+            'Cannon': '' if unit_type.cannons is None else unit_type.cannons,  # cannons: <class 'int'>
+            'Category': unit_type.category.get_wiki_link_with_icon() if unit_type.category else '',  # category: <class 'eu5.eu5lib.UnitCategory'>
+            'Combat': '' if unit_type.combat is None else self.create_wiki_list([f'{k}: ...' for k in unit_type.combat.keys()]) if unit_type.combat else '',  # combat: <class 'common.paradox_parser.Tree'>
+            'Combat Power': unit_type.combat_power,  # combat_power: <class 'float'>
+            'Combat Speed': unit_type.combat_speed,  # combat_speed: <class 'float'>
+            'Construction Demand': '' if unit_type.construction_demand is None else unit_type.construction_demand.format(icon_only=True) if hasattr(unit_type.construction_demand, 'format') else unit_type.construction_demand,  # construction_demand: <class 'eu5.eu5lib.GoodsDemand'>
+            'Copy From': unit_type.copy_from.get_wiki_link_with_icon() if unit_type.copy_from else '',  # copy_from: <class 'eu5.eu5lib.UnitType'>
+            'Country Potential': self.formatter.format_trigger(unit_type.country_potential),  # country_potential: <class 'eu5.trigger.Trigger'>
+            'Crew Size': unit_type.crew_size,  # crew_size: <class 'float'>
+            'Default': '[[File:Yes.png|20px|Default]]' if unit_type.default else '[[File:No.png|20px|Not Default]]',  # default: <class 'bool'>
+            'Flanking Ability': unit_type.flanking_ability,  # flanking_ability: <class 'float'>
+            'Food Consumption Per Strength': unit_type.food_consumption_per_strength,  # food_consumption_per_strength: <class 'float'>
+            'Food Storage Per Strength': unit_type.food_storage_per_strength,  # food_storage_per_strength: <class 'float'>
+            'Frontage': unit_type.frontage,  # frontage: <class 'float'>
+            'Gfx Tags': '' if unit_type.gfx_tags is None else unit_type.gfx_tags,  # gfx_tags: typing.Any
+            'Hull Size': unit_type.hull_size,  # hull_size: <class 'int'>
+            'Impact': '' if unit_type.impact is None else self.create_wiki_list([f'{k}: ...' for k in unit_type.impact.keys()]) if unit_type.impact else '',  # impact: <class 'common.paradox_parser.Tree'>
+            'Initiative': unit_type.initiative,  # initiative: <class 'float'>
+            'Levy': '[[File:Yes.png|20px|Levy]]' if unit_type.levy else '[[File:No.png|20px|Not Levy]]',  # levy: <class 'bool'>
+            'Light': '' if unit_type.light is None else unit_type.light,  # light: typing.Any
+            'Limit': '' if unit_type.limit is None else unit_type.limit.format() if hasattr(unit_type.limit, 'format') else unit_type.limit,  # limit: <class 'eu5.eu5lib.ScriptValue'>
+            'Location Potential': self.formatter.format_trigger(unit_type.location_potential),  # location_potential: <class 'eu5.trigger.Trigger'>
+            'Location Trigger': self.formatter.format_trigger(unit_type.location_trigger),  # location_trigger: <class 'eu5.trigger.Trigger'>
+            'Maintenance Demand': '' if unit_type.maintenance_demand is None else unit_type.maintenance_demand.format(icon_only=True) if hasattr(unit_type.maintenance_demand, 'format') else unit_type.maintenance_demand,  # maintenance_demand: <class 'eu5.eu5lib.GoodsDemand'>
+            'Maritime Presence': '' if unit_type.maritime_presence is None else unit_type.maritime_presence.format() if hasattr(unit_type.maritime_presence, 'format') else unit_type.maritime_presence,  # maritime_presence: <class 'eu5.eu5lib.ScriptValue'>
+            'Max Strength': unit_type.max_strength,  # max_strength: <class 'float'>
+            'Mercenaries Per Location': self.create_wiki_list([f'{self.formatter.format_percent(factor)} {pop_type.get_wiki_icon()}' for m in unit_type.mercenaries_per_location for pop_type, factor in m.items()]),
+            'Morale Damage Done': unit_type.morale_damage_done,  # morale_damage_done: <class 'float'>
+            'Morale Damage Taken': unit_type.morale_damage_taken,  # morale_damage_taken: <class 'float'>
+            'Movement Speed': unit_type.movement_speed,  # movement_speed: <class 'float'>
+            'Strength Damage Done': unit_type.strength_damage_done,  # strength_damage_done: <class 'float'>
+            'Strength Damage Taken': '' if unit_type.strength_damage_taken is None else unit_type.strength_damage_taken,  # strength_damage_taken: typing.Any
+            'Supply Weight': unit_type.supply_weight,  # supply_weight: <class 'float'>
+            'Transport Capacity': unit_type.transport_capacity,  # transport_capacity: <class 'float'>
+            'Upgrades To': '' if unit_type.upgrades_to is None else unit_type.upgrades_to,  # upgrades_to: typing.Any
+            'Upgrades To Only': unit_type.upgrades_to_only.get_wiki_link_with_icon() if unit_type.upgrades_to_only else '',  # upgrades_to_only: <class 'eu5.eu5lib.UnitType'>
+            'Use Ship Names': '' if unit_type.use_ship_names is None else '[[File:Yes.png|20px|Use Ship Names]]' if unit_type.use_ship_names else '[[File:No.png|20px|Not Use Ship Names]]',  # use_ship_names: <class 'bool'>
+        } for unit_type in unit_types]
         return self.make_wiki_table(unit_types_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
     def generate_wargoals_table(self):
-        wargoalss = self.parser.wargoals.values()
+        wargoals = self.parser.wargoals.values()
         wargoals_table_data = [{
-            'Name': f'{{{{iconbox|{wargoals.display_name}|{wargoals.description}|w=300px|image={wargoals.get_wiki_filename()}}}}}',
-            'Attacker': '' if wargoals.attacker is None else self.create_wiki_list([f'{k}: ...' for k in wargoals.attacker.keys()]) if wargoals.attacker else '',  # attacker: <class 'common.paradox_parser.Tree'>
-            'Defender': '' if wargoals.defender is None else self.create_wiki_list([f'{k}: ...' for k in wargoals.defender.keys()]) if isinstance(wargoals.defender, Tree) else "''Unknown type''" if wargoals.defender else '',  # defender: <class 'common.paradox_parser.Tree'>
-            'Ticking War Score': wargoals.ticking_war_score,  # ticking_war_score: <class 'float'>
-            'Type': wargoals.type,  # type: <class 'str'>
-            'War Name': wargoals.war_name,  # war_name: <class 'str'>
-            'War Name Is Country Order Agnostic': '[[File:Yes.png|20px|War Name Is Country Order Agnostic]]' if wargoals.war_name_is_country_order_agnostic else '[[File:No.png|20px|Not War Name Is Country Order Agnostic]]',  # war_name_is_country_order_agnostic: <class 'bool'>
-        } for wargoals in wargoalss]
+            'Name': f'{{{{iconbox|{wargoal.display_name}|{wargoal.description}|w=300px|image={wargoal.get_wiki_filename()}}}}}',
+            'Attacker': '' if wargoal.attacker is None else self.create_wiki_list([f'{k}: ...' for k in wargoal.attacker.keys()]) if wargoal.attacker else '',  # attacker: <class 'common.paradox_parser.Tree'>
+            'Defender': '' if wargoal.defender is None else self.create_wiki_list([f'{k}: ...' for k in wargoal.defender.keys()]) if isinstance(wargoal.defender, Tree) else "''Unknown type''" if wargoal.defender else '',  # defender: <class 'common.paradox_parser.Tree'>
+            'Ticking War Score': wargoal.ticking_war_score,  # ticking_war_score: <class 'float'>
+            'Type': wargoal.type,  # type: <class 'str'>
+            'War Name': wargoal.war_name,  # war_name: <class 'str'>
+            'War Name Is Country Order Agnostic': '[[File:Yes.png|20px|War Name Is Country Order Agnostic]]' if wargoal.war_name_is_country_order_agnostic else '[[File:No.png|20px|Not War Name Is Country Order Agnostic]]',  # war_name_is_country_order_agnostic: <class 'bool'>
+        } for wargoal in wargoals]
         return self.make_wiki_table(wargoals_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
