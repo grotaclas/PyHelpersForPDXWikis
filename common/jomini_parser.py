@@ -3,6 +3,7 @@ import inspect
 import re
 import typing
 from abc import ABCMeta, abstractmethod
+from collections.abc import Iterable
 
 import sys
 from functools import cached_property
@@ -301,9 +302,11 @@ class JominiParser(metaclass=ABCMeta):
         else:
             return mod_value
 
-    def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
+    def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier, excludes: Iterable[str] = ('potential_trigger', )) -> list[ME]:
         modifiers = []
         for mod_name, mod_value in data:
+            if mod_name in excludes:
+                continue
             if isinstance(mod_value, list) and mod_name != 'potential_trigger':
                 mod_value = sum(mod_value)
             mod_type = self.get_modifier_type_or_default(mod_name)

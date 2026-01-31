@@ -366,8 +366,8 @@ class Advance(Eu5AdvancedEntity):
     country_type: str = None
     depth: int = None
     age_specialization: str = None  # called "for" in the files, but that's a reserved word in python
-    government: str = None
-    in_tree_of: Any = None # possible types: {<class 'list'>, <class 'str'>}
+    government: 'GovernmentType' = None
+    modifier: list[Eu5Modifier] = []
     modifier_while_progressing: list[Eu5Modifier] = []
     potential: Trigger = None
 
@@ -376,22 +376,23 @@ class Advance(Eu5AdvancedEntity):
 
     research_cost: float = None # percentage?
     starting_technology_level: int = 0
-    unlock_ability: list[str] = []
-    unlock_building: list[str] = []
-    unlock_cabinet_action: list[str] = []
-    unlock_casus_belli: list[str] = []
-    unlock_country_interaction: list[str] = []
-    unlock_diplomacy: list[str] = []
-    unlock_estate_privilege: list[str] = []
-    unlock_government_reform: list[str] = []
-    unlock_heir_selection: list[str] = []
-    unlock_law: list[str] = []
+    unlock_ability: list['UnitAbility'] = []
+    unlock_building: list['Building'] = []
+    unlock_cabinet_action: list['CabinetAction'] = []
+    unlock_casus_belli: list['CasusBelli'] = []
+    unlock_country_interaction: list['CountryInteraction'] = []
+    unlock_diplomacy: list['Eu5GameConcept'] = []
+    unlock_estate_privilege: list['EstatePrivilege'] = []
+    unlock_government_reform: list['GovernmentReform'] = []
+    unlock_heir_selection: list['HeirSelection'] = []
+    unlock_interaction: list['CharacterInteraction'] = []
+    unlock_law: list['Law'] = []
     unlock_levy: list['Levy'] = []
-    unlock_policy: list[str] = []
-    unlock_production_method: list[str] = []
-    unlock_road_type: list[str] = []
-    unlock_subject_type: list[str] = []
-    unlock_unit: list[str] = []
+    unlock_policy: list['LawPolicy'] = []
+    unlock_production_method: list['ProductionMethod'] = []
+    unlock_road_type: list['RoadType'] = []
+    unlock_subject_type: list['SubjectType'] = []
+    unlock_unit: list['UnitType'] = []
 
     icon_folder = 'ADVANCE_ICON_PATH'
 
@@ -629,6 +630,8 @@ class ProductionMethod(NameableEntity):
     potential: Tree
     produced: Good = None
 
+    buildings: list['Building'] = None
+
     def format(self, icon_only=False):
         data = [
             'Input:',
@@ -639,6 +642,13 @@ class ProductionMethod(NameableEntity):
             data.append(ResourceValue(self.produced, self.output).format(icon_only))
         # return eu5game.parser.formatter.create_wiki_list(data)
         return [self.display_name, data]
+
+    def get_buildings(self) -> list['Building']:
+        if self.buildings is None:
+            # just to trigger building parsing which sets the building for the PMs
+            buildings = eu5game.parser.buildings
+        return self.buildings
+
 
 class Age(Eu5AdvancedEntity):
     long_name: str  # e.g. Age of Traditions
@@ -711,6 +721,14 @@ class Building(Eu5AdvancedEntity):
     town: bool = False
     unique_production_methods: list[list[ProductionMethod]] = []
     icon_folder = 'BUILDINGS_ICON_PATH'
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        super().__init__(name, display_name, **kwargs)
+        for pm_list in self.unique_production_methods + [self.possible_production_methods]:
+            for pm in pm_list:
+                if pm.buildings is None:
+                    pm.buildings = []
+                pm.buildings.append(self)
 
 
 class Climate(Eu5AdvancedEntity):

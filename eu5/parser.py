@@ -1,7 +1,7 @@
 import copy
 import pprint
 import uuid
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Iterable
 from functools import reduce
 from typing import Callable, Type
 
@@ -106,9 +106,12 @@ class Eu5Parser(JominiParser):
                                                 'decaying': lambda name, data: data['game_data']['decaying'] if 'decaying' in data['game_data'] else False,
                                             })
 
-    def _parse_modifier_data(self, data: Tree, modifier_class: Type[ME] = Modifier) -> list[ME]:
+    def _parse_modifier_data(self, data: Tree,
+                             modifier_class: Type[ME] = Eu5Modifier,
+                             excludes: Iterable[str] = ('potential_trigger', 'scale', 'pure_tooltip_entry')
+                             ) -> list[ME]:
         """@TODO: parse potential_trigger and scale and pure_tooltip_entry"""
-        return super()._parse_modifier_data(Tree({mod_name: mod_value for mod_name, mod_value in data if mod_name not in ['potential_trigger', 'scale', 'pure_tooltip_entry']}), modifier_class)
+        return super()._parse_modifier_data(data, modifier_class, excludes)
 
     def parse_modifier_section_from_wiki_section_name(self, wiki_section_name: str) -> list[Eu5Modifier]:
         """
@@ -170,10 +173,18 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('in_game/common/advances', Advance,
                                             extra_data_functions={
                                                 'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
+                                                'modifiers': lambda name, data: self._parse_modifier_data(
+                                                    data,
+                                                    excludes=list(Advance.all_annotations().keys()) + ['requires', 'for']),
                                             },
                                             transform_value_functions={
                                                 # so that the parser passes the value through even though requires is not an attribute
                                                 'requires': lambda c: c,
+                                                'unlock_production_method': lambda pm_strings: [
+                                                    self.all_production_methods[pm]
+                                                    for pm in (
+                                                        pm_strings if not isinstance(pm_strings, str)
+                                                        else [pm_strings])],
                                             },
                                             )
 
@@ -711,6 +722,16 @@ class Eu5Parser(JominiParser):
     @cached_property
     def production_methods(self) -> dict[str, ProductionMethod]:
         return self._parse_production_methods('in_game/common/production_methods')
+
+    @cached_property
+    def all_production_methods(self) -> dict[str, ProductionMethod]:
+        """Also includes unique production methods which are defined in buildings"""
+        production_methods = self.production_methods.copy()
+        for building in self.buildings.values():
+            for pm_list in building.unique_production_methods:
+                for pm in pm_list:
+                    production_methods[pm.name] = pm
+        return production_methods
 
     def _parse_production_methods(self, data_source: str | Tree):
         if isinstance(data_source, list):

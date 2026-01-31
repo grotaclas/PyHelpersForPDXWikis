@@ -579,6 +579,21 @@ class TableGenerator(Eu5FileGenerator):
     def get_advances_sections(self):
         return {f'advances_{age}': self.get_advances_table(advances) for age, advances in unsorted_groupby(self.parser.advances.values(), key=lambda advance: advance.age.name)}
 
+    def _format_advance_unlocks(self, advance: Advance):
+        unlocks = []
+        unlock_attributes = [attribute for attribute in Advance.all_annotations().keys() if attribute.startswith('unlock_')]
+        for unlock_attribute in unlock_attributes:
+            for unlock in getattr(advance, unlock_attribute):
+                if unlock_attribute == 'unlock_production_method':
+                    if len(unlock.get_buildings()) > 1:
+                        raise Exception(f'Unlocked PM {unlock.name} in advance {advance.name} has more than one building: {unlock.get_buildings()}')
+                    unlock_line = f'Production method {self.formatter.quote(unlock.display_name)} for {unlock.get_buildings()[0].get_wiki_link_with_icon()}'
+                else:
+                    unlock_line = unlock.get_wiki_link_with_icon()
+                unlocks.append(unlock_line)
+
+        return self.create_wiki_list(unlocks)
+
     def get_advances_table(self, advances: Iterable[Advance]):
         sorted_advances = sorted(advances, key=attrgetter('display_name'))
         advances_table_data = [{
@@ -592,29 +607,13 @@ class TableGenerator(Eu5FileGenerator):
             'Depth': '' if advance.depth is None else advance.depth,  # depth: <class 'int'>
             'Age Specialization': '' if advance.age_specialization is None else advance.age_specialization,  # age_specialization: <class 'str'>
             'Government': '' if advance.government is None else advance.government,  # government: <class 'str'>
-            'In Tree Of': '' if advance.in_tree_of is None else advance.in_tree_of,  # in_tree_of: typing.Any
+            'Modifiers': self.format_modifier_section('modifiers', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
             'Modifier While Progressing': self.format_modifier_section('modifier_while_progressing', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
             'Potential': self.formatter.format_trigger(advance.potential),  # potential: <class 'eu5.trigger.Trigger'>
             'Requires': self.create_wiki_list([requires.get_wiki_link_with_icon() if requires else '' for requires in advance.requires]),  # requires: list[eu5.eu5lib.Advance]
             'Research Cost': '' if advance.research_cost is None else advance.research_cost,  # research_cost: <class 'float'>
             'Starting Technology Level': advance.starting_technology_level,  # starting_technology_level: <class 'int'>
-            'Unlock Ability': self.create_wiki_list([unlock_ability for unlock_ability in advance.unlock_ability]),  # unlock_ability: list[str]
-            'Unlock Building': self.create_wiki_list([unlock_building for unlock_building in advance.unlock_building]),  # unlock_building: list[str]
-            'Unlock Cabinet Action': self.create_wiki_list([unlock_cabinet_action for unlock_cabinet_action in advance.unlock_cabinet_action]),  # unlock_cabinet_action: list[str]
-            'Unlock Casus Belli': self.create_wiki_list([unlock_casus_belli for unlock_casus_belli in advance.unlock_casus_belli]),  # unlock_casus_belli: list[str]
-            'Unlock Country Interaction': self.create_wiki_list([unlock_country_interaction for unlock_country_interaction in advance.unlock_country_interaction]),  # unlock_country_interaction: list[str]
-            'Unlock Diplomacy': self.create_wiki_list([unlock_diplomacy for unlock_diplomacy in advance.unlock_diplomacy]),  # unlock_diplomacy: list[str]
-            'Unlock Estate Privilege': self.create_wiki_list([unlock_estate_privilege for unlock_estate_privilege in advance.unlock_estate_privilege]),  # unlock_estate_privilege: list[str]
-            'Unlock Government Reform': self.create_wiki_list([unlock_government_reform for unlock_government_reform in advance.unlock_government_reform]),  # unlock_government_reform: list[str]
-            'Unlock Heir Selection': self.create_wiki_list([unlock_heir_selection for unlock_heir_selection in advance.unlock_heir_selection]),  # unlock_heir_selection: list[str]
-            'Unlock Law': self.create_wiki_list([unlock_law for unlock_law in advance.unlock_law]),  # unlock_law: list[str]
-            'Unlock Levy': self.create_wiki_list([unlock_levy.display_name for unlock_levy in advance.unlock_levy]),  # unlock_levy: list[str]
-            'Unlock Policy': self.create_wiki_list([unlock_policy for unlock_policy in advance.unlock_policy]),  # unlock_policy: list[str]
-            'Unlock Production Method': self.create_wiki_list([unlock_production_method for unlock_production_method in advance.unlock_production_method]),  # unlock_production_method: list[str]
-            'Unlock Road Type': self.create_wiki_list([unlock_road_type for unlock_road_type in advance.unlock_road_type]),  # unlock_road_type: list[str]
-            'Unlock Subject Type': self.create_wiki_list([unlock_subject_type for unlock_subject_type in advance.unlock_subject_type]),  # unlock_subject_type: list[str]
-            'Unlock Unit': self.create_wiki_list([unlock_unit for unlock_unit in advance.unlock_unit]),  # unlock_unit: list[str]
-
+            'Unlocks': self._format_advance_unlocks(advance),
         } for advance in sorted_advances]
         return self.make_wiki_table(advances_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
@@ -1080,3 +1079,4 @@ class TableGenerator(Eu5FileGenerator):
 
 if __name__ == '__main__':
     TableGenerator().run(sys.argv)
+    # TableGenerator().generate_advances_tables()
