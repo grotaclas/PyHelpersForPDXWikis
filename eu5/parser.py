@@ -1,4 +1,5 @@
 import copy
+import pprint
 import uuid
 from collections.abc import MutableMapping
 from functools import reduce
@@ -725,7 +726,13 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def religious_aspects(self) -> dict[str, ReligiousAspect]:
-        return self.parse_advanced_entities('in_game/common/religious_aspects', ReligiousAspect)
+        aspects = self.parse_advanced_entities('in_game/common/religious_aspects', ReligiousAspect)
+        for aspect in aspects.values():
+            if aspect.opinions:
+                aspect.opinions = {aspects[key]: value for key, value in aspect.opinions}
+            else:
+                aspect.opinions =  {}
+        return aspects
 
     @cached_property
     def religious_factions(self) -> dict[str, ReligiousFaction]:

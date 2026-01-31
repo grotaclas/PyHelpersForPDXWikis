@@ -1166,7 +1166,7 @@ class ReligiousAspect(Eu5AdvancedEntity):
     enabled: Trigger = None
     icon: str = '' # possible types(out of 95): <class 'str'>(95), <class 'eu5.eu5lib.ReligiousAspect'>(7)
     modifier: list[Eu5Modifier] = []
-    opinions: Tree = None
+    opinions: dict['ReligiousAspect', int] = None
     religion: list['Religion']
     visible: Trigger = None
 

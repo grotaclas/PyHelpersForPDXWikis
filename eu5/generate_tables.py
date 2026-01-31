@@ -893,7 +893,7 @@ class TableGenerator(Eu5FileGenerator):
             'Name': f'{{{{iconbox|{religious_aspect.display_name}|{religious_aspect.description}|w=300px|image={religious_aspect.get_wiki_filename()}}}}}',
             'Modifier': self.format_modifier_section('modifier', religious_aspect),  # modifier: list[eu5.eu5lib.Eu5Modifier]
             'Enabled': self.formatter.format_trigger(religious_aspect.enabled),  # enabled: <class 'eu5.trigger.Trigger'>
-            'Opinions': '' if religious_aspect.opinions is None else self.create_wiki_list([f'{k}: ...' for k in religious_aspect.opinions.keys()]) if religious_aspect.opinions else '',  # opinions: <class 'common.paradox_parser.Tree'>
+            'Opinions': '' if religious_aspect.opinions is None else self.create_wiki_list([f'{k.get_wiki_link_with_icon()}: {v}' for k, v in religious_aspect.opinions.items()]),
             'Religion': self.create_wiki_list([religion.get_wiki_link_with_icon() if religion else '' for religion in religious_aspect.religion]),  # religion: list[eu5.eu5lib.Religion]
             'Visible': self.formatter.format_trigger(religious_aspect.visible),  # visible: <class 'eu5.trigger.Trigger'>
         } for religious_aspect in religious_aspects]
