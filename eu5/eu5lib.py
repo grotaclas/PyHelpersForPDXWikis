@@ -956,7 +956,7 @@ class HeirSelection(Eu5AdvancedEntity):
     include_ruler_siblings: bool = None
     locked: Trigger = None
     max_possible_candidates: int = None
-    modifier: Trigger = None
+    modifier: list[Eu5Modifier] = []
     potential: Trigger = None
     show_candidates: bool = True
     sibling_score: ScriptValue = None
@@ -968,6 +968,10 @@ class HeirSelection(Eu5AdvancedEntity):
     use_mothers_dynasty: bool = False
 
     icon_folder = 'HEIR_SELECTION_ICON_PATH'
+
+    def get_wiki_filename_prefix(self) -> str:
+        return ''
+
 
 class Eu5GameConcept(GameConcept):
     family: str = ''

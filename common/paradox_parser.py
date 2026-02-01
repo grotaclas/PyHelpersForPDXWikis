@@ -294,6 +294,35 @@ class Tree(MutableMapping):
     def __setstate__(self, state):
         self.dictionary = state
 
+    def _to_dict_one_value(self, value: Any) -> Any:
+        if isinstance(value, Tree):
+            return value.to_dict()
+        elif isinstance(value, list):
+            return [self._to_dict_one_value(v) for v in value]
+        else:
+            return value
+
     def to_dict(self) -> dict:
         """recursively convert the tree into a dict"""
-        return {k: v.to_dict() if isinstance(v, Tree) else v for k, v in self}
+        return {k: self._to_dict_one_value(v) for k, v in self}
+
+    def _lowercase(self, obj):
+        """ Make dictionary lowercase
+            from: https://stackoverflow.com/a/40789531
+         """
+        if isinstance(obj, dict):
+            return {k.lower(): self._lowercase(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, set, tuple)):
+            t = type(obj)
+            return t(self._lowercase(o) for o in obj)
+        elif isinstance(obj, str):
+            return obj.lower()
+        else:
+            return obj
+
+    def is_equal_to_dict(self, comparison_dict: dict, case_sensitive = False) -> bool:
+        self_dict = self.to_dict()
+        if not case_sensitive:
+            self_dict = self._lowercase(self_dict)
+            comparison_dict = self._lowercase(comparison_dict)
+        return self_dict == comparison_dict
