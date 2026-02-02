@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 from functools import cached_property, lru_cache
+from numbers import Number
 from pathlib import Path
 from typing import Any
 
@@ -193,9 +194,67 @@ class ScriptValue(NameableEntity):  # can't have a name, but we want to use logi
     value: float|str = None
     calculations:Tree = None  # everything else has to be processed in order
 
-    def format(self):
+    def format(self,entity=None):
         if self.direct_value:
             return self.direct_value
+        elif self.value and len(self.calculations) == 0:
+            return self.value
+        elif list(self.calculations.keys()) == ['add'] and isinstance(self.calculations['add'], (Number, str)):
+            result = self.calculations['add']
+            if self.value:
+                if isinstance(result, Number):
+                    result += self.value
+                else:
+                    result = f'{self.value} + {result}'
+            return str(result)
+        elif list(self.calculations.keys()) == ['if'] and isinstance(self.calculations['if'], Tree):
+            result = ['If:' + eu5game.parser.formatter.format_conditions(self.calculations['if']['limit'], 2),
+                      'then:'
+                      ]
+            calculations = []
+            # TODO: better implementation with recursion
+            # TODO: we need a different parser to get a reliable order,
+            #  because the rakaly parameters which we are using will turn duplicated keys into
+            # a list, but this would turn add, mul, add into [add, add], mul which gives
+            # a different result
+            for k, v in self.calculations['if']:
+                if k == 'limit':
+                    pass  # already handled
+                elif k == 'add':
+                    if isinstance(v, Tree):
+                        # TODO: add parenthesis back for nested formulas
+                        # calculations.append('+(')
+                        for k2, v2 in v:
+                            if isinstance(v2, (Tree, list)):
+                                return 'Showing the full calculation is not implemented yet'
+                            if k2 == 'value':
+                                calculations.append(f'{v2}')
+                            elif k2 == 'add':
+                                calculations.append(f'+ {v2}')
+                            elif k2 =='subtract':
+                                calculations.append(f'- {v2}')
+                            elif k2 =='multiply':
+                                calculations.append(f'* {v2}')
+                            elif k2 =='divide':
+                                calculations.append(f'/ {v2}')
+                            elif k2 =='modulo':
+                                calculations.append(f'mod {v2}')
+                            elif k2 =='max':
+                                calculations.append(f'max {v2}')
+                            elif k2 =='min':
+                                calculations.append(f'min {v2}')
+                            else:
+                                return 'Showing the full calculation is not implemented yet'
+                        # TODO: add parenthesis back for nested formulas
+                        # calculations.append(')')
+                    elif isinstance(v, (Number, str)):
+                        calculations.append(f'+{v}')
+                    else:
+                        return 'Showing the full calculation is not implemented yet'
+                else:
+                    return 'Showing the full calculation is not implemented yet'
+            result.append([' '.join(calculations)])
+            return eu5game.parser.formatter.create_wiki_list(result)
         else:
             if self.desc:
                 tooltip_text = self.desc
