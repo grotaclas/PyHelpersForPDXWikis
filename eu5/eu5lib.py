@@ -359,8 +359,8 @@ class Continent(NameableEntity):
 
 class Advance(Eu5AdvancedEntity):
     age: 'Age'
-    ai_preference_tags: list = [str]
-    ai_weight: Tree = None
+    ai_preference_tags: list[str] = []
+    ai_weight: ScriptValue = None
     allow: Trigger = None
     allow_children: bool = True
     country_type: str = None

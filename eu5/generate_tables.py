@@ -601,8 +601,11 @@ class TableGenerator(Eu5FileGenerator):
         advances_table_data = [{
             'Name': f'{{{{iconbox|{advance.display_name}|{advance.description}|w=300px|image={advance.get_wiki_filename()}}}}}',
             # 'Age': advance.age.get_wiki_link_with_icon(),
-            'Ai Preference Tags': 'grota must implement or delete',  # ai_preference_tags: <class 'list'>
-            'Ai Weight': '' if advance.ai_weight is None else self.create_wiki_list([f'{k}: ...' for k in advance.ai_weight.keys()]) if advance.ai_weight else '',  # ai_weight: <class 'common.paradox_parser.Tree'>
+            'AI': self.merge_multiple_sections([
+                ('Tags', ', '.join(advance.ai_preference_tags)),
+                ('Weight', '' if advance.ai_weight is None else advance.ai_weight.format(advance)),
+            ]
+            ),
             'Allow': self.formatter.format_trigger(advance.allow),  # allow: <class 'eu5.trigger.Trigger'>
             'Allow Children': '[[File:Yes.png|20px|Allow Children]]' if advance.allow_children else '[[File:No.png|20px|Not Allow Children]]',  # allow_children: <class 'bool'>
             'Country Type': '' if advance.country_type is None else advance.country_type,  # country_type: <class 'str'>
