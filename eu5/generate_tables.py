@@ -604,21 +604,25 @@ class TableGenerator(Eu5FileGenerator):
             'AI': self.merge_multiple_sections([
                 ('Tags', ', '.join(advance.ai_preference_tags)),
                 ('Weight', '' if advance.ai_weight is None else advance.ai_weight.format(advance)),
-            ]
-            ),
-            'Allow': self.formatter.format_trigger(advance.allow),  # allow: <class 'eu5.trigger.Trigger'>
-            'Allow Children': '[[File:Yes.png|20px|Allow Children]]' if advance.allow_children else '[[File:No.png|20px|Not Allow Children]]',  # allow_children: <class 'bool'>
-            'Country Type': '' if advance.country_type is None else advance.country_type,  # country_type: <class 'str'>
+            ]),
+            'Requirements': self.merge_multiple_sections([
+                ('Country Type', '' if advance.country_type is None else advance.country_type),
+                ('Government', '' if advance.government is None else advance.government.get_wiki_link_with_icon()),
+                ('', self.formatter.format_trigger(advance.potential)),
+                ('', self.formatter.format_trigger(advance.allow)),
+
+            ]),
             'Depth': '' if advance.depth is None else advance.depth,  # depth: <class 'int'>
             'Age Specialization': '' if advance.age_specialization is None else advance.age_specialization,  # age_specialization: <class 'str'>
-            'Government': '' if advance.government is None else advance.government,  # government: <class 'str'>
-            'Modifiers': self.format_modifier_section('modifiers', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
+
+            'Effects': self.merge_multiple_sections([
+                ('', self.format_modifier_section('modifiers', advance)),
+                ('Unlocks', self._format_advance_unlocks(advance))
+            ]),
             'Modifier While Progressing': self.format_modifier_section('modifier_while_progressing', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
-            'Potential': self.formatter.format_trigger(advance.potential),  # potential: <class 'eu5.trigger.Trigger'>
             'Requires': self.create_wiki_list([requires.get_wiki_link_with_icon() if requires else '' for requires in advance.requires]),  # requires: list[eu5.eu5lib.Advance]
             'Research Cost': '' if advance.research_cost is None else advance.research_cost,  # research_cost: <class 'float'>
             'Starting Technology Level': advance.starting_technology_level,  # starting_technology_level: <class 'int'>
-            'Unlocks': self._format_advance_unlocks(advance),
         } for advance in sorted_advances]
         return self.make_wiki_table(advances_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
