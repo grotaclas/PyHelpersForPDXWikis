@@ -950,6 +950,7 @@ class HeirSelection(Eu5AdvancedEntity):
     calc: ScriptValue = None
     candidate_country: Trigger = None
     custom_tags: list[str] = []
+    depth_first: bool = False
     heir_is_allowed: Trigger = None
     ignore_ruler: bool = False
     include_other_countries: Trigger = None
@@ -971,6 +972,9 @@ class HeirSelection(Eu5AdvancedEntity):
 
     def get_wiki_filename_prefix(self) -> str:
         return ''
+
+    def get_wiki_page_name(self) -> str:
+        return 'Succession laws'
 
 
 class Eu5GameConcept(GameConcept):

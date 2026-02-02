@@ -807,6 +807,7 @@ class TableGenerator(Eu5FileGenerator):
             'Calc<ref name=heir_selection_from_tooltip>The conditions in this column are derived from the ingame tooltips which are wrong or misleading in some cases</ref>': '' if heir_selection.calc is None else self.format_heir_selection_calc(heir_selection.calc),
             'Candidate Country': self.formatter.format_trigger(heir_selection.candidate_country),  # candidate_country: <class 'eu5.trigger.Trigger'>
             'Custom Tags': self.create_wiki_list([custom_tags for custom_tags in heir_selection.custom_tags]),  # custom_tags: list[str]
+            'Depth first': '[[File:Yes.png|20px|Depth first]]' if heir_selection.depth_first else '[[File:No.png|20px|Not Depth first]]',
             'Heir Is Allowed': self.formatter.format_trigger(heir_selection.heir_is_allowed),  # heir_is_allowed: <class 'eu5.trigger.Trigger'>
             'Ignore Ruler': '[[File:Yes.png|20px|Ignore Ruler]]' if heir_selection.ignore_ruler else '[[File:No.png|20px|Not Ignore Ruler]]',  # ignore_ruler: <class 'bool'>
             'Include Other Countries': self.formatter.format_trigger(heir_selection.include_other_countries),  # include_other_countries: <class 'eu5.trigger.Trigger'>
