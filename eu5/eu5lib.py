@@ -1659,6 +1659,11 @@ class CasusBelli(Eu5AdvancedEntity):
     visible: Trigger = None
     war_goal_type: 'Wargoal'
     icon_folder = 'CASUS_BELLI_ICON_PATH' # 30 / 92 icons found
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'Cb'
+
+
 class CoatOfArms(Eu5AdvancedEntity):
     color1: PdxColor = None
     color2: PdxColor = None
@@ -2148,6 +2153,14 @@ class RoadType(Eu5AdvancedEntity):
     proximity: int = 0
     spline_style_id: int
     icon_folder = 'ROAD_ICON_PATH' # 4 / 4 icons found
+
+    def get_wiki_filename_prefix(self) -> str:
+        return ''
+
+    def get_wiki_page_name(self) -> str:
+        return 'Road'
+
+
 class Scenario(Eu5AdvancedEntity):
     country: Country
     flag: str = None
@@ -2455,6 +2468,11 @@ class UnitAbility(Eu5AdvancedEntity):
     start_effect: Effect = None
     toggle: bool
     icon_folder = 'UNIT_ABILITY_ICON_PATH' # 14 / 15 icons found
+
+    def get_wiki_filename_prefix(self) -> str:
+        return ''
+
+
 class UnitCategory(Eu5AdvancedEntity):
     ai_weight: float
     anti_piracy_warfare: float = 0
