@@ -2490,6 +2490,16 @@ class UnitCategory(Eu5AdvancedEntity):
     icon_folder = 'UNIT_CATEGORY_ICON_PATH' # 8 / 8 icons found
     # icon_folder = 'UNIT_BATTLE_CATEGORY_ICON_PATH' # 8 / 8 icons found
     # icon_folder = 'UNIT_TYPE_ILLUSTRATION_MASK_PATH' # 6 / 8 icons found
+    def get_wiki_filename_prefix(self) -> str:
+        return ''
+
+    def get_wiki_page_name(self) -> str:
+        if self.is_army:
+            return 'Army'
+        else:
+            return 'Navy'
+
+
 class UnitType(Eu5AdvancedEntity):
     age: Age = None
     artillery_barrage: int = 0
@@ -2562,6 +2572,14 @@ class UnitType(Eu5AdvancedEntity):
             return eu5game.parser.unit_types[self._upgrades_to_only]
         else:
             return None
+
+    def get_wiki_filename(self) -> str:
+        return self.category.get_wiki_filename()
+
+    def get_wiki_page_name(self) -> str:
+        return self.category.get_wiki_page_name()
+
+
 class Wargoal(Eu5AdvancedEntity):
     attacker: Tree = None
     defender: Tree = None # possible types(out of 32): <class 'common.paradox_parser.Tree'>(31), list[common.paradox_parser.Tree](1)
