@@ -208,7 +208,12 @@ class ScriptValue(NameableEntity):  # can't have a name, but we want to use logi
                     result = f'{self.value} + {result}'
             return str(result)
         elif list(self.calculations.keys()) == ['if'] and isinstance(self.calculations['if'], Tree):
-            result = ['If:' + eu5game.parser.formatter.format_conditions(self.calculations['if']['limit'], 2),
+            conditions = eu5game.parser.formatter.format_conditions(self.calculations['if']['limit'], 2).strip()
+            if '\n' not in conditions:
+                conditions = re.sub(r'^[*\s]*', '', conditions)
+                result = [f'If {conditions}:']
+            else:
+                result = [f'If:\n{conditions}',
                       'then:'
                       ]
             calculations = []
