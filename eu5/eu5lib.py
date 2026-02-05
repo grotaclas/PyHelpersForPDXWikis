@@ -1499,6 +1499,14 @@ class Achievement(Eu5AdvancedEntity):
     happened: Trigger
     possible: Trigger
     icon_folder = 'achievements' # 50 / 50 icons found
+
+    def get_wiki_filename(self) -> str:
+        prefix = self.get_wiki_filename_prefix()
+        filename = f'{prefix} {self.display_name.lower()}.png'
+
+        return eu5game.parser.formatter.normalize_page_title(filename, False)
+
+
 class AiDiplochance(Eu5AdvancedEntity):
     actor_at_war: int = 0
     actor_is_rival: int = 0

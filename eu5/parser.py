@@ -838,7 +838,7 @@ class Eu5Parser(JominiParser):
         return self.parse_advanced_entities('main_menu/common/coat_of_arms/coat_of_arms', CoatOfArms)
     @cached_property
     def achievements(self) -> dict[str, Achievement]:
-        return self.parse_advanced_entities('in_game/common/achievements', Achievement,
+        return self.parse_advanced_entities('main_menu/common/achievements', Achievement,
                                             description_localization_prefix='ACHIEVEMENT_DESC_', description_localization_suffix='', # Used in 1/1 Examples: {'ACHIEVEMENT_DESC_until_death_do_us_apart': 'Secure a Royal Marriage with another country.'}
                                             localization_prefix='ACHIEVEMENT_', # Used in 1/1 Examples: {'ACHIEVEMENT_until_death_do_us_apart': 'Until death do us apart'}
                                             )

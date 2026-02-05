@@ -209,6 +209,27 @@ class WikiTextFormatter:
         except ValueError:
             return False
 
+    @staticmethod
+    def normalize_page_title(title: str, title_might_include_namespace=True):
+        """ For better comparison of page titles and cleaner linking, this function does:
+        - Replaces underscore by spaces
+        - Removes : if they are not separating the namespace
+        - Uppercase the first letter
+         """
+        title = title.strip()
+        if title[0] == ':':
+            title = title[1:]
+        if title_might_include_namespace and ':' in title:
+            namespace, _, title = title.partition(':')
+            namespace += ':'
+        else:
+            namespace = ''
+
+        title = title[0].upper() + title[1:]
+        title = title.replace('_', ' ')
+        title = title.replace(':', '')
+        return f'{namespace}{title}'
+
 
 # the rest of the file is an unfinished version of a better wiki-table generator
 class Cell:
