@@ -1,8 +1,6 @@
 import json
 import re
-import sys
 from collections import ChainMap
-from dataclasses import dataclass
 from itertools import groupby
 
 from colormath.color_conversions import convert_color
@@ -164,13 +162,33 @@ class PdxColor(sRGBColor):
         return self.get_css_color_string()
 
 
-class NameableEntity:
+class ParsableObject:
+    """For objects which get parsed from Tree, but which have no name and are not an entity in the game"""
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def all_annotations(cls) -> ChainMap:
+        """Returns a dictionary-like ChainMap that includes annotations for all
+           attributes defined in cls or inherited from superclasses."""
+        return ChainMap(*(get_type_hints(c) for c in cls.mro()))
+
+    @cached_property
+    def default_values(self):
+        return {attribute: value for attribute, value in vars(self.__class__).items()
+                if not attribute.startswith('__')
+                and not callable(value)
+                and not isinstance(value, cached_property)
+                }
+
+
+class NameableEntity(ParsableObject):
     def __init__(self, name: str, display_name: str, **kwargs):
         self.name = name
         self.display_name = display_name
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        super().__init__(**kwargs)
 
     def __repr__(self):
         string = super().__repr__()
@@ -191,21 +209,6 @@ class NameableEntity:
 
     def __lt__(self, other):
         return self.display_name < str(other)
-
-    @cached_property
-    def default_values(self):
-        return {attribute: value for attribute, value in vars(self.__class__).items()
-                if not attribute.startswith('__')
-                and not callable(value)
-                and not isinstance(value, cached_property)
-                }
-
-    @classmethod
-    @lru_cache(maxsize=1)
-    def all_annotations(cls) -> ChainMap:
-        """Returns a dictionary-like ChainMap that includes annotations for all
-           attributes defined in cls or inherited from superclasses."""
-        return ChainMap(*(get_type_hints(c) for c in cls.mro()))
 
 
 class IconMixin:
@@ -516,4 +519,5 @@ class GameConcept(AdvancedEntity):
 
 AE = TypeVar('AE', bound=AdvancedEntity)
 NE = TypeVar('NE', bound=NameableEntity)
+PE = TypeVar('PE', bound=ParsableObject)
 ME = TypeVar('ME', bound=Modifier)

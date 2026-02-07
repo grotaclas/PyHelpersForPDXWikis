@@ -1,5 +1,6 @@
 import enum
 import inspect
+import numbers
 import re
 import typing
 from abc import ABCMeta, abstractmethod
@@ -10,7 +11,7 @@ from functools import cached_property
 from typing import Iterator, Type, Callable, get_origin, get_args, Any
 
 from common.paradox_parser import ParadoxParser, Tree, ParsingWorkaround
-from common.paradox_lib import Modifier, AE, NE, ME, ModifierType, NameableEntity, PdxColor
+from common.paradox_lib import Modifier, AE, NE, PE, ME, ModifierType, NameableEntity, PdxColor, ParsableObject
 
 
 class JominiParser(metaclass=ABCMeta):
@@ -127,6 +128,17 @@ class JominiParser(metaclass=ABCMeta):
 
         return entities
 
+    def parse_parsable_object(self, data: Tree, object_class: Type[PE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None, transform_value_functions: dict[str, Callable[[Any], Any]] = None) -> PE:
+        if extra_data_functions is None:
+            extra_data_functions = {}
+        if transform_value_functions is None:
+            transform_value_functions = {}
+        if isinstance(data, Tree):
+            entity_values = self._parse_entity_values('', object_class.all_annotations(), data, object_class, extra_data_functions, transform_value_functions, [], {})
+            return object_class(**entity_values)
+        else:
+            return object_class(data)
+
     def _get_entities_from_level(self, class_attributes, entity_class, extra_data_functions, previous_headings,
                                  transform_value_functions, tree, entity_level, current_level, level_headings_keys,
                                  conditions=None, allow_empty_entities=False):
@@ -171,15 +183,21 @@ class JominiParser(metaclass=ABCMeta):
                                 print(f'Warning: ignoring empty element in "{"|".join(headings)}"', file=sys.stderr)
         return entities
 
-    def _parse_entity(self, class_attributes, data, entity_class, extra_data_functions, headings,
-                      level_headings_keys, transform_value_functions, conditions=None):
-        entity_values = {}
+    def _parse_entity(self, class_attributes, data, entity_class, extra_data_functions, headings: list[str],
+                      level_headings_keys: dict[str, int], transform_value_functions, conditions=None):
         if 'name' in extra_data_functions:
             name = extra_data_functions['name']('', data)
         elif 'name' in level_headings_keys:
             name = headings[level_headings_keys['name']]
         else:
             name = headings[-1]
+        entity_values = self._parse_entity_values(name, class_attributes, data, entity_class, extra_data_functions,
+                                                  transform_value_functions, headings, level_headings_keys, conditions)
+        return name, entity_class(name, **entity_values)
+
+    def _parse_entity_values(self, name, class_attributes, data, entity_class, extra_data_functions,
+                             transform_value_functions, headings, level_headings_keys, conditions = None) -> dict[str, Any]:
+        entity_values = {}
         for key, level in level_headings_keys.items():
             if key != 'name':
                 entity_values[key] = headings[level_headings_keys[key]]
@@ -188,6 +206,7 @@ class JominiParser(metaclass=ABCMeta):
         for key, func in extra_data_functions.items():
             if key != 'name':
                 entity_values[key] = func(name, data)
+
         for k, v in data:
             if isinstance(v, str) and v.startswith('define:'):
                 category, _, define = v.removeprefix('define:').partition('|')
@@ -199,13 +218,17 @@ class JominiParser(metaclass=ABCMeta):
                     entity_values[k] = class_attributes[k](v)
                 elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], PdxColor):
                     entity_values[k] = self.parse_color_value(v)
-                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(typing.get_args(class_attributes[k])[0]) and issubclass(typing.get_args(class_attributes[k])[0], Modifier):
+                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(
+                        typing.get_args(class_attributes[k])[0]) and issubclass(typing.get_args(class_attributes[k])[0],
+                                                                                Modifier):
                     if type(v) == list and len(v) > 0:
                         print(f'Error: duplicate section "{k}" in "{name}"')
                         continue
                     entity_values[k] = self._parse_modifier_data(v, typing.get_args(class_attributes[k])[0])
-                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(typing.get_args(class_attributes[k])[0]) and issubclass(
-                        typing.get_args(class_attributes[k])[0], NameableEntity) and typing.get_args(class_attributes[k])[0] != entity_class:
+                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(
+                        typing.get_args(class_attributes[k])[0]) and issubclass(
+                        typing.get_args(class_attributes[k])[0], NameableEntity) and \
+                        typing.get_args(class_attributes[k])[0] != entity_class:
                     if isinstance(v, str):
                         v = [v]
                     else:
@@ -216,11 +239,22 @@ class JominiParser(metaclass=ABCMeta):
                             elif isinstance(item, list):
                                 flat_v.extend(item)
                             else:
-                                raise Exception(f'Unexpected type "{type(item)}" in list for attribute "{k}" in "{name}"')
+                                raise Exception(
+                                    f'Unexpected type "{type(item)}" in list for attribute "{k}" in "{name}"')
                         v = flat_v
 
-                    entity_values[k] = [self.resolve_entity_reference(typing.get_args(class_attributes[k])[0], entity_name) for entity_name in v]
-                elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], NameableEntity) and class_attributes[k] != entity_class:
+                    entity_values[k] = [
+                        self.resolve_entity_reference(typing.get_args(class_attributes[k])[0], entity_name) for
+                        entity_name in v]
+                elif typing.get_origin(class_attributes[k]) == list and \
+                        inspect.isclass(typing.get_args(class_attributes[k])[0]) and \
+                        issubclass(typing.get_args(class_attributes[k])[0], ParsableObject) and \
+                        typing.get_args(class_attributes[k])[0] != entity_class:
+                    if not isinstance(v, list):
+                        v = [v]
+                    entity_values[k] = [self.parse_parsable_object(object_data, typing.get_args(class_attributes[k])[0]) for object_data in v]
+                elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], ParsableObject) and \
+                        class_attributes[k] != entity_class:
                     if isinstance(v, list):
                         if len(v) == 0:
                             continue
@@ -228,7 +262,10 @@ class JominiParser(metaclass=ABCMeta):
                         v = v[-1]
                         if len(different_values) > 1:
                             print(f'Warning: duplicate section "{k}" in "{name}". Using last entry "{v}"')
-                    entity_values[k] = self.resolve_entity_reference(class_attributes[k], v)
+                    if issubclass(class_attributes[k], NameableEntity):
+                        entity_values[k] = self.resolve_entity_reference(class_attributes[k], v)
+                    else:
+                        entity_values[k] = self.parse_parsable_object(v, class_attributes[k])
                 else:
                     entity_values[k] = v
         if conditions is not None:
@@ -236,7 +273,7 @@ class JominiParser(metaclass=ABCMeta):
                 entity_values['conditions'] = conditions
             elif 'dlc' in class_attributes:
                 entity_values['dlc'] = self.parse_dlc_from_conditions(conditions)
-        return name, entity_class(name, **entity_values)
+        return entity_values
 
     @abstractmethod
     def parse_dlc_from_conditions(self, conditions):
