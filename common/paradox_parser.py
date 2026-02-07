@@ -57,6 +57,18 @@ class IgnoreAtVariablesWorkaround(ParsingWorkaround):
     replacement_regexes = {r'(?m)^\s*@[a-zA-Z]+[^\n]*\n?': ''}
 
 
+class ScriptedWorkaround(ParsingWorkaround):
+    """
+    replaces
+        scripted_effect minor_earthquake_payment = {
+    with
+        scripted_effect = { id = minor_earthquake_payment
+    """
+    replacement_regexes = {
+        r'(?m)^scripted_(effect|trigger)\s+([^\s={}#]+)\s*=\s*\{': r'scripted_\1 = { id = \2',
+    }
+
+
 class ParadoxParser:
     """the parse_ methods parse paradox development studio game scripts into python objects"""
 

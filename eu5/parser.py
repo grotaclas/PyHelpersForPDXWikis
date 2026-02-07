@@ -11,7 +11,7 @@ from common.file_generator import FileGenerator
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NE, AE, ME
-from common.paradox_parser import ParsingWorkaround
+from common.paradox_parser import ParsingWorkaround, ScriptedWorkaround
 
 
 class Eu5Parser(JominiParser):
@@ -524,6 +524,72 @@ class Eu5Parser(JominiParser):
     @cached_property
     def estate_privileges(self) -> dict[str, EstatePrivilege]:
         return self.parse_advanced_entities('in_game/common/estate_privileges', EstatePrivilege)
+
+    @cached_property
+    def events(self) -> dict[str, Event]:
+        return {event_id: event for event_file in self.event_files.values() for event_id, event in event_file.events.items()}
+
+    @cached_property
+    def event_files(self) -> dict[str, EventFile]:
+        event_files = {}
+        for path, filedata in self.parser.parse_files('in_game/events/**/*.txt', [ScriptedWorkaround()]):
+            filename = str(path.relative_to(self.parser.base_folder / 'in_game/events' ))
+            namespaces = []
+            scripted_triggers = {}
+            scripted_effects = {}
+            unparsed_events = Tree({})
+            for k, v in filedata:
+                if k == 'namespace':
+                    if isinstance(v, list):
+                        namespaces.extend(v)
+                    else:
+                        namespaces.append(v)
+                elif k == 'scripted_trigger':
+                    scripted_triggers.update(self.parse_advanced_entities(
+                        Tree({
+                            trigger_data['id']: trigger_data
+                            for trigger_data in (
+                                v if isinstance(v, list) else [v]
+                            )
+                        }),
+                        ScriptedTrigger
+                    ))
+                elif k == 'scripted_effect':
+                    scripted_effects.update(self.parse_advanced_entities(
+                        Tree({
+                            effect_data['id']: effect_data
+                            for effect_data in (
+                                v if isinstance(v, list) else [v]
+                            )
+                        }),
+                        ScriptedEffect
+                    ))
+                elif '.' in k and k.partition('.')[0] in namespaces:
+                    unparsed_events[k] = v
+                else:
+                    raise Exception(f'Unexpected key {k} when parsing event file {filename}')
+
+            events = self.parse_advanced_entities(unparsed_events, Event,
+                                            transform_value_functions={
+                                                'option': lambda option: self.parse_advanced_entities(
+                                                    Tree({
+                                                        option_data['name']: option_data
+                                                        for option_data in (
+                                                            option if isinstance(option, list) else [option]
+                                                        )
+                                                    }),
+                                                    EventOption
+                                                )
+                                            })
+            event_file = EventFile(filename=filename, namespaces=namespaces,
+                                   scripted_triggers=scripted_triggers, scripted_effects=scripted_effects,
+                                   events=events)
+            for event in events.values():
+                event.event_file = event_file
+            event_files[filename] = event_file
+
+
+        return event_files
 
     @cached_property
     def flag_definitions(self) -> dict[str, FlagDefinitionList]:
