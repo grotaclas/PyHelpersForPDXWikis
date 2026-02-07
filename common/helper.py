@@ -28,9 +28,10 @@ class OneTypeHelper:
     low_priority_types = str, Tree, Any
     class_name_map: dict[str, str]
 
-    def __init__(self, folder, depth=0, ignored_toplevel_keys: list=None, ignored_keys: list=None, class_name_map=None):
+    def __init__(self, folder, depth=0, ignored_toplevel_keys: list=None, ignored_keys: list=None, class_name_map=None, ignore_based_on_data=None):
         self.ignored_keys = ignored_keys
         self.ignored_toplevel_keys = ignored_toplevel_keys
+        self.ignore_based_on_data = ignore_based_on_data
         self.depth = depth
         self.folder = folder
         self.element_counter = 0
@@ -47,6 +48,8 @@ class OneTypeHelper:
             self.class_name_map = class_name_map
         else:
             self.class_name_map = dict()
+        if self.ignore_based_on_data is None:
+            self.ignore_based_on_data = lambda key, data, depth: False
 
     def get_data(self):
         raise NotImplementedError('Subclasses must implement this function')
@@ -162,35 +165,25 @@ class OneTypeHelper:
     def analyze_folder(self):
         keys = {}
         entity_names = []
+        file_counter = 0
         for filename, filedata in self.get_data():
-            for toplevelkey, data in filedata:
-                if toplevelkey in self.ignored_toplevel_keys:
-                    continue
-                if self.depth == 0:
-                    entity_names.append(toplevelkey)
-                    # self._update_keys_from_data(data['game_data'], keys, self.ignored_keys)
-                    self._update_keys_from_data(data, keys, self.ignored_keys)
-                else:
-                    for n2, d2 in data:
-                        if self.depth == 1:
-                            if n2 in self.ignored_toplevel_keys:
-                                continue
-                            entity_names.append(n2)
-                            self._update_keys_from_data(d2, keys, self.ignored_keys)
-                        else:
-                            for n3, d3 in d2:
-                                if self.depth == 2:
-                                    if n3 in self.ignored_toplevel_keys:
-                                        continue
-                                    entity_names.append(n3)
-                                    self._update_keys_from_data(d3, keys, self.ignored_keys)
-                                else:
-                                    for n4, d4 in d3:
-                                        if n4 in self.ignored_toplevel_keys:
-                                            continue
-                                        entity_names.append(n4)
-                                        self._update_keys_from_data(d4, keys, self.ignored_keys)
+            file_counter += 1
+            self._do_analyze(filedata, entity_names, keys, 0)
+        if file_counter == 0:
+            raise Exception(f'Error: No files found when getting data from {self.folder}')
+
         return entity_names, keys
+
+    def _do_analyze(self, data: Tree, entity_names: list, keys: dict,  depth=0):
+        for key, d2 in data:
+            if key in self.ignored_toplevel_keys or not isinstance(d2, Tree) or self.ignore_based_on_data(key, d2, depth):
+                continue
+            if self.depth == depth:
+                entity_names.append(key)
+                # self._update_keys_from_data(data['game_data'], keys, self.ignored_keys)
+                self._update_keys_from_data(d2, keys, self.ignored_keys)
+            else:
+                self._do_analyze(d2, entity_names, keys, depth + 1)
 
     @cached_property
     def entity_names(self) -> list[str]:
