@@ -131,7 +131,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                 'religion': self.parser.religions,
                 'religion_group': self.parser.religion_groups,
             }
-            if typ in type_sources:
+            if typ in type_sources and value_without_prefix_and_suffix in type_sources[typ]:
                 value = type_sources[typ][value_without_prefix_and_suffix]
             else:
                 suffix = None  # we use the unchanged value, so we don't want to add the suffix to it

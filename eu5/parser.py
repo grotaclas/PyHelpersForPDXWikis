@@ -529,6 +529,8 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def event_files(self) -> dict[str, EventFile]:
+        event_option_attributes = set(EventOption.all_annotations().keys())
+        event_option_attributes.add('name')
         event_files = {}
         for path, filedata in self.parser.parse_files('in_game/events/**/*.txt', [ScriptedWorkaround()]):
             filename = str(path.relative_to(self.parser.base_folder / 'in_game/events' ))
@@ -569,6 +571,7 @@ class Eu5Parser(JominiParser):
 
             events = self.parse_advanced_entities(unparsed_events, Event,
                                             transform_value_functions={
+                                                'historical_info': self.localize_and_format,
                                                 'option': lambda option: self.parse_advanced_entities(
                                                     Tree({
                                                         option_data['name']: option_data
@@ -576,15 +579,25 @@ class Eu5Parser(JominiParser):
                                                             option if isinstance(option, list) else [option]
                                                         )
                                                     }),
-                                                    EventOption
+                                                    EventOption,
+                                                    extra_data_functions={
+                                                        'effect': lambda name, data: Tree({
+                                                            option_key: option_value
+                                                            for option_key, option_value in data
+                                                            if option_key not in event_option_attributes
+                                                        })
+                                                    }
                                                 )
                                             })
-            event_file = EventFile(filename=filename, namespaces=namespaces,
-                                   scripted_triggers=scripted_triggers, scripted_effects=scripted_effects,
-                                   events=events)
-            for event in events.values():
-                event.event_file = event_file
-            event_files[filename] = event_file
+            if len(events) > 0:
+                event_file = EventFile(path=path, filename=filename, namespaces=namespaces,
+                                       scripted_triggers=scripted_triggers, scripted_effects=scripted_effects,
+                                       events=events)
+                for event in events.values():
+                    event.event_file = event_file
+                event_files[filename] = event_file
+            elif 'readme' not in filename.lower():
+                print(f'Error: no events in "{filename}"')
 
 
         return event_files

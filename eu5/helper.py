@@ -86,13 +86,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
     def get_value_for_example(self, value, key):
         if isinstance(value, Tree) and Trigger.could_be_trigger(value):
             return Trigger
-        # if isinstance(value, Tree) and Effect.could_be_effect(value):
-        #     return Effect
-        if key == 'special_status':
-            pass
         example = super().get_value_for_example(value, key)
-        # if key == 'special_status':
-        #     print('special_status:', key, value, example)
         return example
 
     def get_value_type_counter(self, values):
@@ -148,7 +142,6 @@ class Eu5OneTypeHelper(OneTypeHelper):
                     if filename not in image_filename_to_folders:
                         image_filename_to_folders[filename] = []
                     folder_name = str(path.parent.relative_to(Eu5AdvancedEntity.base_icon_folder, walk_up=True))
-                    # possible_defines_folder = str(path.parent.relative_to(path.parents[4]))
                     if path.is_relative_to(base_folder_for_defines):
                         possible_defines_folder = str(path.parent.relative_to(base_folder_for_defines))
                         if possible_defines_folder in folder_to_define:
@@ -322,6 +315,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
         source_var_name = f'{var_name}s'
         print(f'{base_indent_str}{source_var_name} = self.parser.{parser_property_name}.values()')
         if cargo:
+            print(f'{base_indent_str}{result_var_name} = [{{')
             cargo_declare_lines = [
                 '{{#cargo_declare:',
                 f'_table = {self.camel_to_snake(main_class)}',

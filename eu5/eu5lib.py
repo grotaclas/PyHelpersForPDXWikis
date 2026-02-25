@@ -1513,25 +1513,27 @@ class TriggeredDesc(ParsableObject):
 class TriggeredTextHolder(ParsableObject):
     desc: str = None  # if it is not actually triggered
     localized_desc: str = None  # if it is not actually triggered
-    first_valid: list[TriggeredDesc] = []
-    random_valid: list[TriggeredDesc] = []
-    triggered_desc: list[TriggeredDesc] = []
+    Trigger = None
+
+    first_valid: list['TriggeredTextHolder'] = []
+    random_valid: list['TriggeredTextHolder'] = []
+    triggered_desc: list['TriggeredTextHolder'] = []
 
     def __init__(self, desc: str = None, **kwargs):
         if isinstance(desc, list):
-            self.desc = [eu5game.parser.localize(d) for d in desc]
-        else:
-            self.desc = eu5game.parser.localize(desc)
-        super().__init__(**kwargs)
+            self.localized_desc = [eu5game.parser.localize(d) for d in desc]
+        elif desc is not None:
+            self.localized_desc = eu5game.parser.localize(desc)
+        super().__init__(desc=desc, **kwargs)
 
     def __str__(self):
         if self.desc is None:
             desc = []
-        elif isinstance(self.desc, list):
-            desc = self.desc
+        elif isinstance(self.localized_desc, list):
+            desc = self.localized_desc
         else:
-            desc = [self.desc]
-        desc.extend(triggered_desc.desc for triggered_desc in (self.first_valid + self.random_valid + self.triggered_desc))
+            desc = [self.localized_desc]
+        desc.extend(str(triggered_desc) for triggered_desc in (self.first_valid + self.random_valid + self.triggered_desc))
         return ' / '.join(desc)
 
 
@@ -1541,6 +1543,7 @@ class EventOption(Eu5AdvancedEntity):
     ai_will_select: ScriptValue = None
     historical_option: bool = False
     trigger: Trigger = None
+    effect: Effect = None
 
     # unused according to event modding wiki article, but can be used for gui scripting in mods
     high_risk_option: bool = False
@@ -1551,9 +1554,14 @@ class EventOption(Eu5AdvancedEntity):
 
 class DynamicHistoricalEvent(ParsableObject):
     tag: list[str] = []
-    from_date: str  # from is a reserved word
-    to_date: str
+    from_date: str = ''  # from is a reserved word
+    to_date: str = ''
     monthly_chance: float
+
+    attribute_name_map = {
+        'from': 'from_date',  # from is a reserved word
+        'to': 'to_date'
+    }
 
 class Event(Eu5AdvancedEntity):
     after: Effect = None
@@ -1567,10 +1575,10 @@ class Event(Eu5AdvancedEntity):
     immediate: Effect = None
     major: bool = False
     major_trigger: Trigger = None
-    option: list[EventOption] = []
+    option: dict[str, EventOption] = {}
     title: TriggeredTextHolder
     trigger: Trigger = None
-    type: str
+    type: str = None
 
     event_file: 'EventFile'
 
@@ -1585,6 +1593,7 @@ class Event(Eu5AdvancedEntity):
 
 class EventFile(ParsableObject):
     filename: str
+    path: Path
     namespaces: list[str]
     scripted_effects: dict[str, ScriptedEffect]
     scripted_triggers: dict[str, ScriptedTrigger]
@@ -2409,7 +2418,9 @@ class SocietalValue(Eu5AdvancedEntity):
             '>': '<',
             '≥': '≤',
         }
-        if value < 0:
+        if not isinstance(value, Number):
+          side = self
+        elif value < 0:
             side = self.left
             value = value * -1
             comparison_operator = flipped_operators[comparison_operator]

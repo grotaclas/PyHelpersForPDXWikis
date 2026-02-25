@@ -1,17 +1,18 @@
 import sys
 from operator import attrgetter
-from typing import Any
+from typing import Any, Iterable
 
 from common.paradox_lib import unsorted_groupby
 from eu5.eu5_file_generator import Eu5FileGenerator
-from eu5.eu5lib import Country
+from eu5.eu5lib import Country, Event, EventFile
 
 
 class CargoDataGenerator(Eu5FileGenerator):
-    def create_cargo_template_calls(self, template_name: str, data: list[dict[str, Any]]):
+    def create_cargo_template_calls(self, template_name: str, data: list[dict[str, Any]],
+                                    include_header_level: int | None = 3):
         lines = []
         for item_data in data:
-            lines.append(self.create_cargo_template_call(template_name, item_data, include_header_level=3))
+            lines.append(self.create_cargo_template_call(template_name, item_data, include_header_level=include_header_level))
         return '\n'.join(lines)
 
     def create_cargo_template_call(self, template_name: str, item_data: dict[str, Any], include_header_level: int = None):

@@ -9,7 +9,7 @@ from common.paradox_lib import unsorted_groupby
 from common.paradox_parser import Tree
 from eu5.eu5_file_generator import Eu5FileGenerator
 from eu5.eu5lib import GoodCategory, Eu5GameConcept, Building, Law, LawPolicy, Good, EstatePrivilege, Advance, \
-    Eu5AdvancedEntity, ScriptValue
+    Eu5AdvancedEntity, ScriptValue, Event
 from eu5.parser import Eu5Parser
 
 
