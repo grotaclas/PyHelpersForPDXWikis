@@ -50,9 +50,9 @@ class NamedModifier(Vic3AdvancedEntity):
 
 
 class StateResource:
-    def __init__(self, building_group: str, amount: int = 0, undiscovered_amount: int = 0, is_arable: bool = False,
+    def __init__(self, building: str, amount: int = 0, undiscovered_amount: int = 0, is_arable: bool = False,
                  is_capped: bool = False, is_discoverable: bool = False):
-        self.building_group = building_group
+        self.building = building
         self.amount = amount
         self.undiscovered_amount = undiscovered_amount
         self.is_arable = is_arable
@@ -223,6 +223,7 @@ class BuildingGroup(NameableEntity):
     has_trade_revenue: bool = False
     company_headquarter: bool = False
     regional_company_headquarter: bool = False
+    self_investment_chance_modifier: bool = False
 
     def __init__(self, name: str, display_name: str, parent_group: 'BuildingGroup' = None, **kwargs):
         super().__init__(name, display_name)
@@ -366,8 +367,8 @@ class Achievement(Vic3AdvancedEntity):
 
 
 class Character(NameableEntity):
-    first_name: str
-    last_name: str
+    first_name: str = ''
+    last_name: str = ''
     country: Country = None
     female: bool = False
     culture: str = ''
@@ -413,8 +414,9 @@ class Character(NameableEntity):
             'Ruler': self.ruler,
             'Heir': self.heir,
             'Politician': self.ig_leader or self.interest_group_leader_usage,
-            'General': self.is_general or (self.commander_usage and self.commander_usage['role'] == 'general'),
-            'Admiral': self.is_admiral or (self.commander_usage and self.commander_usage['role'] == 'admiral'),
+            'Undefined commander role(possible bug?)': self.commander_usage and ('role' not  in self.commander_usage or self.commander_usage['role'] not in ('general', 'admiral')),
+            'General': self.is_general or (self.commander_usage and 'role' in self.commander_usage and self.commander_usage['role'] == 'general'),
+            'Admiral': self.is_admiral or (self.commander_usage and 'role' in self.commander_usage and self.commander_usage['role'] == 'admiral'),
             'Agitator': self.is_agitator or self.agitator_usage,
         }.items() if has_role]
 

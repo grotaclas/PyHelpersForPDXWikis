@@ -198,7 +198,7 @@ class TableGenerator(Vic3FileGenerator):
             return f'{amount}'
 
     def _format_resource_name(self, resource: StateResource):
-        return re.sub('_.*$', '', resource.building_group.removeprefix("bg_"))
+        return re.sub('_.*$', '', resource.building)
 
     def generate_state_data_lua(self):
         lua_tables = []
@@ -218,7 +218,7 @@ class TableGenerator(Vic3FileGenerator):
                     resource_amounts[name]['undiscovered_amount'] += res.undiscovered_amount
             resources = ', '.join(f'{name} = "{self._format_resource(amounts["amount"], amounts["undiscovered_amount"])}"'
                                   for name, amounts in resource_amounts.items())
-            arable_resources = ', '.join(f'"{self.parser.building_groups[res.building_group].display_name}"' for res in state.resources.values() if res.is_arable)
+            arable_resources = ', '.join(f'"{self.parser.buildings[res.building].display_name}"' for res in state.resources.values() if res.is_arable)
             lua_tables.append(f'''p["{state.display_name}"] = {{
     arable_land = {state.arable_land},
     arable_resources = {{ {arable_resources} }},

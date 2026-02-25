@@ -237,8 +237,13 @@ class Vic3Parser(JominiParser):
             state_name = name_with_s.removeprefix('s:')
             state_populations[state_name] = 0
             for region_state_name, region_state in state:
-                for create_pop in region_state.find_all('create_pop'):
-                    state_populations[state_name] += create_pop['size']
+                if isinstance(region_state, list):
+                    for x in region_state:
+                        for create_pop in x.find_all('create_pop'):
+                            state_populations[state_name] += create_pop['size']
+                else:
+                    for create_pop in region_state.find_all('create_pop'):
+                        state_populations[state_name] += create_pop['size']
         return state_populations
 
     def parse_technologies_section(self, name, data, section_name='unlocking_technologies') -> list[Technology]:
@@ -334,7 +339,7 @@ class Vic3Parser(JominiParser):
                      'pays_taxes', 'is_government_funded', 'created_by_trade_routes', 'subsidized', 'is_military',
                      'default_building', 'ignores_productivity_when_hiring',
                      'min_productivity_to_hire', 'owns_other_buildings', 'always_self_owning', 'has_trade_revenue', 'company_headquarter', 'regional_company_headquarter',
-                     'construction_efficiency_modifier']:
+                     'construction_efficiency_modifier', 'self_investment_chance_modifier']:
                 entity_values[k] = v
             elif k == 'parent_group':
                 entity_values['parent_group'] = parsed_building_groups[v]
@@ -521,7 +526,7 @@ class Vic3Parser(JominiParser):
                         # 'display_name': lambda name, data:
                         #     self.localize(data["first_name"]) + ' ' + self.localize(data["last_name"]) if 'first_name' in data else data['template'],
                         'name': lambda name, data:
-                            data['first_name'] + '_' + data['last_name'] if 'first_name' in data else template_chars[data['template']].first_name + '_' + template_chars[data['template']].last_name,
+                            data['first_name'] + '_' + data['last_name'] if 'first_name' in data else template_chars[data['template']].first_name + '_' + template_chars[data['template']].last_name if 'template' in data else 'unnamed_character_' +  '_'.join(f'{k}-{v}' for k, v in data),
 
                     },
                                              )
