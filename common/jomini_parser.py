@@ -188,6 +188,8 @@ class JominiParser(metaclass=ABCMeta):
             if isinstance(v, str) and v.startswith('define:'):
                 category, _, define = v.removeprefix('define:').partition('|')
                 v = self.defines[category][define]
+            if hasattr(entity_class, 'attribute_name_map') and k in entity_class.attribute_name_map:
+                k = entity_class.attribute_name_map[k]
             if k in transform_value_functions:
                 entity_values[k] = transform_value_functions[k](v)
             elif k in class_attributes and k not in entity_values:
@@ -226,7 +228,8 @@ class JominiParser(metaclass=ABCMeta):
                 elif typing.get_origin(class_attributes[k]) == list and \
                         inspect.isclass(typing.get_args(class_attributes[k])[0]) and \
                         issubclass(typing.get_args(class_attributes[k])[0], ParsableObject) and \
-                        typing.get_args(class_attributes[k])[0] != entity_class:
+                        not issubclass(
+                        typing.get_args(class_attributes[k])[0], NameableEntity):
                     if not isinstance(v, list):
                         v = [v]
                     entity_values[k] = [self.parse_parsable_object(object_data, typing.get_args(class_attributes[k])[0]) for object_data in v]

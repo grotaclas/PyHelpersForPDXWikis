@@ -51,6 +51,7 @@ class FileGenerator:
 
     def _really_write_file(self, name: str, content: str):
         output_file = self.outpath / '{}{}.txt'.format(self.game.short_game_name, name)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         with output_file.open('w', encoding='utf-8') as f:
             f.write(content)
 

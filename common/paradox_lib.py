@@ -164,6 +164,10 @@ class PdxColor(sRGBColor):
 
 class ParsableObject:
     """For objects which get parsed from Tree, but which have no name and are not an entity in the game"""
+
+    # for attributes which have a different name in the object than in the game files (e.g. to avoid reserved words)
+    attribute_name_map = {}
+
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
