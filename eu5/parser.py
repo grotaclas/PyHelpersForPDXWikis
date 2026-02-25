@@ -12,6 +12,7 @@ from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NE, AE, ME
 from common.paradox_parser import ParsingWorkaround, ScriptedWorkaround
+from eu5.localization import Eu5Localizer
 
 
 class Eu5Parser(JominiParser):
@@ -21,22 +22,19 @@ class Eu5Parser(JominiParser):
         Language: 'languages_including_dialects',
     }
 
-    # allows the overriding of localization strings
-    localizationOverrides = {
-        # the default is "Trade Embark/Disembark Cost" which is problematic for redirects and filenames, because of the slash
-        'MODIFIER_TYPE_NAME_local_trade_embark_disembark_cost_modifier': 'Trade Embark-Disembark Cost',
-        'BGP': 'Burgundy (BGP)',
-        'MAM': 'Egypt (MAM)'
-    }
+    localizer: Eu5Localizer
 
     def __init__(self, game_installation: Path = EU5DIR, language: str = 'english'):
         super().__init__(game_installation / 'game' )
-        self.localization_folder_iterator = (game_installation / 'game' / 'main_menu' / 'localization' / language).glob(f'**/*_l_{language}.yml')
+        self.localizer = Eu5Localizer(game_installation, language)
 
     @cached_property
     def formatter(self):
         from eu5.text_formatter import Eu5WikiTextFormatter
         return Eu5WikiTextFormatter()
+
+    def localize_and_format(self, key):
+        return self.formatter.format_localization_text(self.localize(key))
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
                                 transform_value_functions: dict[str, Callable[[Any], Any]] = None, entity_level: int = 0,

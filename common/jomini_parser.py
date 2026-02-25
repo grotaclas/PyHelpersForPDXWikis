@@ -5,11 +5,13 @@ import re
 import typing
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
+from pathlib import Path
 
 import sys
 from functools import cached_property
-from typing import Iterator, Type, Callable, get_origin, get_args, Any
+from typing import Type, Callable, get_origin, get_args, Any
 
+from common.localization import JominiLocalizer
 from common.paradox_parser import ParadoxParser, Tree, ParsingWorkaround
 from common.paradox_lib import Modifier, AE, NE, PE, ME, ModifierType, NameableEntity, PdxColor, ParsableObject
 
@@ -19,25 +21,11 @@ class JominiParser(metaclass=ABCMeta):
 
     _class_property_map_overrides: dict[Type[NE], str] = {}
 
-    # allows the overriding of localization strings
-    localizationOverrides = {}
+    localizer: JominiLocalizer
 
-    localization_folder_iterator: Iterator
-
-    def __init__(self, game_path):
+    def __init__(self, game_path: Path):
         self.parser = ParadoxParser(game_path)
         self._entity_reference_cache = {}
-
-    @cached_property
-    def _localization_dict(self):
-        localization_dict = {}
-        for path in self.localization_folder_iterator:
-            with path.open(encoding='utf-8-sig') as f:
-                for line in f:
-                    match = re.fullmatch(r'\s*([^#\s:]+):\d?\s*"(.*)"[^"]*', line)
-                    if match:
-                        localization_dict[match.group(1)] = match.group(2)
-        return localization_dict
 
     def localize(self, key: str, default: str = None, return_none_instead_of_default=False) -> str|None:
         """localize the key from the english localization files
@@ -46,18 +34,7 @@ class JominiParser(metaclass=ABCMeta):
             if it is true, None is returned
             if it is false, the default is returned unless it is None in which case the key is returned
         """
-
-        if key in self.localizationOverrides:
-            return self.localizationOverrides[key]
-        elif key in self._localization_dict:
-            return self._localization_dict[key]
-        else:
-            if return_none_instead_of_default:
-                return None
-            elif default is None:
-                return key
-            else:
-                return default
+        return self.localizer.localize(key, default, return_none_instead_of_default)
 
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE],
                                 extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,

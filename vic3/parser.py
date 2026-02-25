@@ -3,6 +3,7 @@ from typing import TypeVar, Type, Callable, Any
 from PyHelpersForPDXWikis.localsettings import VIC3DIR
 from common.jomini_parser import JominiParser
 from common.paradox_parser import QuestionmarkEqualsWorkaround, ParsingWorkaround
+from vic3.localization import Vic3Localizer
 from vic3.vic3lib import *
 from common.paradox_lib import AE
 
@@ -21,14 +22,11 @@ class Vic3Parser(JominiParser):
     parse_advanced_entities() and parse_advanced_entities() can be used to easily add parsing for new entities.
     """
 
-    # allows the overriding of localization strings
-    localizationOverrides = {'recognized': 'Recognized', # there doesn't seem to be a localization for this
-                             'GNI': 'Guarani (GNI)',  # there are two tags called Guarani: GNI and GRI
-                             }
+    localizer: Vic3Localizer
 
     def __init__(self):
         super().__init__(VIC3DIR / 'game')
-        self.localization_folder_iterator = (VIC3DIR / 'game' / 'localization' / 'english').glob('**/*_l_english.yml')
+        self.localizer = Vic3Localizer(VIC3DIR)
 
     def parse_dlc_from_conditions(self, conditions: Tree):
         feature_dlc_map = {
