@@ -34,6 +34,31 @@ class AccidentSiteFlags(CS2BaseFlag):
     MovingVehicles = 0x100
 
 
+# Game.UI.ActionBits
+class ActionBits(CS2BaseFlag):
+
+    Continue = 1
+    Ignore = 2
+    Mute = 0x100
+    SaveAndContinue = 0x200
+    SaveAndQuit = 0x400
+    Quit = 0x20000
+    Rename = 0x40000
+
+
+# Game.Input.ActionComponent
+class ActionComponent(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Press = 1
+    Negative = 2
+    Positive = 3
+    Down = 4
+    Up = 5
+    Left = 6
+    Right = 7
+
+
 # Game.Effects.ActionFlags
 class GameEffectsActionFlags(CS2BaseFlag):
 
@@ -55,7 +80,7 @@ class GameRenderingActionFlags(CS2BaseFlag):
 
 
 # Game.Pathfind.ActionType
-class ActionType(CS2BaseEnum):
+class GamePathfindActionType(CS2BaseEnum):
 
     Create = 0
     Update = 1
@@ -68,6 +93,14 @@ class ActionType(CS2BaseEnum):
     Flow = 8
 
 
+# Game.Input.ActionType
+class GameInputActionType(CS2BaseEnum):
+
+    Button = 0
+    Axis = 1
+    Vector2 = 2
+
+
 # Game.Prefabs.ActivityCondition
 class ActivityCondition(CS2BaseFlag):
 
@@ -76,6 +109,7 @@ class ActivityCondition(CS2BaseFlag):
     Sad = 4
     Happy = 8
     Waiting = 0x10
+    Collapsed = 0x20
 
 
 # Game.Prefabs.ActivityFlags
@@ -111,16 +145,28 @@ class ActivityType(CS2BaseEnum):
     Squats = 20
     Mood = 21
     Yoga = 22
+    Reading = 23
+    Fishing = 24
+    Biking = 25
 
 
 # Game.Prefabs.AgeMask
-class AgeMask(CS2BaseFlag):
+class GamePrefabsAgeMask(CS2BaseFlag):
 
     Child = 1
     Teen = 2
     Adult = 4
     Elderly = 8
     Any = 0xF
+
+
+# Game.Tools.AgeMask
+class GameToolsAgeMask(CS2BaseFlag):
+
+    Sapling = 1
+    Young = 2
+    Mature = 4
+    Elderly = 8
 
 
 # Game.Vehicles.AircraftFlags
@@ -131,6 +177,7 @@ class AircraftFlags(CS2BaseFlag):
     StayMidAir = 4
     Blocking = 8
     Working = 0x10
+    IgnoreParkedVehicle = 0x20
 
 
 # Game.Vehicles.AircraftLaneFlags
@@ -140,6 +187,7 @@ class AircraftLaneFlags(CS2BaseFlag):
     EndReached = 2
     Connection = 4
     TransformTarget = 8
+    ParkingSpace = 0x10
     ResetSpeed = 0x20
     Obsolete = 0x40
     Reserved = 0x80
@@ -155,7 +203,7 @@ class AircraftLaneFlags(CS2BaseFlag):
 
 
 # Game.UI.Tooltip.Alignment
-class Alignment(CS2BaseEnum):
+class Alignment(CS2BaseFlag):
 
     Start = 0
     Center = 1
@@ -181,6 +229,7 @@ class AmbulanceFlags(CS2BaseFlag):
     AtTarget = 0x20
     Disembarking = 0x40
     Disabled = 0x80
+    Critical = 0x100
 
 
 # Game.Creatures.AnimalFlags
@@ -191,6 +240,14 @@ class AnimalFlags(CS2BaseFlag):
     FlyingTarget = 4
 
 
+# Game.Creatures.AnimalTravelFlags
+class AnimalTravelFlags(CS2BaseFlag):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Flying = 1
+    Swimming = 2
+
+
 # Game.Prefabs.AnimationLayer
 class AnimationLayer(CS2BaseEnum):
 
@@ -199,6 +256,14 @@ class AnimationLayer(CS2BaseEnum):
     Prop = 2
     Facial = 3
     Corrective = 4
+    PlaybackLayer0 = 5
+    PlaybackLayer1 = 6
+    PlaybackLayer2 = 7
+    PlaybackLayer3 = 8
+    PlaybackLayer4 = 9
+    PlaybackLayer5 = 10
+    PlaybackLayer6 = 11
+    PlaybackLayer7 = 12
 
 
 # Game.Prefabs.AnimationPlayback
@@ -209,6 +274,7 @@ class AnimationPlayback(CS2BaseEnum):
     FullLoop = 2
     HalfLoop = 3
     OptionalOnce = 4
+    SyncToRelative = 5
 
 
 # Game.Notifications.AnimationType
@@ -308,6 +374,16 @@ class AreaTypeMask(CS2BaseFlag):
     Surfaces = 0x10
 
 
+# Game.Prefabs.Modes.ArgumentUnit
+class ArgumentUnit(CS2BaseEnum):
+
+    integer = 0
+    percentage = 1
+    money = 2
+    xp = 3
+    custom = 4
+
+
 # Game.Prefabs.AttachedObjectType
 class AttachedObjectType(CS2BaseEnum):
 
@@ -383,15 +459,15 @@ class AvailableResource(CS2BaseEnum):
     Taxi = 30
     Bus = 31
     TramSubway = 32
-    Count = 33
+    FishSupply = 33
+    Count = 34
 
 
-# Game.Debug.Tests.BackendService
-class BackendService(CS2BaseEnum):
+# Game.Input.AxisComponent
+class AxisComponent(CS2BaseEnum):
 
-    GDK = 0
-    PDX = 1
-    Steam = 2
+    Negative = 2
+    Positive = 3
 
 
 # Game.Prefabs.BalloonDirection
@@ -424,6 +500,9 @@ class BatchFlags(CS2BaseFlag):
     Hanging = 0x8000
     BlendWeights = 0x10000
     SurfaceState = 0x20000
+    Base = 0x40000
+    CullVertices = 0x80000
+    Overlay = 0x100000
 
 
 # Game.Rendering.BatchRenderFlags
@@ -436,28 +515,152 @@ class BatchRenderFlags(CS2BaseFlag):
     All = 255  # the value is byte.MaxValue in C#
 
 
-# Game.Input.BindingType
-class BindingType(CS2BaseFlag):
-
-    Original = 1
-    Overridden = 2
-    OnlyRebindable = 4
-    OnlyRebound = 8
-    AllModifiers = 0x10
-
-
-# Game.Input.BindingUsage
-class BindingUsage(CS2BaseFlag):
+# Game.Input.BindingGamepad
+class BindingGamepad(CS2BaseEnum):
 
     _None = 0  # the name is None in C#, but python doesn't support this.
-    Menu = 1
-    Default = 2
-    Overlay = 4
-    Tool = 8
-    CancelableTool = 0x10
-    Debug = 0x20
-    Editor = 0x40
-    All = 0x7F
+    DpadUp = 1
+    DpadDown = 2
+    DpadLeft = 3
+    DpadRight = 4
+    North = 5
+    East = 6
+    South = 7
+    West = 8
+    LeftShoulder = 11
+    RightShoulder = 12
+    Start = 13
+    Select = 14
+    LeftTrigger = 33
+    RightTrigger = 34
+    LeftStickUp = 35
+    LeftStickDown = 36
+    LeftStickLeft = 37
+    LeftStickRight = 38
+    RightStickUp = 39
+    RightStickDown = 40
+    RightStickLeft = 41
+    RightStickRight = 42
+    Y = 5
+    B = 6
+    A = 7
+    X = 8
+    Triangle = 5
+    Circle = 6
+    Cross = 7
+    Square = 8
+
+
+# Game.Input.BindingKeyboard
+class BindingKeyboard(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Space = 1
+    Enter = 2
+    Tab = 3
+    Backquote = 4
+    Quote = 5
+    Semicolon = 6
+    Comma = 7
+    Period = 8
+    Slash = 9
+    Backslash = 10
+    LeftBracket = 11
+    RightBracket = 12
+    Minus = 13
+    Equals = 14
+    A = 15
+    B = 16
+    C = 17
+    D = 18
+    E = 19
+    F = 20
+    G = 21
+    H = 22
+    I = 23
+    J = 24
+    K = 25
+    L = 26
+    M = 27
+    N = 28
+    O = 29
+    P = 30
+    Q = 31
+    R = 32
+    S = 33
+    T = 34
+    U = 35
+    V = 36
+    W = 37
+    X = 38
+    Y = 39
+    Z = 40
+    Digit1 = 41
+    Digit2 = 42
+    Digit3 = 43
+    Digit4 = 44
+    Digit5 = 45
+    Digit6 = 46
+    Digit7 = 47
+    Digit8 = 48
+    Digit9 = 49
+    Digit0 = 50
+    Escape = 60
+    LeftArrow = 61
+    RightArrow = 62
+    UpArrow = 63
+    DownArrow = 64
+    Backspace = 65
+    PageDown = 66
+    PageUp = 67
+    Home = 68
+    End = 69
+    Delete = 71
+    NumpadEnter = 77
+    NumpadDivide = 78
+    NumpadMultiply = 79
+    NumpadPlus = 80
+    NumpadMinus = 81
+    NumpadPeriod = 82
+    NumpadEquals = 83
+    Numpad0 = 84
+    Numpad1 = 85
+    Numpad2 = 86
+    Numpad3 = 87
+    Numpad4 = 88
+    Numpad5 = 89
+    Numpad6 = 90
+    Numpad7 = 91
+    Numpad8 = 92
+    Numpad9 = 93
+    F1 = 94
+    F2 = 95
+    F3 = 96
+    F4 = 97
+    F5 = 98
+    F6 = 99
+    F7 = 100
+    F8 = 101
+    F9 = 102
+    F10 = 103
+    F11 = 104
+    F12 = 105
+    OEM1 = 106
+    OEM2 = 107
+    OEM3 = 108
+    OEM4 = 109
+    OEM5 = 110
+
+
+# Game.Input.BindingMouse
+class BindingMouse(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Left = 1
+    Middle = 3
+    Right = 2
+    Forward = 4
+    Backward = 5
 
 
 # Game.Vehicles.BlockerType
@@ -533,6 +736,18 @@ class BoneType(CS2BaseEnum):
     LookAtMovementY = 28
     LookAtMovementZ = 29
     LookAtRotationSide = 30
+    RotationXFromMovementY = 31
+    ScaledMovement = 32
+    LookAtAimForward = 33
+    ScaledRotation = 34
+    PlaybackLayer0 = 35
+    PlaybackLayer1 = 36
+    PlaybackLayer2 = 37
+    PlaybackLayer3 = 38
+    PlaybackLayer4 = 39
+    PlaybackLayer5 = 40
+    PlaybackLayer6 = 41
+    PlaybackLayer7 = 42
 
 
 # Game.Common.BoundsMask
@@ -547,7 +762,16 @@ class BoundsMask(CS2BaseFlag):
     OccupyZone = 0x40
     NotOverridden = 0x80
     NotWalkThrough = 0x100
+    HasLot = 0x200
     AllLayers = 0x1E
+
+
+# Game.Prefabs.BridgeBuildStyle
+class BridgeBuildStyle(CS2BaseEnum):
+
+    Elevated = 0
+    Raised = 1
+    Quay = 2
 
 
 # Game.Prefabs.BridgeWaterFlow
@@ -569,6 +793,8 @@ class BuildingAccessType(CS2BaseEnum):
     RightAndBackCorner = 5
     FrontAndBack = 6
     All = 7
+    OnRoad = 8
+    OnRoadArea = 9
 
 
 # Game.Buildings.BuildingFlags
@@ -596,6 +822,13 @@ class GamePrefabsBuildingFlags(CS2BaseFlag):
     HasWaterNode = 0x200
     HasSewageNode = 0x400
     HasInsideRoom = 0x800
+    RestrictedParking = 0x1000
+    RestrictedTrack = 0x2000
+    CanBeOnRoad = 0x4000
+    CanBeOnRoadArea = 0x8000
+    RequireAccess = 0x10000
+    CanBeRoadSide = 0x20000
+    HasResourceNode = 0x40000
 
 
 # Game.Buildings.BuildingHappinessFactor
@@ -629,7 +862,8 @@ class BuildingHappinessFactor(CS2BaseEnum):
     OutputCosts = 25
     ElectricityFee = 26
     WaterFee = 27
-    Count = 28
+    LocalBonuses = 28
+    Count = 29
 
 
 # Game.Buildings.BuildingModifierType
@@ -679,6 +913,16 @@ class BuildingStatusType(CS2BaseEnum):
     WaterPollutionSource = 18
     LandValue = 19
     WaterConsumption = 20
+    ResidentialBuilding = 21
+    CommercialBuilding = 22
+    IndustrialBuilding = 23
+    OfficeBuilding = 24
+    SignatureResidential = 25
+    SignatureCommercial = 26
+    SignatureIndustrial = 27
+    SignatureOffice = 28
+    HomelessCount = 29
+    OutsideTrading = 30
 
 
 # Game.Prefabs.BuildingType
@@ -710,7 +954,7 @@ class BuildingType(CS2BaseEnum):
     WelfareOffice = 22
     ResearchFacility = 23
     ParkMaintenanceDepot = 24
-    ParkingFacility = 25
+    CarParkingFacility = 25
     Battery = 26
     ResidentialBuilding = 27
     CommercialBuilding = 28
@@ -722,6 +966,25 @@ class BuildingType(CS2BaseEnum):
     SignatureIndustrial = 34
     SignatureOffice = 35
     LandValueSources = 36
+    BicycleParkingFacility = 37
+
+
+# Game.Input.BuiltInUsages
+class BuiltInUsages(CS2BaseFlag):
+
+    Menu = 1
+    DefaultTool = 2
+    Overlay = 4
+    Tool = 8
+    CancelableTool = 0x10
+    Debug = 0x20
+    Editor = 0x40
+    PhotoMode = 0x80
+    Options = 0x100
+    Tutorial = 0x200
+    DiscardableTool = 0x400
+    All = 0x7FF
+    DefaultSet = 0x41E
 
 
 # Game.Prefabs.CalendarEventMonths
@@ -774,6 +1037,7 @@ class CarFlags(CS2BaseFlag):
     Working = 0x200
     SignalAnimation1 = 0x400
     SignalAnimation2 = 0x800
+    CannotReverse = 0x1000
 
 
 # Game.Net.CarLaneFlags
@@ -791,9 +1055,9 @@ class GameNetCarLaneFlags(CS2BaseFlag):
     Runway = 0x200
     Yield = 0x400
     Stop = 0x800
-    ForbidCombustionEngines = 0x1000
-    ForbidTransitTraffic = 0x2000
-    ForbidHeavyTraffic = 0x4000
+    SecondaryStart = 0x1000
+    SecondaryEnd = 0x2000
+    ForbidBicycles = 0x4000
     PublicOnly = 0x8000
     Highway = 0x10000
     UTurnRight = 0x20000
@@ -810,6 +1074,7 @@ class GameNetCarLaneFlags(CS2BaseFlag):
     ParkingLeft = 0x10000000
     ParkingRight = 0x20000000
     Forbidden = 0x40000000
+    AllowEnter = 0x80000000
 
 
 # Game.Vehicles.CarLaneFlags
@@ -873,24 +1138,6 @@ class CargoTransportFlags(CS2BaseFlag):
     Disabled = 0x800
 
 
-# Game.Debug.Tests.Category
-class Category(CS2BaseEnum):
-
-    _None = 0  # the name is None in C#, but python doesn't support this.
-    Debug = 2
-    Serialization = 4
-    Timings = 8
-    General = 16
-    Gameplay = 32
-    QA = 64
-    RunInAllCategories = 128
-    AssetDatabase = 256
-    AssetPipeline = 512
-    Performance = 136
-    Runtime = 948
-    Default = 956
-
-
 # Game.Zones.CellFlags
 class CellFlags(CS2BaseFlag):
 
@@ -909,16 +1156,16 @@ class CellFlags(CS2BaseFlag):
     RoadBack = 0x800
 
 
-# Game.Input.Change
+# Game.Prefabs.Climate.Change
 class Change(CS2BaseEnum):
 
-    _None = 0  # the name is None in C#, but python doesn't support this.
-    EventCaptured = 1
-    EventPlayed = 2
-    CaptureStarted = 3
-    CaptureStopped = 4
-    ReplayStarted = 5
-    ReplayStopped = 6
+    Night = 0
+    NightDeviationFromMin = 1
+    NightDeviationFromMax = 2
+    Day = 3
+    DayDeviationFromMin = 4
+    DayDeviationFromMax = 5
+    SeasonTime = 6
 
 
 # Game.Prefabs.ChirpDataFlags
@@ -992,7 +1239,7 @@ class CitizenFlags(CS2BaseFlag):
     _None = 0  # the name is None in C#, but python doesn't support this.
     AgeBit1 = 1
     AgeBit2 = 2
-    MovingAway = 4
+    MovingAwayReachOC = 4
     Male = 8
     EducationBit1 = 0x10
     EducationBit2 = 0x20
@@ -1003,6 +1250,7 @@ class CitizenFlags(CS2BaseFlag):
     Commuter = 0x400
     LookingForPartner = 0x800
     NeedsNewJob = 0x1000
+    BicycleUser = 0x2000
 
 
 # Game.Citizens.CitizenHappiness
@@ -1068,6 +1316,8 @@ class CitizenPseudoRandom(CS2BaseEnum):
     StudyWillingness = 1176609278
     Death = 1177657855
     SpawnResident = 2432906522
+    BicycleModel = 2761047266
+    CarProbability = 1965574495
 
 
 # Game.UI.InGame.CitizenResidenceKey
@@ -1075,6 +1325,7 @@ class CitizenResidenceKey(CS2BaseEnum):
 
     Home = 0
     Hotel = 1
+    Shelter = 2
 
 
 # Game.UI.InGame.CitizenStateKey
@@ -1156,6 +1407,12 @@ class CityModifierType(CS2BaseEnum):
     OfficeEfficiency = 32
     PollutionHealthAffect = 33
     HospitalEfficiency = 34
+    IndustrialFishInputEfficiency = 35
+    IndustrialFishHubEfficiency = 36
+    CityServiceImportCost = 37
+    CityServiceBuildingBaseUpkeepCost = 38
+    CrimeResponseTime = 39
+    TaxHappiness = 40
 
 
 # Game.City.CityOption
@@ -1163,6 +1420,7 @@ class CityOption(CS2BaseEnum):
 
     UnlimitedHighwaySpeed = 0
     PaidTaxiStart = 1
+    ImportOutsideServices = 2
 
 
 # Game.City.CityService
@@ -1185,6 +1443,16 @@ class CityService(CS2BaseEnum):
     Count = 14
 
 
+# Game.Prefabs.ClipState
+class ClipState(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Operating = 1
+    Driving = 2
+    TakingOff = 3
+    Landing = 4
+
+
 # Game.Common.CollisionMask
 class CollisionMask(CS2BaseFlag):
 
@@ -1198,6 +1466,8 @@ class CollisionMask(CS2BaseFlag):
 class ColorFilterFlags(CS2BaseFlag):
 
     SeasonFilter = 1
+    BlendColor = 2
+    BlendProbability = 4
 
 
 # Game.Rendering.ColorSourceType
@@ -1284,6 +1554,8 @@ class CompositionState(CS2BaseFlag):
     RaiseToTerrain = 0x4000
     NoSubCollisions = 0x8000
     Airspace = 0x10000
+    HalfLength = 0x20000
+    Hidden = 0x40000
 
 
 # Game.Net.ConnectionLaneFlags
@@ -1304,6 +1576,48 @@ class ConnectionLaneFlags(CS2BaseFlag):
     Inside = 0x1000
     Area = 0x2000
     Disabled = 0x4000
+    AllowEnter = 0x8000
+    AllowExit = 0x10000
+    NoRestriction = 0x20000
+
+
+# Game.Simulation.Consumer
+class Consumer(CS2BaseEnum):
+
+    ServiceUpkeep = 0
+    Citizens = 1
+    ImportExport = 2
+    Retail = 3
+    Commercial = 4
+    Industrial = 5
+    Office = 6
+    Heating = 7
+    LevelUp = 8
+    Count = 9
+
+
+# Game.Prefabs.ContentFlags
+class ContentFlags(CS2BaseFlag):
+
+    RequireDlc = 1
+    RequirePdxLogin = 2
+    RequireMod = 4
+
+
+# Game.UI.Editor.ContextActionState
+class ContextActionState(CS2BaseEnum):
+
+    Unset = 0
+    Set = 1
+    Disabled = 2
+
+
+# Game.Prefabs.ControlScheme
+class ControlScheme(CS2BaseFlag):
+
+    KeyboardAndMouse = 1
+    Gamepad = 2
+    All = 3
 
 
 # Game.Simulation.CountPurpose
@@ -1339,7 +1653,9 @@ class CoursePosFlags(CS2BaseFlag):
     RightTransition = 0x200
     ForceElevatedNode = 0x400
     ForceElevatedEdge = 0x800
-    IsGrid = 0x1000
+    DisableMerge = 0x1000
+    IsGrid = 0x2000
+    DontCreate = 0x4000
 
 
 # Game.Net.CoverageService
@@ -1376,6 +1692,9 @@ class CreationFlags(CS2BaseFlag):
     Native = 0x4000
     Construction = 0x8000
     SubElevation = 0x10000
+    Duplicate = 0x20000
+    Repair = 0x40000
+    Stamping = 0x80000
 
 
 # Game.Creatures.CreatureLaneFlags
@@ -1433,6 +1752,15 @@ class CriminalFlags(CS2BaseFlag):
     Sentenced = 0x40
 
 
+# Game.Rendering.CustomMeshType
+class CustomMeshType(CS2BaseFlag):
+
+    Cylinder = 0
+    Arrow = 1
+    Plane = 2
+    NumCustomMeshTypes = 3
+
+
 # Game.Simulation.Flow.CutElementFlags
 class CutElementFlags(CS2BaseFlag):
 
@@ -1450,6 +1778,14 @@ class DangerFlags(CS2BaseFlag):
     Evacuate = 2
     UseTransport = 4
     WaitingCitizens = 8
+
+
+# Game.AssetPipeline.DataType
+class DataType(CS2BaseEnum):
+
+    Prefab = 0
+    StreamingData = 1
+    RawTexture = 2
 
 
 # Game.Buildings.DeathcareFacilityFlags
@@ -1497,9 +1833,10 @@ class DeliveryTruckFlags(CS2BaseFlag):
     Buying = 0x10
     StorageTransfer = 0x20
     Delivering = 0x40
-    NoUnloading = 0x80
+    UpkeepDelivery = 0x80
     TransactionCancelled = 0x100
     UpdateOwnerQuantity = 0x200
+    UpdateSellerQuantity = 0x400
 
 
 # Game.Simulation.DemandFactor
@@ -1510,8 +1847,8 @@ class DemandFactor(CS2BaseEnum):
     EducatedWorkforce = 2
     CompanyWealth = 3
     LocalDemand = 4
-    FreeWorkplaces = 5
-    Unemployment = 6
+    Unemployment = 5
+    FreeWorkplaces = 6
     Happiness = 7
     Homelessness = 8
     TouristDemand = 9
@@ -1523,7 +1860,8 @@ class DemandFactor(CS2BaseEnum):
     PoorZoneLocation = 15
     PetrolLocalDemand = 16
     Warehouses = 17
-    Count = 18
+    BuildingDemand = 18
+    Count = 19
 
 
 # Game.Modding.Toolchain.DependencyState
@@ -1597,6 +1935,7 @@ class DistrictModifierType(CS2BaseEnum):
     StreetSpeedLimit = 9
     StreetTrafficSafety = 10
     EnergyConsumptionAwareness = 11
+    CarReserveProbability = 12
 
 
 # Game.Areas.DistrictOption
@@ -1606,6 +1945,7 @@ class DistrictOption(CS2BaseEnum):
     ForbidCombustionEngines = 1
     ForbidTransitTraffic = 2
     ForbidHeavyTraffic = 3
+    ForbidBicycles = 4
 
 
 # Game.Creatures.DomesticatedFlags
@@ -1623,8 +1963,6 @@ class DynResUpscaleFilter(CS2BaseEnum):
     ContrastAdaptiveSharpen = 1
     EdgeAdaptiveScaling = 2
     TAAU = 3
-    DLSS = 4
-    FSR2 = 5
 
 
 # Game.Pathfind.EdgeFlags
@@ -1638,15 +1976,28 @@ class EdgeFlags(CS2BaseFlag):
     SecondaryEnd = 0x20
     FreeForward = 0x40
     FreeBackward = 0x80
-    HasBlockage = 0x100
-    ForbidCombustionEngines = 0x200
-    ForbidTransitTraffic = 0x400
-    ForbidHeavyTraffic = 0x800
-    ForbidPrivateTraffic = 0x1000
-    ForbidSlowTraffic = 0x2000
+    Secondary = 0x100
+    AllowEnter = 0x200
+    AllowExit = 0x400
     RequireAuthorization = 0x4000
     OutsideConnection = 0x8000
-    DefaultMask = 0xFFCF
+    DefaultMask = 0xFEFF
+
+
+# Game.UI.Editor.EditorPanelWidgetRenderer
+class EditorPanelWidgetRenderer(CS2BaseEnum):
+
+    Editor = 0
+    PhotoMode = 1
+
+
+# Game.UI.Editor.EditorScreen
+class EditorScreen(CS2BaseEnum):
+
+    Main = 0
+    PauseMenu = 1
+    Options = 2
+    FreeCamera = 3
 
 
 # Game.Prefabs.EffectColorSource
@@ -1684,7 +2035,8 @@ class EffectConditionFlags(CS2BaseFlag):
     WorkLights = 0x80000
     Spillway = 0x100000
     Collapsing = 0x200000
-    Last = 0x200000
+    MoveableBridgeWorking = 0x400000
+    Last = 0x400000
 
 
 # Game.Buildings.EfficiencyFactor
@@ -1718,7 +2070,11 @@ class EfficiencyFactor(CS2BaseEnum):
     CityModifierOfficeEfficiency = 25
     CityModifierHospitalEfficiency = 26
     SpecializationBonus = 27
-    Count = 28
+    CityModifierFishInput = 28
+    CityModifierFishHub = 29
+    LackResources = 30
+    GateBypass = 31
+    Count = 32
 
 
 # Game.Buildings.ElectricityConsumerFlags
@@ -1748,6 +2104,7 @@ class ElevationFlags(CS2BaseFlag):
     Stacked = 1
     OnGround = 2
     Lowered = 4
+    OnAttachedParent = 8
 
 
 # Game.Buildings.EmergencyShelterFlags
@@ -1835,7 +2192,11 @@ class ErrorType(CS2BaseEnum):
     NotOnBorder = 24
     NoGroundWater = 25
     OnFire = 26
-    Count = 27
+    NoPortAccess = 27
+    NotEnoughClearance = 28
+    NoBicycleAccess = 29
+    NotEditable = 30
+    Count = 31
 
 
 # Game.Events.EventCityEffectTrackingType
@@ -1871,6 +2232,14 @@ class EventTargetType(CS2BaseEnum):
     Couple = 6
 
 
+# Game.UI.Editor.ExpandState
+class ExpandState(CS2BaseEnum):
+
+    Collapsed = 0
+    PrimaryExpanded = 1
+    SecondaryExpanded = 2
+
+
 # Game.City.ExpenseSource
 class ExpenseSource(CS2BaseEnum):
 
@@ -1883,7 +2252,20 @@ class ExpenseSource(CS2BaseEnum):
     SubsidyCommercial = 6
     SubsidyIndustrial = 7
     SubsidyOffice = 8
-    Count = 9
+    ImportPoliceService = 9
+    ImportAmbulanceService = 10
+    ImportHearseService = 11
+    ImportFireEngineService = 12
+    ImportGarbageService = 13
+    MapTileUpkeep = 14
+    Count = 15
+
+
+# Game.Buildings.ExtensionFlags
+class ExtensionFlags(CS2BaseFlag):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Disabled = 1
 
 
 # Game.Buildings.ExtractorFlags
@@ -1891,6 +2273,14 @@ class ExtractorFlags(CS2BaseFlag):
 
     Rotating = 1
     Working = 2
+
+
+# Game.Prefabs.ExtractorRequirementFlags
+class ExtractorRequirementFlags(CS2BaseFlag):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    RouteConnect = 1
+    NetConnect = 2
 
 
 # Game.Settings.FPSMode
@@ -1983,6 +2373,48 @@ class FlowResource(CS2BaseEnum):
 
     _None = -1  # the name is None in C#, but python doesn't support this.
     WaterPipes = 1
+
+
+# Game.FormatTags
+class FormatTags(CS2BaseEnum):
+
+    ShortLaneOptimization = 0
+    HomelessAndWorkerFix = 1
+    CompanyAndCargoFix = 2
+    TradeCostFix = 3
+    TerrainSystemCleanup = 4
+    FishResource = 5
+    AquacultureLandAmbience = 6
+    BpPrefabData = 7
+    ContentPrefabInCityConfiguration = 8
+    SeagullAmbience = 9
+    BPDLCAchievement = 10
+    StandingLegOffset = 11
+    CargoPortCleanup = 12
+    NewWaterSources = 13
+    RemoveConsumptionAccumulator = 14
+    TrackCompanyCustomersAndTaxes = 15
+    ActivityProps = 16
+    UnifyCompanyStatistics = 17
+    UnemploymentAffectHappiness = 18
+    HouseholdConsumptionFix = 19
+    MovingAwayReason = 20
+    SicknessHealthPenalty = 21
+    LevelingFixReset = 22
+    IndustrialConsumptionAccumulator = 23
+    LevelUpStatistics = 24
+    WaterfrontLowCommercialZone = 25
+    OldTownAmbience = 26
+    WaterSourceYPositionFix = 27
+    TrackProcessingMail = 28
+    TrackCitizenEconomyStats = 29
+    DelayMoveAwayCompany = 30
+    TrackCityMaxProduction = 31
+    BicycleDataMigration = 32
+    WaterRenderSettings = 33
+    TerrainRenderSettings = 34
+    PrefabIDHash = 35
+    EasyModeDeathRateFix = 36
 
 
 # Game.GameMode
@@ -2085,12 +2517,15 @@ class General(CS2BaseFlag):
     Tiles = 0x8000000
     Lighting = 0x10000000
     Inside = 0x20000000
+    StyleBreak = 0x40000000
     Elevated = 0x10000
     Tunnel = 0x20000
     MiddlePlatform = 0x40000
     WideMedian = 0x80000
     PrimaryMiddleBeautification = 0x100000
     SecondaryMiddleBeautification = 0x200000
+    FixedNodeSize = 0x400000
+    StraightNodeEnd = 0x800000
 
 
 # Game.Rendering.GeneratedType
@@ -2126,6 +2561,10 @@ class GameObjectsGeometryFlags(CS2BaseFlag):
     IgnoreBottomCollision = 0x40000
     HasBase = 0x80000
     HasLot = 0x100000
+    IgnoreLegCollision = 0x200000
+    Builtin = 0x400000
+    ReadOnly = 0x800000
+    IgnoreElevatedGround = 0x1000000
 
 
 # Game.Net.GeometryFlags
@@ -2160,6 +2599,7 @@ class GameNetGeometryFlags(CS2BaseFlag):
     IsLefthanded = 0x4000000
     InvertCompositionHandedness = 0x8000000
     FlipCompositionHandedness = 0x10000000
+    ElevatedIsRaised = 0x20000000
 
 
 # Game.Areas.GeometryFlags
@@ -2173,6 +2613,9 @@ class GameAreasGeometryFlags(CS2BaseFlag):
     ShiftTerrain = 0x20
     OnWaterSurface = 0x40
     PseudoRandom = 0x80
+    RequireWater = 0x100
+    HiddenIngame = 0x200
+    SubAreaBatch = 0x400
 
 
 # Game.Simulation.GoodsDeliveryFlags
@@ -2214,7 +2657,12 @@ class GroupAmbienceType(CS2BaseEnum):
     Forest = 16
     Rain = 17
     WaterfrontLow = 18
-    Count = 19
+    NightForest = 19
+    AquacultureLand = 20
+    SeagullAmbience = 21
+    WaterfrontLowCommercial = 22
+    OldTown = 23
+    Count = 24
 
 
 # Game.Simulation.HappinessFactor
@@ -2245,7 +2693,8 @@ class HappinessFactor(CS2BaseEnum):
     Homelessness = 22
     ElectricityFee = 23
     WaterFee = 24
-    Count = 25
+    Unemployment = 25
+    Count = 26
 
 
 # Game.Prefabs.HealthEventType
@@ -2309,6 +2758,7 @@ class HeatmapData(CS2BaseEnum):
     WaterPollution = 16
     Population = 17
     GroundWaterPollution = 18
+    Fish = 19
 
 
 # Game.Vehicles.HelicopterType
@@ -2362,6 +2812,7 @@ class HumanFlags(CS2BaseFlag):
     Sad = 0x100
     Happy = 0x200
     Angry = 0x400
+    Collapsed = 0x800
 
 
 # Game.Prefabs.IconCategory
@@ -2382,6 +2833,7 @@ class IconCategory(CS2BaseEnum):
     NoisePollution = 12
     GroundPollution = 13
     LandValue = 14
+    Level = 15
 
 
 # Game.Notifications.IconClusterLayer
@@ -2471,19 +2923,6 @@ class IntersectResult(CS2BaseEnum):
     Partial = 2
 
 
-# Game.UI.Editor.ItemType
-class ItemType(CS2BaseEnum):
-
-    _None = 0  # the name is None in C#, but python doesn't support this.
-    Map = 1
-    Climate = 2
-    Water = 3
-    Resources = 4
-    ObjectContainer = 5
-    Object = 6
-    SubMesh = 7
-
-
 # Game.Prefabs.Justify
 class Justify(CS2BaseEnum):
 
@@ -2520,6 +2959,7 @@ class GameSimulationLaneFlags(CS2BaseFlag):
     MiddleLeft = 4
     MiddleRight = 8
     InverseClipOffset = 0x10
+    Raised = 0x20
 
 
 # Game.Prefabs.LaneFlags
@@ -2550,6 +2990,8 @@ class GamePrefabsLaneFlags(CS2BaseFlag):
     HasAuxiliary = 0x400000
     EvenSpacing = 0x800000
     PseudoRandom = 0x1000000
+    BicyclesOnly = 0x2000000
+    TrackFlow = 0x4000000
 
 
 # Game.Rendering.LaneProperty
@@ -2576,6 +3018,7 @@ class LaneProperty(CS2BaseEnum):
 class LaneSignalFlags(CS2BaseEnum):
 
     CanExtend = 1
+    Physical = 2
 
 
 # Game.Net.LaneSignalType
@@ -2608,6 +3051,7 @@ class Layer(CS2BaseFlag):
     MarkerTaxiway = 0x4000
     PublicTransportRoad = 0x8000
     LaneEditor = 0x10000
+    ResourceLine = 0x20000
     _None = 0  # the name is None in C#, but python doesn't support this.
     All = 4294967295  # the value is uint.MaxValue in C#
 
@@ -2637,14 +3081,6 @@ class LeisureType(CS2BaseEnum):
     Count = 10
 
 
-# Game.UI.Widgets.Level
-class GameUIWidgetsLevel(CS2BaseEnum):
-
-    Title = 0
-    SubTitle = 1
-    GroupTitle = 2
-
-
 # Game.Settings.Level
 class GameSettingsLevel(CS2BaseEnum):
 
@@ -2655,6 +3091,14 @@ class GameSettingsLevel(CS2BaseEnum):
     High = 4
     Colossal = 5
     Custom = 6
+
+
+# Game.UI.Widgets.Level
+class GameUIWidgetsLevel(CS2BaseEnum):
+
+    Title = 0
+    SubTitle = 1
+    GroupTitle = 2
 
 
 # Game.Prefabs.LifePathEventType
@@ -2699,6 +3143,14 @@ class LightUnit(CS2BaseEnum):
     Lux = 2
     Nits = 3
     Ev100 = 4
+
+
+# Game.UI.InGame.LineType
+class LineType(CS2BaseEnum):
+
+    Passenger = 0
+    Cargo = 1
+    Work = 2
 
 
 # Game.UI.Widgets.ListOperations
@@ -2785,6 +3237,18 @@ class MaintenanceVehicleFlags(CS2BaseFlag):
     ClearChecked = 0x200
 
 
+# Game.UI.Editor.MapActions
+class MapActions(CS2BaseFlag):
+
+    New = 1
+    Load = 2
+    Save = 4
+    Share = 8
+    ShareDisabledLogin = 0x10
+    ShareDisabledPlayable = 0x20
+    Default = 7
+
+
 # Game.Areas.MapFeature
 class MapFeature(CS2BaseEnum):
 
@@ -2797,7 +3261,8 @@ class MapFeature(CS2BaseEnum):
     Ore = 5
     SurfaceWater = 6
     GroundWater = 7
-    Count = 8
+    Fish = 8
+    Count = 9
 
 
 # Game.Rendering.MarkerType
@@ -2820,28 +3285,40 @@ class GamePrefabsMarkerType(CS2BaseEnum):
     WaterPipeOutsideConnection = 6
 
 
+# Game.Net.MasterLaneFlags
+class MasterLaneFlags(CS2BaseFlag):
+
+    HasBikeOnlyLane = 1
+
+
 # Game.Rendering.MaterialProperty
 class MaterialProperty(CS2BaseEnum):
 
-    VTUVs0 = 0
-    VTUVs1 = 1
-    AlbedoAffectEmissive = 2
-    SingleLightsOffset = 3
-    TextureArea = 4
-    MeshSize = 5
-    LodDistanceFactor = 6
-    BaseColor = 7
-    DilationParams = 8
-    ImpostorFrames = 9
-    ImpostorSize = 10
-    ImpostorOffset = 11
-    TextureScaleFactor = 12
-    SmoothingDistance = 13
-    WindRangeLvlB = 14
-    WindElasticityLvlB = 15
-    ShapeParameters1 = 16
-    ShapeParameters2 = 17
-    Count = 18
+    DefaultPVTStack_Transform = 0
+    ExtendedPVTStack_Transform = 1
+    DefaultPVTStack_TextureInfo = 2
+    ExtendedPVTStack_TextureInfo = 3
+    AlbedoAffectEmissive = 4
+    Snow = 5
+    SingleLightsOffset = 6
+    TextureArea = 7
+    MeshSize = 8
+    LodDistanceFactor = 9
+    BaseColor = 10
+    DilationParams = 11
+    ImpostorFrames = 12
+    ImpostorSize = 13
+    ImpostorOffset = 14
+    TextureScaleFactor = 15
+    SmoothingDistance = 16
+    WindRangeLvlB = 17
+    WindElasticityLvlB = 18
+    ShapeParameters1 = 19
+    ShapeParameters2 = 20
+    CullParameters = 21
+    OverlayParameters = 22
+    AlphaMaskIndexRange = 23
+    Count = 24
 
 
 # Game.Citizens.MeetingStatus
@@ -2879,6 +3356,7 @@ class MeshFlags(CS2BaseFlag):
     Animated = 0x1000
     Skeleton = 0x2000
     Character = 0x4000
+    Prop = 0x8000
 
 
 # Game.Prefabs.MeshGroupFlags
@@ -2890,6 +3368,10 @@ class MeshGroupFlags(CS2BaseFlag):
     RequireHomeless = 8
     RequireMotorcycle = 0x10
     ForbidMotorcycle = 0x20
+    RequireFishing = 0x40
+    ForbidFishing = 0x80
+    RequireBicycle = 0x100
+    ForbidBicycle = 0x200
 
 
 # Game.Prefabs.MeshLayer
@@ -2984,6 +3466,8 @@ class GameToolsMode(CS2BaseEnum):
     Move = 2
     Brush = 3
     Stamp = 4
+    Line = 5
+    Curve = 6
 
 
 # Game.Tools.Mode
@@ -3014,6 +3498,29 @@ class GameToolsMode(CS2BaseEnum):
     Everything = 2
 
 
+# Game.UI.Widgets.Mode
+class GameUIWidgetsMode(CS2BaseEnum):
+
+    Albedo = 0
+    Normal = 1
+    MaskMap = 2
+
+
+# Game.UI.Editor.Mode
+class GameUIEditorMode(CS2BaseEnum):
+
+    Instance = 0
+    Prefab = 1
+
+
+# Game.Input.ModifierOptions
+class ModifierOptions(CS2BaseEnum):
+
+    Disallow = 0
+    Allow = 1
+    Ignore = 2
+
+
 # Game.Buildings.ModifierRadiusCombineMode
 class ModifierRadiusCombineMode(CS2BaseEnum):
 
@@ -3029,19 +3536,27 @@ class ModifierValueMode(CS2BaseEnum):
     InverseRelative = 2
 
 
+# Game.Agents.MoveAwayReason
+class MoveAwayReason(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    NoSuitableProperty = 1
+    NotHappy = 2
+    NoAdults = 3
+    NoMoney = 4
+    TouristNoTarget = 5
+    TouristNoHotel = 6
+    TouristNoMoney = 7
+    TripNeedNotMovedIn = 8
+    Count = 9
+
+
 # Game.UI.NameType
 class NameType(CS2BaseEnum):
 
     Custom = 0
     Localized = 1
     Formatted = 2
-
-
-# Game.Simulation.NaturalResource
-class NaturalResource(CS2BaseEnum):
-
-    Forest = 0
-    Count = 1
 
 
 # Game.Prefabs.NetAreaFlags
@@ -3051,6 +3566,7 @@ class NetAreaFlags(CS2BaseFlag):
     Invert = 2
     Hole = 4
     NoBridge = 8
+    Median = 0x10
 
 
 # Game.Prefabs.NetEdgeMatchType
@@ -3067,6 +3583,7 @@ class NetInvertMode(CS2BaseEnum):
     Never = 0
     LefthandTraffic = 1
     RighthandTraffic = 2
+    Always = 3
 
 
 # Game.Objects.NetObjectFlags
@@ -3096,6 +3613,10 @@ class NetObjectPlacement(CS2BaseEnum):
     EdgeEndsOrNodeFixedSegment = 13
     EdgeStartOrNodeFixedSegment = 14
     EdgeEndOrNodeFixedSegment = 15
+    WaterwayCrossingNode = 16
+    NotWaterwayCrossingNode = 17
+    NotWaterwayCrossingEdgeMiddle = 18
+    NotWaterwayCrossingEdgeEndsOrNode = 19
 
 
 # Game.Prefabs.NetPieceFlags
@@ -3114,6 +3635,10 @@ class NetPieceFlags(CS2BaseFlag):
     RaiseTopToTerrain = 0x400
     SmoothTopNormal = 0x800
     SkipBottomHalf = 0x1000
+    Top = 0x2000
+    Bottom = 0x4000
+    HasRoadLanes = 0x8000
+    HasBicycleLanes = 0x10000
 
 
 # Game.Prefabs.NetPieceLayer
@@ -3123,6 +3648,15 @@ class NetPieceLayer(CS2BaseEnum):
     Bottom = 1
     Top = 2
     Side = 3
+
+
+# Game.Prefabs.NetPieceLayerMask
+class NetPieceLayerMask(CS2BaseFlag):
+
+    Surface = 1
+    Bottom = 2
+    Top = 4
+    Side = 8
 
 
 # Game.Prefabs.NetPieceRequirements
@@ -3205,6 +3739,23 @@ class NetPieceRequirements(CS2BaseEnum):
     Inside = 74
     ForbidStraight = 75
     OppositeForbidStraight = 76
+    Hidden = 77
+    ParkingSpaces = 78
+    OppositeParkingSpaces = 79
+    FixedNodeSize = 80
+    HalfLength = 81
+    AbruptEnd = 82
+    OppositeAbruptEnd = 83
+    AttachmentTrack = 84
+    EnterGate = 85
+    ExitGate = 86
+    StyleBreak = 87
+    FerryStop = 88
+    StraightNodeEnd = 89
+    BicycleLane = 90
+    OppositeBicycleLane = 91
+    ForbidBicycles = 92
+    OppositeForbidBicycles = 93
 
 
 # Game.Rendering.NetProperty
@@ -3241,6 +3792,12 @@ class NetSectionFlags(CS2BaseFlag):
     FlipLanes = 0x40
     AlignCenter = 0x80
     FlipMesh = 0x100
+    Hidden = 0x200
+    HiddenSurface = 0x400
+    HiddenSide = 0x800
+    HiddenTop = 0x1000
+    HiddenBottom = 0x2000
+    HalfLength = 0x4000
 
 
 # Game.Prefabs.NetStatusType
@@ -3255,6 +3812,10 @@ class NetStatusType(CS2BaseEnum):
     HighVoltageFlow = 6
     PipeWaterFlow = 7
     PipeSewageFlow = 8
+    OilFlow = 9
+    LeisureProvider = 10
+    BicycleLanes = 11
+    BicycleTrafficVolume = 12
 
 
 # Game.Rendering.NetSubMesh
@@ -3280,6 +3841,15 @@ class NetType(CS2BaseEnum):
     SubwayTrack = 4
 
 
+# Game.Net.NodeLaneFlags
+class NodeLaneFlags(CS2BaseFlag):
+
+    StartWidthOffset = 1
+    EndWidthOffset = 2
+    StartBicycleOnly = 4
+    EndBicycleOnly = 8
+
+
 # Game.Tutorials.ObjectPlacementTriggerFlags
 class ObjectPlacementTriggerFlags(CS2BaseFlag):
 
@@ -3290,25 +3860,28 @@ class ObjectPlacementTriggerFlags(CS2BaseFlag):
     RequireSewageOutletConnection = 0x10
     RequireElectricityProducerConnection = 0x20
     RequireOutsideConnection = 0x40
+    RequireResourceConnection = 0x80
+    RequireResourceExtractorConnection = 0x100
+    RequireServiceUpgrade = 0x200
 
 
 # Game.Rendering.ObjectProperty
 class ObjectProperty(CS2BaseEnum):
 
-    AnimationCoordinate = 0
-    BoneParameters = 1
-    LightParameters = 2
-    ColorMask1 = 3
-    ColorMask2 = 4
-    ColorMask3 = 5
-    InfoviewColor = 6
-    BuildingState = 7
-    OutlineColors = 8
-    LodFade0 = 9
-    LodFade1 = 10
-    MetaParameters = 11
-    SurfaceWetness = 12
-    SurfaceDamage = 13
+    BoneParameters = 0
+    LightParameters = 1
+    ColorMask1 = 2
+    ColorMask2 = 3
+    ColorMask3 = 4
+    InfoviewColor = 5
+    BuildingState = 6
+    OutlineColors = 7
+    LodFade0 = 8
+    LodFade1 = 9
+    MetaParameters = 10
+    SurfaceWetness = 11
+    SurfaceDamage = 12
+    BaseState = 13
     Count = 14
 
 
@@ -3356,6 +3929,9 @@ class ObjectState(CS2BaseEnum):
     Motorcycle = 19
     Forward = 20
     Backward = 21
+    Outline = 22
+    Fishing = 23
+    Bicycle = 24
 
 
 # Game.Prefabs.ObjectStatusType
@@ -3369,6 +3945,43 @@ class ObjectStatusType(CS2BaseEnum):
     Tourist = 5
 
 
+# Game.Input.OptionGroupOverride
+class OptionGroupOverride(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Navigation = 1
+    Menu = 2
+    Camera = 3
+    Tool = 4
+    Shortcuts = 5
+    PhotoMode = 6
+    Toolbar = 7
+    Tutorial = 8
+    Simulation = 9
+    SIP = 10
+
+
+# Game.Input.Options
+class GameInputOptions(CS2BaseFlag):
+
+    Name = 1
+    Path = 2
+    Component = 4
+
+
+# Game.Input.Options
+class GameInputOptions(CS2BaseFlag):
+
+    MapName = 1
+    ActionName = 2
+    Name = 4
+    Path = 8
+    Modifiers = 0x10
+    Usages = 0x20
+    Device = 0x40
+    Component = 0x80
+
+
 # Game.Prefabs.OutsideConnectionTransferType
 class OutsideConnectionTransferType(CS2BaseFlag):
 
@@ -3378,6 +3991,7 @@ class OutsideConnectionTransferType(CS2BaseFlag):
     Air = 4
     Ship = 0x10
     Last = 0x20
+    All = 0x17
 
 
 # Game.Net.OverlapFlags
@@ -3393,6 +4007,8 @@ class OverlapFlags(CS2BaseFlag):
     Road = 0x80
     Track = 0x100
     MergeFlip = 0x200
+    Slow = 0x400
+    Water = 0x800
 
 
 # Game.SceneFlow.OverlayProgressType
@@ -3412,14 +4028,17 @@ class OverlayScreen(CS2BaseEnum):
     Splash2 = 2
     Splash3 = 3
     Splash4 = 4
-    Wait = 5
-    UserLoggedOut = 6
-    ControllerDisconnected = 7
-    ControllerPairingChanged = 8
-    Engagement = 9
-    Loading = 10
-    CorruptSaveData = 11
-    Validation = 12
+    SplashIceflake = 5
+    PiracyDisclaimer = 6
+    PhotosensitivityDisclaimer = 7
+    Wait = 8
+    UserLoggedOut = 9
+    ControllerDisconnected = 10
+    ControllerPairingChanged = 11
+    Engagement = 12
+    Loading = 13
+    CorruptSaveData = 14
+    Validation = 15
 
 
 # Game.Rendering.CinematicCamera.OverrideControl
@@ -3442,8 +4061,8 @@ class ParkingLaneFlags(CS2BaseFlag):
     Invert = 1
     StartingLane = 2
     EndingLane = 4
-    SecondaryStart = 8
-    FixedSlots = 0x10
+    AdditionalStart = 8
+    ParkingInverted = 0x10
     LeftSide = 0x20
     RightSide = 0x40
     TaxiAvailabilityUpdated = 0x80
@@ -3453,6 +4072,10 @@ class ParkingLaneFlags(CS2BaseFlag):
     ParkingLeft = 0x800
     ParkingRight = 0x1000
     ParkingDisabled = 0x2000
+    AllowEnter = 0x4000
+    AllowExit = 0x8000
+    SpecialVehicles = 0x10000
+    SecondaryStart = 0x20000
 
 
 # Game.Citizens.PartnerType
@@ -3481,6 +4104,7 @@ class PathElementFlags(CS2BaseFlag):
     Reverse = 0x10
     WaitPosition = 0x20
     Leader = 0x40
+    Hangaround = 0x80
 
 
 # Game.Pathfind.PathFlags
@@ -3516,6 +4140,18 @@ class PathMethod(CS2BaseFlag):
     PublicTransportNight = 0x200
     Boarding = 0x400
     Offroad = 0x800
+    SpecialParking = 0x1000
+    MediumRoad = 0x2000
+    Bicycle = 0x4000
+    BicycleParking = 0x8000
+
+
+# Game.Input.PathType
+class PathType(CS2BaseFlag):
+
+    Effective = 0
+    Original = 1
+    Overridden = 2
 
 
 # Game.Pathfind.PathfindActionState
@@ -3539,6 +4175,8 @@ class PathfindFlags(CS2BaseFlag):
     MultipleDestinations = 0x100
     IgnoreExtraStartAccessRequirements = 0x200
     IgnoreExtraEndAccessRequirements = 0x400
+    IgnorePath = 0x800
+    SkipPathfind = 0x1000
 
 
 # Game.Net.PedestrianLaneFlags
@@ -3547,8 +4185,12 @@ class PedestrianLaneFlags(CS2BaseFlag):
     Unsafe = 1
     Crosswalk = 2
     AllowMiddle = 4
+    AllowEnter = 8
+    SideConnection = 0x10
     ForbidTransitTraffic = 0x20
     OnWater = 0x40
+    AllowExit = 0x80
+    AllowBicycle = 0x100
 
 
 # Game.Simulation.PerformancePreference
@@ -3649,6 +4291,9 @@ class GameObjectsPlacementFlags(CS2BaseFlag):
     HasProbability = 0x8000
     Underwater = 0x10000
     Waterway = 0x20000
+    SubNetSnap = 0x40000
+    Attached = 0x80000
+    RequirePedestrian = 0x100000
 
 
 # Game.Net.PlacementFlags
@@ -3664,6 +4309,8 @@ class GameNetPlacementFlags(CS2BaseFlag):
     FlowLeft = 0x40
     FlowRight = 0x80
     UndergroundUpgrade = 0x100
+    LinkAuxOffsets = 0x200
+    ShoreLine = 0x400
 
 
 # Game.City.PlayerResource
@@ -3852,6 +4499,19 @@ class PreCullingFlags(CS2BaseFlag):
     SmoothColor = 0x10000000
 
 
+# Game.UI.Editor.PrefabActions
+class PrefabActions(CS2BaseFlag):
+
+    DuplicateAndEdit = 1
+    DuplicateAndPlace = 2
+    Edit = 4
+    Place = 8
+    Save = 0x10
+    Share = 0x20
+    Delete = 0x40
+    All = 0x7F
+
+
 # Game.Prefabs.PrefabComponents
 class PrefabComponents(CS2BaseFlag):
 
@@ -3859,11 +4519,50 @@ class PrefabComponents(CS2BaseFlag):
     PlacedSignatureBuilding = 2
 
 
+# Game.UI.Editor.Preset
+class Preset(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Building = 1
+    SignatureBuilding = 2
+    CityServiceBuilding = 3
+    SpawnableBuilding = 4
+    BuildingExtension = 5
+    CityServiceExtension = 6
+    StaticObject = 7
+    AgingTree = 8
+    SimplePlant = 9
+    ExistingPrefab = 10
+
+
+# Game.Input.Priority
+class Priority(CS2BaseFlag):
+
+    Custom = -1000
+    Disabled = -1
+    Tooltip = 0
+    A = 20
+    X = 30
+    Y = 40
+    B = 50
+    DPad = 55
+    Bumper = 60
+    Trigger = 70
+
+
 # Game.Buildings.PrisonFlags
 class PrisonFlags(CS2BaseFlag):
 
     HasAvailablePrisonVans = 1
     HasPrisonerSpace = 2
+
+
+# Game.Input.ProcessorDeviceType
+class ProcessorDeviceType(CS2BaseEnum):
+
+    Keyboard = 0
+    Mouse = 1
+    Gamepad = 2
 
 
 # Game.Prefabs.ProductionChainActorType
@@ -3888,20 +4587,25 @@ class ProductionChainActorType(CS2BaseEnum):
 class ProfileId(CS2BaseEnum):
 
     WaterResetToLevel = 0
-    SimulateWaterFlow = 1
-    SimulateWater = 2
-    CopyToHeightMap = 3
-    ApplyWaterFlow = 4
-    SourceStep = 5
-    CopyStep = 6
-    DepthStep = 7
-    EvaporateStep = 8
-    VelocityStep = 9
-    AddSnow = 10
-    TransferSnow = 11
-    UpdateSplatmap = 12
-    UpdateSnowHeightBackdrop = 13
-    WindGlobalProperties = 14
+    EvaluateSeaPropagation = 1
+    RemoveSeaWater = 2
+    RestoreSeaWater = 3
+    SimulateWaterFlow = 4
+    SimulateWater = 5
+    CopyToHeightMap = 6
+    ApplyWaterFlow = 7
+    SourceStep = 8
+    CopyStep = 9
+    DepthStep = 10
+    EvaporateStep = 11
+    VelocityStep = 12
+    AddSnow = 13
+    TransferSnow = 14
+    UpdateSplatmap = 15
+    UpdateSnowHeightBackdrop = 16
+    WindGlobalProperties = 17
+    ComputeWaterDisplacementRequests = 18
+    MaxHeightStep = 19
 
 
 # Game.Vehicles.PublicTransportFlags
@@ -3979,7 +4683,8 @@ class GameCitizensPurpose(CS2BaseEnum):
     WaitingHome = 37
     PathFailed = 38
     InEmergencyShelter = 39
-    Count = 40
+    CompanyShopping = 40
+    Count = 41
 
 
 # Game.Prefabs.Purpose
@@ -4057,6 +4762,7 @@ class GamePrefabsPurpose(CS2BaseEnum):
     BoardingLightLeft = 69
     BoardingLightRight = 70
     EffectSource = 71
+    BuildingActive = 72
 
 
 # Game.Pathfind.QueryType
@@ -4071,6 +4777,8 @@ class QueryType(CS2BaseEnum):
 class RandomTrafficRequestFlags(CS2BaseFlag):
 
     NoSlowVehicles = 1
+    DeliveryTruck = 2
+    TransportVehicle = 4
 
 
 # Game.Prefabs.Climate.RandomizationLayer
@@ -4101,6 +4809,19 @@ class RaycastFlags(CS2BaseFlag):
     Passenger = 0x2000
     Decals = 0x4000
     EditorContainers = 0x8000
+    SubBuildings = 0x10000
+    PartialSurface = 0x20000
+    BuildingLots = 0x40000
+    IgnoreSecondary = 0x80000
+
+
+# Game.Input.RebindOptions
+class RebindOptions(CS2BaseFlag):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Key = 1
+    Modifiers = 2
+    All = 3
 
 
 # Game.Buildings.RentActionFlags
@@ -4174,7 +4895,8 @@ class Resource(CS2BaseEnum):
     Entertainment = 137438953472
     Recreation = 274877906944
     Garbage = 549755813888
-    Last = 1099511627776
+    Fish = 1099511627776
+    Last = 2199023255552
     All = 18446744073709551615  # the value is ulong.MaxValue in C#
 
 
@@ -4222,7 +4944,25 @@ class ResourceInEditor(CS2BaseEnum):
     Entertainment = 38
     Recreation = 39
     Garbage = 40
-    Count = 41
+    Fish = 41
+    Count = 42
+
+
+# Game.Buildings.ResourceNeedingFlags
+class ResourceNeedingFlags(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Requested = 1
+    Delivered = 2
+
+
+# Game.UI.InGame.ResourceStatus
+class ResourceStatus(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Deficit = 1
+    Normal = 2
+    Surplus = 3
 
 
 # Game.UI.InGame.Result
@@ -4308,6 +5048,7 @@ class RoadTypes(CS2BaseFlag):
     Watercraft = 2
     Helicopter = 4
     Airplane = 8
+    Bicycle = 0x10
 
 
 # Game.Objects.RotationSymmetry
@@ -4330,6 +5071,7 @@ class RouteConnectionType(CS2BaseEnum):
     Cargo = 4
     Air = 5
     Parking = 6
+    Offroad = 7
 
 
 # Game.Routes.RouteFlags
@@ -4374,7 +5116,20 @@ class RouteType(CS2BaseEnum):
 
     _None = -1  # the name is None in C#, but python doesn't support this.
     TransportLine = 0
-    Count = 1
+    WorkRoute = 1
+    Count = 2
+
+
+# Game.Pathfind.RuleFlags
+class RuleFlags(CS2BaseFlag):
+
+    HasBlockage = 1
+    ForbidCombustionEngines = 2
+    ForbidTransitTraffic = 4
+    ForbidHeavyTraffic = 8
+    ForbidPrivateTraffic = 0x10
+    ForbidSlowTraffic = 0x20
+    AvoidBicycles = 0x40
 
 
 # Game.Prefabs.SchoolLevel
@@ -4387,6 +5142,14 @@ class SchoolLevel(CS2BaseEnum):
     Outside = 5
 
 
+# Game.Prefabs.SeasonBlendMode
+class SeasonBlendMode(CS2BaseEnum):
+
+    _None = -1  # the name is None in C#, but python doesn't support this.
+    Colors = 0
+    Probability = 1
+
+
 # Game.Prefabs.SecondaryLaneDataFlags
 class SecondaryLaneDataFlags(CS2BaseFlag):
 
@@ -4397,6 +5160,8 @@ class SecondaryLaneDataFlags(CS2BaseFlag):
     FitToParkingSpaces = 0x10
     SkipTrackOverlap = 0x20
     EvenSpacing = 0x40
+    SkipSideCarOverlap = 0x80
+    InvertOverlapCuts = 0x100
 
 
 # Game.Prefabs.SecondaryNetLaneFlags
@@ -4422,6 +5187,8 @@ class SecondaryNetLaneFlags(CS2BaseFlag):
     RequireYield = 0x20000
     DuplicateSides = 0x40000
     RequireSafeMaster = 0x80000
+    RequireRoundabout = 0x100000
+    RequireNotRoundabout = 0x200000
 
 
 # Game.Audio.Radio.SegmentType
@@ -4436,12 +5203,18 @@ class SegmentType(CS2BaseEnum):
     Emergency = 6
 
 
-# Game.UI.Editor.SelectionType
-class GameUIEditorSelectionType(CS2BaseEnum):
+# Game.UI.InGame.SelectedInfoTags
+class SelectedInfoTags(CS2BaseEnum):
 
-    singleSelection = 0
-    multiSelection = 1
-    inheritedMultiSelection = 2
+    HasWorkers = 0
+    TransportLine = 1
+    CargoRoute = 2
+    TransportStop = 3
+    Destroyed = 4
+    UnderConstruction = 5
+    Male = 6
+    HomelessShelter = 7
+    WorkRoute = 8
 
 
 # Game.Tools.SelectionType
@@ -4450,6 +5223,14 @@ class GameToolsSelectionType(CS2BaseEnum):
     _None = 0  # the name is None in C#, but python doesn't support this.
     ServiceDistrict = 1
     MapTiles = 2
+
+
+# Game.UI.Editor.SelectionType
+class GameUIEditorSelectionType(CS2BaseEnum):
+
+    singleSelection = 0
+    multiSelection = 1
+    inheritedMultiSelection = 2
 
 
 # Game.Simulation.ServiceRequestFlags
@@ -4472,6 +5253,7 @@ class SetupTargetFlags(CS2BaseFlag):
     SecondaryPath = 0x40
     RequireTransport = 0x80
     PathEnd = 0x100
+    BuildingUpkeep = 0x200
 
 
 # Game.Pathfind.SetupTargetType
@@ -4523,13 +5305,8 @@ class SetupTargetType(CS2BaseEnum):
     PostVanRequest = 42
     MaintenanceRequest = 43
     HealthcareRequest = 44
-
-
-# Game.UI.Severity
-class Severity(CS2BaseFlag):
-
-    Warning = 0
-    Error = 1
+    TouristFindTarget = 45
+    GoodsDelivery = 46
 
 
 # Game.Prefabs.SignalGroupMask
@@ -4554,13 +5331,7 @@ class SizeClass(CS2BaseEnum):
     Small = 0
     Medium = 1
     Large = 2
-
-
-# Game.Settings.Skinning
-class Skinning(CS2BaseEnum):
-
-    TwoBones = 0
-    FourBones = 1
+    Undefined = 3
 
 
 # Game.Net.SlaveLaneFlags
@@ -4605,6 +5376,7 @@ class Snap(CS2BaseFlag):
     AutoParent = 0x10000
     PrefabType = 0x20000
     ContourLines = 0x40000
+    Distance = 0x80000
     _None = 0  # the name is None in C#, but python doesn't support this.
     All = 4294967295  # the value is uint.MaxValue in C#
 
@@ -4626,6 +5398,23 @@ class SourceUpdateType(CS2BaseEnum):
     Snap = 2
     Remove = 3
     WrongPrefab = 4
+
+
+# Game.Objects.SpawnLocationFlags
+class SpawnLocationFlags(CS2BaseFlag):
+
+    AllowEnter = 1
+    ParkedVehicle = 2
+    AllowExit = 4
+
+
+# Game.Buildings.SpawnLocationType
+class SpawnLocationType(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    SpawnLocation = 1
+    HangaroundLocation = 2
+    ParkingLane = 3
 
 
 # Game.Rendering.SpotLightShape
@@ -4666,16 +5455,12 @@ class Stage(CS2BaseEnum):
 class GameUIState(CS2BaseEnum):
 
     Enabled = 0
-    DisabledConflict = 1
-    DisabledDuplicate = 2
-
-
-# Game.UI.Editor.State
-class GameUIEditorState(CS2BaseEnum):
-
-    Loading = 0
-    Success = 1
-    Failure = 2
+    Disabled = 1
+    DisabledNoConsumer = 2
+    DisabledNotSet = 3
+    DisabledMaskMismatch = 4
+    DisabledConflict = 5
+    DisabledDuplicate = 6
 
 
 # Game.Rendering.State
@@ -4688,6 +5473,20 @@ class GameRenderingState(CS2BaseEnum):
     Dusk = 4
     Night = 5
     Invalid = 6
+
+
+# Game.Modding.State
+class GameModdingState(CS2BaseEnum):
+
+    Unknown = 0
+    Loaded = 1
+    Disposed = 2
+    IsNotModWarning = 3
+    IsNotUniqueWarning = 4
+    GeneralError = 5
+    MissedDependenciesError = 6
+    LoadAssemblyError = 7
+    LoadAssemblyReferenceError = 8
 
 
 # Game.Tools.State
@@ -4705,6 +5504,15 @@ class GameToolsState(CS2BaseEnum):
     Create = 1
     Modify = 2
     Remove = 3
+
+
+# Game.UI.Editor.State
+class GameUIEditorState(CS2BaseEnum):
+
+    Idle = 0
+    Loading = 1
+    Success = 2
+    Failure = 3
 
 
 # Game.City.StatisticCollectionType
@@ -4787,7 +5595,10 @@ class StatisticType(CS2BaseEnum):
     Age = 56
     WellbeingLevel = 57
     HealthLevel = 58
-    Count = 59
+    HomelessCount = 59
+    PassengerCountFerry = 60
+    MovedAwayReason = 61
+    Count = 62
 
 
 # Game.City.StatisticUnitType
@@ -4814,12 +5625,14 @@ class StdoutCaptureMode(CS2BaseEnum):
     _None = 0  # the name is None in C#, but python doesn't support this.
     Console = 1
     CaptureOnly = 2
+    Redirect = 3
 
 
 # Game.Routes.StopFlags
 class StopFlags(CS2BaseFlag):
 
     Active = 1
+    AllowEnter = 2
 
 
 # Game.Companies.StorageTransferFlags
@@ -4843,13 +5656,6 @@ class StreetLightState(CS2BaseFlag):
 
     _None = 0  # the name is None in C#, but python doesn't support this.
     TurnedOff = 1
-
-
-# Game.Rendering.StyleFlags
-class StyleFlags(CS2BaseFlag):
-
-    Grid = 1
-    Projected = 2
 
 
 # Game.Prefabs.SubMeshFlags
@@ -4879,6 +5685,7 @@ class SubMeshFlags(CS2BaseFlag):
     HasTransform = 0x200000
     RequireForward = 0x400000
     RequireBackward = 0x800000
+    OutlineOnly = 0x1000000
 
 
 # Game.Prefabs.SubObjectFlags
@@ -4891,6 +5698,8 @@ class SubObjectFlags(CS2BaseFlag):
     RequireDeadEnd = 0x40
     RequireOrphan = 0x80
     OnGround = 0x100
+    WaterwayCrossing = 0x200
+    NotWaterwayCrossing = 0x400
     EdgePlacement = 0x1000
     MiddlePlacement = 0x2000
     AllowCombine = 0x4000
@@ -4904,6 +5713,22 @@ class SubObjectFlags(CS2BaseFlag):
     PreserveShape = 0x800000
     EvenSpacing = 0x1000000
     SpacingOverride = 0x2000000
+    OnAttachedParent = 0x4000000
+
+
+# Game.Net.SubReplacementSide
+class SubReplacementSide(CS2BaseEnum):
+
+    Left = -1
+    Middle = 0
+    Right = 1
+
+
+# Game.Net.SubReplacementType
+class SubReplacementType(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    Tree = 1
 
 
 # Game.SystemUpdatePhase
@@ -4957,6 +5782,22 @@ class GameUIInGameTab(CS2BaseEnum):
 # Game.UI.InGame.Tab
 class GameUIInGameTab(CS2BaseEnum):
 
+    All = 0
+    Zones = 1
+    Utilities = 2
+    Services = 3
+    Roads = 4
+    Transport = 5
+    Events = 6
+    Progression = 7
+    Tools = 8
+    Economy = 9
+    Interface = 10
+
+
+# Game.UI.InGame.Tab
+class GameUIInGameTab(CS2BaseEnum):
+
     Development = 0
     Milestones = 1
     Achievements = 2
@@ -4974,6 +5815,13 @@ class GameUIInGameTab(CS2BaseEnum):
 
     PublicTransport = 0
     Cargo = 1
+
+
+# Game.Routes.TakeoffLocationFlags
+class TakeoffLocationFlags(CS2BaseFlag):
+
+    AllowEnter = 1
+    AllowExit = 2
 
 
 # Game.Triggers.TargetType
@@ -5007,8 +5855,8 @@ class TaxRate(CS2BaseEnum):
     OfficeOffset = 4
     EducationZeroOffset = 5
     CommercialResourceZeroOffset = 10
-    IndustrialResourceZeroOffset = 50
-    Count = 90
+    IndustrialResourceZeroOffset = 51
+    Count = 92
 
 
 # Game.Simulation.TaxResultType
@@ -5082,6 +5930,7 @@ class TempFlags(CS2BaseFlag):
     Optional = 0x4000
     Cancel = 0x8000
     SubDetail = 0x10000
+    Duplicate = 0x20000
 
 
 # Game.Prefabs.TerraformingTarget
@@ -5103,23 +5952,18 @@ class TerraformingType(CS2BaseEnum):
     Level = 1
     Soften = 2
     Slope = 3
-
-
-# Game.Debug.Tests.TestPhase
-class TestPhase(CS2BaseEnum):
-
-    Paradox = 1000
-    Default = 2000
-    Network = 3000
+    Count = 4
 
 
 # Game.Simulation.TilePurchaseErrorFlags
 class TilePurchaseErrorFlags(CS2BaseFlag):
 
     _None = 0  # the name is None in C#, but python doesn't support this.
-    NoSelection = 1
-    InsufficientFunds = 2
-    InsufficientPermits = 4
+    NoCurrentlyAvailable = 1
+    NoAvailable = 2
+    NoSelection = 4
+    InsufficientFunds = 8
+    InsufficientPermits = 0x10
 
 
 # Game.Pathfind.TimeActionFlags
@@ -5162,18 +6006,6 @@ class TooltipPosition(CS2BaseEnum):
 
     Title = 0
     Container = 1
-
-
-# Game.UI.InGame.TooltipTags
-class TooltipTags(CS2BaseEnum):
-
-    HasWorkers = 0
-    TransportLine = 1
-    CargoRoute = 2
-    TransportStop = 3
-    Destroyed = 4
-    UnderConstruction = 5
-    Male = 6
 
 
 # Game.Rendering.TooltipType
@@ -5222,6 +6054,8 @@ class TrafficAccidentType(CS2BaseEnum):
 class TrafficLightFlags(CS2BaseFlag):
 
     LevelCrossing = 1
+    MoveableBridge = 2
+    IsSubNode = 4
 
 
 # Game.Objects.TrafficLightState
@@ -5276,7 +6110,11 @@ class TrafficSignType(CS2BaseEnum):
     TaxiOnly = 14
     RoundaboutCounterclockwise = 15
     RoundaboutClockwise = 16
-    Count = 17
+    MoveableBridge = 17
+    BicycleOnly = 18
+    PedestrianOnly = 19
+    NoBicycles = 20
+    Count = 21
 
 
 # Game.Prefabs.TrailerMovementType
@@ -5293,6 +6131,7 @@ class GameVehiclesTrainFlags(CS2BaseFlag):
     BoardingLeft = 2
     BoardingRight = 4
     Pantograph = 8
+    IgnoreParkedVehicle = 0x10
 
 
 # Game.Prefabs.TrainFlags
@@ -5316,6 +6155,7 @@ class TrainLaneFlags(CS2BaseFlag):
     TurnLeft = 0x100
     TurnRight = 0x200
     BlockReserve = 0x400
+    ParkingSpace = 0x800
     KeepClear = 0x4000
     TryReserve = 0x8000
     Connection = 0x10000
@@ -5403,7 +6243,11 @@ class TransportType(CS2BaseEnum):
     Airplane = 7
     Subway = 8
     Rocket = 9
-    Count = 10
+    Work = 10
+    Ferry = 11
+    Bicycle = 12
+    Car = 13
+    Count = 14
 
 
 # Game.Objects.TreeState
@@ -5461,6 +6305,7 @@ class TriggerType(CS2BaseEnum):
     PolicyActivated = 30
     MapTilePurchased = 31
     BrandRented = 32
+    FreePublicTransport = 33
     EventHappened = 34
     AverageAirPollution = 35
     ObjectCreated = 36
@@ -5505,14 +6350,28 @@ class TriggerType(CS2BaseEnum):
     CityServiceWaterSewage = 75
     TaxHappinessFactor = 76
     BuildingsHappinessFactor = 77
-    ConsumptionHappinessFactor = 78
+    WealthHappinessFactor = 78
     TrafficPenaltyHappinessFactor = 79
     DeathPenaltyHappinessFactor = 80
     CitizenCoupleMadeBaby = 81
     HomelessnessHappinessFactor = 82
+    EmptyBuilding = 83
     CitizenDroppedOutSchool = 84
     ElectricityFeeHappinessFactor = 85
     WaterFeeHappinessFactor = 86
+    CitizenUnemployedHappinessFactor = 87
+    BikeParking = 88
+    BicycleRoadUsage = 89
+    BicycleCarRoadUsage = 90
+    BicycleRoadBan = 91
+
+
+# Game.Prefabs.TutorialCategory
+class TutorialCategory(CS2BaseEnum):
+
+    _None = 0  # the name is None in C#, but python doesn't support this.
+    ZoneBasics = 1
+    UtilityBasics = 2
 
 
 # Game.Tutorials.TutorialMode
@@ -5530,6 +6389,7 @@ class TutorialPhaseType(CS2BaseEnum):
     Balloon = 0
     Card = 1
     CenterCard = 2
+    InfoPanel = 3
 
 
 # Game.Common.TypeMask
@@ -5566,6 +6426,7 @@ class UtilityLaneFlags(CS2BaseFlag):
     SecondaryEndAnchor = 2
     PipelineConnection = 4
     CutForTraffic = 8
+    VerticalConnection = 0x10
 
 
 # Game.Net.UtilityTypes
@@ -5579,6 +6440,7 @@ class UtilityTypes(CS2BaseFlag):
     Fence = 0x10
     Catenary = 0x20
     HighVoltageLine = 0x40
+    Resource = 0x80
 
 
 # Game.Effects.VFXUpdateType
@@ -5587,6 +6449,15 @@ class VFXUpdateType(CS2BaseEnum):
     Add = 0
     Remove = 1
     MoveIndex = 2
+
+
+# Game.Input.Vector2Component
+class Vector2Component(CS2BaseEnum):
+
+    Down = 4
+    Up = 5
+    Left = 6
+    Right = 7
 
 
 # Game.Prefabs.VehicleCarriageDirection
@@ -5628,6 +6499,12 @@ class VehicleLocaleKey(CS2BaseEnum):
     DeliveryTruck = 18
     HouseholdVehicle = 19
     PublicTransportVehicle = 20
+    FishingVehicle = 21
+    FarmVehicle = 22
+    ForestryVehicle = 23
+    DrillingVehicle = 24
+    MiningVehicle = 25
+    ExtractingVehicle = 26
 
 
 # Game.UI.InGame.VehiclePassengerLocaleKey
@@ -5664,7 +6541,13 @@ class VehicleStateLocaleKey(CS2BaseEnum):
     EnRoute = 20
     Disembarking = 21
     InvolvedInAccident = 22
-    Unknown = 23
+    Fishing = 23
+    Farming = 24
+    Harvesting = 25
+    Drilling = 26
+    Mining = 27
+    Extracting = 28
+    Unknown = 29
 
 
 # Game.Prefabs.VehicleType
@@ -5684,6 +6567,7 @@ class VehicleType(CS2BaseEnum):
     PoliceCar = 10
     PostVan = 11
     PrisonerTransport = 12
+    GoodsDelivery = 13
 
 
 # Game.Vehicles.VehicleWorkType
@@ -5692,6 +6576,14 @@ class VehicleWorkType(CS2BaseEnum):
     _None = 0  # the name is None in C#, but python doesn't support this.
     Harvest = 1
     Collect = 2
+    Move = 3
+
+
+# Game.Prefabs.Version
+class Version(CS2BaseEnum):
+
+    Original = 0
+    OverrideMaterial = 1
 
 
 # Game.Prefabs.Voltage
@@ -5753,6 +6645,7 @@ class WatercraftFlags(CS2BaseFlag):
     Queueing = 4
     DeckLights = 8
     LightsOff = 0x10
+    Working = 0x20
 
 
 # Game.Vehicles.WatercraftLaneFlags
@@ -5767,12 +6660,15 @@ class WatercraftLaneFlags(CS2BaseFlag):
     Obsolete = 0x40
     Reserved = 0x80
     FixedLane = 0x100
+    NeedSignal = 0x200
+    IgnoreSignal = 0x400
     GroupTarget = 0x800
     Queue = 0x1000
     IgnoreBlocker = 0x2000
     IsBlocked = 0x4000
     QueueReached = 0x8000
     Connection = 0x10000
+    Area = 0x20000
     AlignLeft = 0x80000
     AlignRight = 0x100000
 
@@ -5818,6 +6714,9 @@ class WidgetChanges(CS2BaseFlag):
     Path = 1
     Properties = 2
     Children = 4
+    Visibility = 8
+    Activity = 0x10
+    TotalProperties = 0x1A
 
 
 # Game.UI.Menu.WidgetType
@@ -5832,11 +6731,14 @@ class WidgetType(CS2BaseEnum):
     FloatSlider = 6
     StringDropdown = 7
     StringField = 8
-    LocalizedStringField = 9
-    AdvancedEnumDropdown = 10
-    EnumDropdown = 11
-    KeyBinding = 12
-    CustomDropdown = 13
+    StringTextInput = 9
+    LocalizedStringField = 10
+    AdvancedEnumDropdown = 11
+    EnumDropdown = 12
+    KeyBinding = 13
+    DirectoryPicker = 14
+    MultilineText = 15
+    CustomDropdown = 16
 
 
 # Game.Creatures.WildlifeFlags
@@ -5853,6 +6755,10 @@ class WorkVehicleFlags(CS2BaseFlag):
     Returning = 1
     ExtractorVehicle = 2
     StorageVehicle = 4
+    RouteSource = 8
+    Arriving = 0x10
+    WorkLocation = 0x20
+    CargoMoveVehicle = 0x40
 
 
 # Game.Prefabs.WorkplaceComplexity
@@ -5896,6 +6802,14 @@ class XPReason(CS2BaseEnum):
 class XPRewardFlags(CS2BaseFlag):
 
     ElectricityGridBuilt = 1
+
+
+# Game.Prefabs.ZoneDensity
+class ZoneDensity(CS2BaseEnum):
+
+    Low = 0
+    Medium = 1
+    High = 2
 
 
 # Game.Prefabs.ZoneFlags

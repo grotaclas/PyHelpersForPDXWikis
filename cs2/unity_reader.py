@@ -1,6 +1,7 @@
 from functools import cached_property
 from pathlib import Path
 from types import NoneType
+from typing import Any
 
 from UnityPy.classes import PPtr
 from UnityPy.classes.Object import NodeHelper
@@ -26,6 +27,7 @@ class MonoBehaviourReader(UnityReader):
                        # seems to specify how much terraforming will be done to construct it
                        'Game.Prefabs.ObsoleteIdentifiers',  # I guess they are obsolete
                        'Game.Prefabs.ActivityLocation',  # benches and parking spots
+                       'Game.Prefabs.ActivityPropPrefab', # read errors
                        'Game.Prefabs.RenderPrefab',
                        # meshes. reading it sometimes throws an exception in read_typetree
                        'Game.Prefabs.CharacterStyle',  # read errors

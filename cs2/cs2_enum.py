@@ -32,6 +32,7 @@ class DLC(Enum):
     CS1TreasureHunt = 2
     BeachProperties = 3
     DeluxeRelaxRadio = 4
+    BridgesAndPorts = 5
 
     def __str__(self):
         return self.name
@@ -46,6 +47,7 @@ class DLC(Enum):
                 'CS1TreasureHunt': 'Treasure Hunt',
                 'BeachProperties': 'Beach Properties',
                 'DeluxeRelaxRadio': 'Deluxe Relax Station',
+                'BridgesAndPorts': 'Bridges and Ports',
                 }[self.name]
 
     @cached_property
@@ -56,6 +58,7 @@ class DLC(Enum):
                             'LandmarkBuildings': 'preorder',
                             'SanFranciscoSet': 'sfc',
                             'CS1TreasureHunt': 'Treasure Hunt',
-                            'BeachProperties': 'bp'
+                            'BeachProperties': 'bp',
+                            'BridgesAndPorts': 'bap',
                             }[self.name] + '}}'
 

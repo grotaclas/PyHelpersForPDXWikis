@@ -99,6 +99,8 @@ class NamedAsset(CS2Asset):
         if hasattr(self, 'ContentPrerequisite'):
             if 'DLC_Requirement' in self.ContentPrerequisite.contentPrerequisite:
                 return DLC(self.ContentPrerequisite.contentPrerequisite.DLC_Requirement.dlc['id'])
+            elif 'DlcRequirement' in self.ContentPrerequisite.contentPrerequisite:
+                return DLC(self.ContentPrerequisite.contentPrerequisite.DlcRequirement.dlc['id'])
             elif 'PdxLoginRequirement' in self.ContentPrerequisite.contentPrerequisite:
                 return DLC.PdxLoginRequirement
             else:
@@ -151,6 +153,18 @@ class BaseBuilding(NamedAsset):
         super().add_attributes(attributes)
         if 'ServiceUpgrade' in attributes:
             self.localization_sub_category_description = 'UPGRADE_DESCRIPTION'
+
+    def _get_display_name(self, data):
+        if 'ServiceUpgrade' in self:
+            default = False
+        else:
+            default = None
+        building_loc = cs2game.parser.localizer.localize(self.localization_category,
+                                                     self.localization_sub_category_display_name, data['name'], default=default)
+        if not building_loc:
+            building_loc = cs2game.parser.localizer.localize(self.localization_category, 'UPGRADE_NAME', data['name'])
+
+        return building_loc
 
     def get_wiki_filename(self) -> str:
         # landmarks are also service buildings, so this check has to be first
@@ -524,27 +538,24 @@ class UIObject(CS2Asset):
     # fix wrong capitalization in some folder names
     transform_value_functions = {'icon': lambda icon: icon.replace('Media/game/Icons', 'Media/Game/Icons')}
 
-    def get_icon_png(self, fallback_folder: Path, width=256) -> bytes | Path:
+    def get_icon_png(self, fallback_folder: Path, width=256) -> bytes | Path | None:
         """get the svg icon from the game files and convert it to png with inkscape.
         If there is no icon, return the Path to the file in the fallback_folder"""
         if self.icon:
             tmp_file = NamedTemporaryFile(delete=False, prefix='PyHelpersForPDXWiki_cs2', suffix='.png')
             filename = tmp_file.name
             tmp_file.close()
-            folder = cs2game.game_path / 'Cities2_Data/StreamingAssets/~UI~/GameUI'
-            svg_file = folder / self.icon
-            if not svg_file.parent.exists():
-                # 1.2 and later
-                svg_file = cs2game.game_path / 'Cities2_Data/Content/Game/~UI~' / self.icon
-            # fix filenames with wrong capitalization on case-sensitive file system
-            if not svg_file.is_file():
-                for file in svg_file.parent.iterdir():
-                    if file.name.lower() == svg_file.name.lower():
-                        svg_file = file
-                        break
-            convert_svg_to_png(svg_file, filename, width)
-            with open(filename, 'rb') as tmp_file:
-                return tmp_file.read()
+            possible_files = list((cs2game.game_path / 'Cities2_Data' / 'Content').glob(f'*/UI/{self.icon}', case_sensitive=False))
+            if len(possible_files) == 0:
+                # TODO missing icons
+                return None
+            elif len(possible_files) == 1:
+                svg_file = possible_files[0]
+                convert_svg_to_png(svg_file, filename, width)
+                with open(filename, 'rb') as tmp_file:
+                    return tmp_file.read()
+            elif len(possible_files) > 1:
+                raise Exception(f'Found more than one file for icon {self.icon}:\n{"\n".join(possible_files)}')
         else:
             return fallback_folder / (self.parent_asset.name + '.png')
 
@@ -955,13 +966,13 @@ class Map(NamedAsset):
     waterAvailability: int  # seems to always be 0
     resources: Dict[str, int]
     connections: Dict[str, bool]
-    contentPrerequisite: List[DLC]
+    contentPrerequisites: List[DLC]
     nameAsCityName: bool  # always False
     startingYear: int   # always -1
     mapData: str  # hash which points to .cdm file
     sessionGuid: str  # seems to always be a bunch of 0's
 
-    transform_value_functions = {'contentPrerequisite': lambda reqs: [DLC[req] for req in reqs if req] if reqs else [DLC.BaseGame]}
+    transform_value_functions = {'contentPrerequisites': lambda reqs: [DLC[req] for req in reqs if req] if reqs else [DLC.BaseGame]}
 
     def format_connection_icons(self) -> List[str]:
         icon_map = {
@@ -973,3 +984,7 @@ class Map(NamedAsset):
             "water": 'water connections',
         }
         return [f'{{{{icon|{icon_map[connection]}}}}}' for connection, active in self.connections.items() if active]
+
+    @cached_property
+    def contentPrerequisite(self) -> List[DLC]:
+        return self.contentPrerequisites

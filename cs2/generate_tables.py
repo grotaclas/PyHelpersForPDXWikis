@@ -142,7 +142,12 @@ class TableGenerator(CS2FileGenerator):
                 cats[category] = f'== {building.UIObject.group.menu.display_name} ==\n=== {building.UIObject.group.display_name} ==='
             buildings_by_category[category].append(building)
         for upgrade in filter(lambda b: b.name != 'HydroelectricPowerPlant01_End', self.parser.service_building_upgrades.values()):
-            category = self._format_service_category(upgrade, upgrade.ServiceUpgrade.buildings[0].ServiceObject.service.name, upgrade.ServiceUpgrade.buildings[0].UIObject.group.name)
+            try:
+                upgrade_service_name = upgrade.ServiceUpgrade.buildings[0].ServiceObject.service.name
+            except AttributeError:
+                print(f'Error: no ServiceObject in upgrade "{upgrade.display_name if hasattr(upgrade, "display_name") else "No localization"}"({upgrade.name})')
+                continue
+            category = self._format_service_category(upgrade, upgrade_service_name, upgrade.ServiceUpgrade.buildings[0].UIObject.group.name)
             buildings_by_category[category].append(upgrade)
 
         result = {}
@@ -490,7 +495,7 @@ class TableGenerator(CS2FileGenerator):
             'Name': f'{{{{iconbox|{m.display_name}|{m.description}|image={m.display_name} Preview.png}}}}',
             # 'Name': m.display_name,
             # 'Preview': f'[[File:{m.display_name} Preview.png|38px]]',
-            'DLC': ', '.join([dlc.icon for dlc in m.contentPrerequisite]),
+            'DLC': ', '.join([dlc.icon for dlc in m.contentPrerequisites]),
             'Theme': f'{{{{icon|{m.theme}}}}}',
             'Weather': f'{{{{weather|{m.cloudiness}|{m.precipitation}}}}}',
             'Temperature': f'{m.temperatureRange["min"]:0.1f}–{m.temperatureRange["max"]:0.1f}°C',
@@ -505,7 +510,8 @@ class TableGenerator(CS2FileGenerator):
             '{{icon|forest}}':  self.formatter.weight(m.resources['forest']),
             '{{icon|ore}}': self.formatter.weight(m.resources['ore']),
             '{{icon|oil}}': self.formatter.weight(m.resources['oil']),
-        } for m in sorted(self.parser.maps, key=lambda m: (m.contentPrerequisite[0].value, m.display_name))]
+            '{{icon|fish}}': self.formatter.weight(m.resources['fish']),
+        } for m in sorted(self.parser.maps, key=lambda m: (m.contentPrerequisites[0].value, m.display_name))]
 
         return (self.get_SVersion_header(scope='table') + '\n'
             + self.make_wiki_table(data, table_classes=['mildtable'],

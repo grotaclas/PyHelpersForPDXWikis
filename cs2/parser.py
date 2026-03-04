@@ -1,6 +1,7 @@
 import json
 import re
 import shutil
+import zipfile
 from enum import Enum
 from typing import TypeVar, Type, Set
 
@@ -334,6 +335,7 @@ if __name__ == '__main__':
     def service_building_upgrades(self) -> Dict[str, CS2_ASSET]:
         return {asset.name: asset for asset in self.parsed_assets.values()
                 if hasattr(asset, 'ServiceUpgrade')
+                and not isinstance(asset, Pathway)  # TODO: maybe handle them somehow. example is ferry pier upgrade
                 }
 
     @cached_property
@@ -366,16 +368,18 @@ if __name__ == '__main__':
     @cached_property
     def maps(self) -> List[Map]:
         maps = []
-        for path in (cs2game.game_path / 'Cities2_Data' / 'StreamingAssets' / 'Maps~').glob('*.MapMetadata'):
-            with open(path, 'r', encoding='utf-8-sig') as data_file:
-                data = json.load(data_file)
-                # display name is actually the name
-                # the real display name will be determined by add_attributes
-                data['name'] = data['displayName']
-                del data['displayName']
-                map = Map('', path.name, 0)
-                map.add_attributes(data)
-                maps.append(map)
+        for path in (cs2game.game_path / 'Cities2_Data' / 'Content').glob('*/Maps/*.cok'):
+            zip_path = zipfile.Path(path)
+            for data_path in zip_path.glob('*.MapMetadata'):
+                with data_path.open('r', encoding='utf-8-sig') as data_file:
+                    data = json.load(data_file)
+                    # display name is actually the name
+                    # the real display name will be determined by add_attributes
+                    data['name'] = data['displayName']
+                    del data['displayName']
+                    map = Map('', path.name, 0)
+                    map.add_attributes(data)
+                    maps.append(map)
         return maps
 
     def write_icons(self, assets: List[CS2Asset], prefix: str, destination_folder: Path, fallback_folder: Path, move_fallbacks=False):
