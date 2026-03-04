@@ -799,6 +799,21 @@ class ProcessingRequirement(Requirement):
         return [f'{self.minimumProducedAmount:,} {self.resourceType.display_name} goods produced']
 
 
+class TransportRequirement(Requirement):
+    transportType: TransportType
+    filterID: int
+    minimumTransportedPassenger: int
+    minimumTransportedCargo: int
+
+    def format(self) -> List[str]:
+        formatted_res = []
+        if self.minimumTransportedPassenger > 0:
+            formatted_res.append(f'{self.minimumTransportedPassenger:,} passengers transported by {self.transportType.display_name}')
+        if self.minimumTransportedCargo > 0:
+            formatted_res.append(f'{self.minimumTransportedCargo:,} cargo transported by {self.transportType.display_name}')
+        return formatted_res
+
+
 class PoliceStation(CS2Asset):
     patrolCarCapacity: int
     policeHelicopterCapacity: int
