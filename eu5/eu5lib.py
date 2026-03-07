@@ -1139,6 +1139,7 @@ class LawPolicy(Eu5AdvancedEntity):
     years: int = 0
     weeks: int = 0
     days: int = 0
+    level: int = None
     on_activate: Effect = None
     on_deactivate: Effect = None
     on_pay_price: Effect = None
@@ -1177,6 +1178,7 @@ class LawPolicy(Eu5AdvancedEntity):
 class Law(Eu5AdvancedEntity):
     allow: Trigger = None  # trigger
     custom_tags: list[str] = []
+    has_levels: bool = False
     law_category: str = ''
     law_country_group: str = None # tag
     law_gov_group: str = None # gov type
