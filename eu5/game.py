@@ -42,14 +42,27 @@ class EuropaUniversalisV(Game):
         """the branch from caesar_branch.txt. This is not a good indication of a version number, but there isn't a good way to extract one right now"""
         config_path = self.game_path / 'caesar_branch.txt'
         with open(config_path, 'r') as config_file:
-            return config_file.read().removeprefix('release/')
+            branch = config_file.read().removeprefix('release/')
+        if branch == '1.1.0':
+            version_by_rev = {
+                'dc27a2531a681cb9f00ea1f0dd7d885840c68c46': '1.1.9'
+            }
+            if self.revision in version_by_rev:
+                return version_by_rev[self.revision]
+            else:
+                raise Exception('Specify the real version in version_by_rev')
+        return branch
 
     @cached_property
     def full_version(self):
         """the build revision from caesar_rev.txt"""
+        return self.version + '-' + self.revision
+
+    @cached_property
+    def revision(self):
         config_path = self.game_path / 'caesar_rev.txt'
         with open(config_path, 'r') as config_file:
-            return self.version + '-' + config_file.read()
+            return config_file.read()
 
 
 eu5game = EuropaUniversalisV()
