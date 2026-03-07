@@ -257,6 +257,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         while previous_text != new_text:
             previous_text = new_text
             new_text = re.sub(r'\$([^$]*)\$', resolve_replacement, previous_text)
+            new_text = re.sub(r"\[Localize\('([^']+)'\)]", resolve_replacement, new_text, flags=re.IGNORECASE)
 
         return new_text
 
