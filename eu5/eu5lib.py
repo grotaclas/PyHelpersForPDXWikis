@@ -1515,7 +1515,7 @@ class TriggeredDesc(ParsableObject):
 class TriggeredTextHolder(ParsableObject):
     desc: str = None  # if it is not actually triggered
     localized_desc: str = None  # if it is not actually triggered
-    Trigger = None
+    trigger: Trigger = None
 
     first_valid: list['TriggeredTextHolder'] = []
     random_valid: list['TriggeredTextHolder'] = []
