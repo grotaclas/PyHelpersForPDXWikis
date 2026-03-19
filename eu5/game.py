@@ -45,7 +45,9 @@ class EuropaUniversalisV(Game):
             branch = config_file.read().removeprefix('release/')
         if branch == '1.1.0':
             version_by_rev = {
-                'dc27a2531a681cb9f00ea1f0dd7d885840c68c46': '1.1.9'
+                'dc27a2531a681cb9f00ea1f0dd7d885840c68c46': '1.1.9',
+                'bb626854c1e562fddec318a5a433fb1e4840edf1': '1.1.10',
+
             }
             if self.revision in version_by_rev:
                 return version_by_rev[self.revision]
