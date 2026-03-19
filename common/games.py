@@ -1,3 +1,6 @@
+import json
+from functools import cached_property
+
 from PyHelpersForPDXWikis.localsettings import STELLARISDIR, CK3DIR
 from aow4.game import aow4game
 from common.paradox_lib import Game
@@ -159,7 +162,17 @@ class CitiesSkylines(Game):
     name = 'Cities: Skylines'
     short_game_name = 'skylines'
     wiki_domain = 'skylines.paradoxwikis.com'
+    game_path = eu4dir / '../Cities_Skylines'
+    launcher_settings = game_path / 'launcher-settings.json'
 
+    @cached_property
+    def version(self):
+        return self.full_version.partition('-')[0]
+
+    @cached_property
+    def full_version(self) -> str:
+        json_object = json.load(open(self.launcher_settings, encoding='utf-8'))
+        return json_object['version']
 
 skylinesgame = CitiesSkylines()
 
