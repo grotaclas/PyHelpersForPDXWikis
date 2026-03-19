@@ -6,7 +6,7 @@ from itertools import groupby
 from colormath.color_conversions import convert_color
 from colormath.color_objects import sRGBColor, HSVColor
 from enum import Flag, Enum
-from functools import cached_property, lru_cache
+from functools import cached_property, lru_cache, total_ordering
 from typing import Any, Callable, Dict, get_origin, get_args, get_type_hints, TypeVar
 from pathlib import Path
 
@@ -188,6 +188,7 @@ class ParsableObject:
                 }
 
 
+@total_ordering
 class NameableEntity(ParsableObject):
     def __init__(self, name: str, display_name: str, **kwargs):
         self.name = name

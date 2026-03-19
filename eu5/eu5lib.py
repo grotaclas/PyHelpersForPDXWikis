@@ -739,6 +739,13 @@ class Age(Eu5AdvancedEntity):
 
     icon_folder = 'AGE_ICON_PATH'
 
+    def __lt__(self, other):
+        if isinstance(other, Age):
+            return self.year < other.year
+        else:
+            return super().__lt__(other)
+
+
 class BuildingCategory(Eu5AdvancedEntity):
     icon_folder = 'building_categories'
 
