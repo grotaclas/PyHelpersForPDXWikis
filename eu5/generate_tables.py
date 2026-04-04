@@ -127,7 +127,7 @@ class TableGenerator(Eu5FileGenerator):
 ]),
 # 'Category': building.category,  # category: <class 'str'>
 # 'City': '[[File:Yes.png|20px|City]]' if building.city else '[[File:No.png|20px|Not City]]',  # city: <class 'bool'>
-'Construction Demand': building.construction_demand.format(icon_only=True) if hasattr(building.construction_demand, 'format') else building.construction_demand,  # construction_demand: <class 'eu5.eu5lib.GoodsDemand'>
+'Construction Demand': building.construction_demand.format() if hasattr(building.construction_demand, 'format') else building.construction_demand,  # construction_demand: <class 'eu5.eu5lib.GoodsDemand'>
 'Destroy Price': building.destroy_price.format(icon_only=True) if hasattr(building.destroy_price, 'format') else building.destroy_price,  # destroy_price: <class 'eu5.eu5lib.Price'>
 'Employment': f'{building.employment_size:g} {building.pop_type.get_wiki_icon()}',  # employment_size: <class 'float'>
 'Estate': building.estate.get_wiki_link_with_icon() if building.estate else '',
