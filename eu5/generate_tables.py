@@ -37,7 +37,7 @@ class TableGenerator(Eu5FileGenerator):
         for pm_list in pm_lists:
             formatted_pms = []
             for pm in pm_list:
-                formatted_pms.extend(pm.format(icon_only=True))
+                formatted_pms.extend(pm.format())
             formatted_pm_categories.append(self.create_wiki_list(formatted_pms))
         return '\n----\n'.join(formatted_pm_categories)
 
