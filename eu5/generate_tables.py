@@ -1116,7 +1116,7 @@ class TableGenerator(Eu5FileGenerator):
             'Chance': '' if trait.chance is None else self.create_wiki_list([f'{k}: ...' for k in trait.chance.keys()]) if trait.chance else '',  # chance: <class 'common.paradox_parser.Tree'>
             # 'Flavor': '' if trait.flavor is None else trait.flavor.display_name if trait.flavor else '',  # flavor: <class 'eu5.eu5lib.TraitFlavor'>
         } for trait in traits]
-        return self.make_wiki_table(trait_table_data, table_classes=['mildtable', 'plainlist'],
+        return self.make_wiki_table(trait_table_data, table_classes=['mildtable', 'plainlist', 'mw-collapsible'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
