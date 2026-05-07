@@ -14,7 +14,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
     def __init__(self):
         self.parser = vic3game.parser
 
-    def format_localization_text(self, text, concepts_in_same_article: list[str] = None):
+    def format_localization_text(self, text: str, concepts_in_same_article: list[str] = None):
         """
 
         @param text: the text which should be formatted
@@ -28,7 +28,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         while previous_text != text:
             previous_text = text
             # the next line doesn't really fit here, but it has to be done early,
-            # because it matches the [concept] formmating which comes afterwards
+            # because it matches the [concept] formating which comes afterwards
             text = text.replace('[Nbsp]', '&nbsp;')
             text = re.sub(
                 r"(?<!\[)\[\s*(Concept\s*\(\s*')?(?P<concept_name>[^]|']*)('\s*,\s*'(?P<concept_display_string>[^']*)'\s*\))?\s*(?P<formatting>\|[leE])?\s*](?!])",
@@ -241,10 +241,10 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                       lambda match: self.parser.interest_groups[match.group('ig_key')].display_name, text)
         return text
 
-    def resolve_nested_localizations(self, text: str, seen_keys = None):
+    def resolve_nested_localizations(self, text: str, seen_keys = None) -> str:
         if seen_keys is None:
             seen_keys = set()
-        def resolve_replacement(match: re.Match):
+        def resolve_replacement(match: re.Match) -> str:
             key_to_replace = match.group(1)
             if key_to_replace in seen_keys:
                 print(f'Recursive localisation "{key_to_replace}" when resolving "{text}"', file=sys.stderr)

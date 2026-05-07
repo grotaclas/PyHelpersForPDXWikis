@@ -141,7 +141,7 @@ class Eu5AdvancedEntity(AdvancedEntity):
 
     @classmethod
     @lru_cache
-    def has_wiki_icon(cls):
+    def has_wiki_icon(cls) -> bool:
         try:
             icon_folder = cls.get_icon_folder()
             return icon_folder.exists()
@@ -2597,7 +2597,7 @@ class SubjectType(Eu5AdvancedEntity):
     use_overlord_laws: bool = False
     use_overlord_map_color: bool = None
     use_overlord_map_name: bool = True
-    visible_through_diplomacy: Trigger
+    visible_through_diplomacy: Trigger = None
     visible_through_treaty: Trigger = None
     war_score_cost: float = 0
     icon_folder = 'SUBJECT_TYPES_ICON_PATH' # 19 / 19 icons found
