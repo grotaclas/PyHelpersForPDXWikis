@@ -492,6 +492,26 @@ class Eu5Parser(JominiParser):
         return result
 
     @cached_property
+    def dlcs(self) -> dict[str, DLC]:
+        dlc_data = {}
+        for file in (self.parser.base_folder / 'dlc').glob('*/*.json'):
+            if 'D000_shared' in str(file):
+                continue
+            json_contents = self.parser.json_to_tree(file.read_text(encoding='utf-8-sig'))
+            name = json_contents['name']
+            del json_contents['name']
+            json_contents['path'] = file.parent
+            dlc_data[name] = json_contents
+
+        return self.parse_advanced_entities(
+            Tree(dlc_data),
+            DLC,
+            extra_data_functions={
+                'display_name': lambda _name, data: self.formatter.strip_formatting(self.localize(data['localizable_name'])).replace("'", "")
+            }
+        )
+
+    @cached_property
     def dynasties(self) -> dict[str, Dynasty]:
         """Only scripted dynasties from setup, but not from the dynasty names"""
         return self.parse_advanced_entities(self.setup_data['dynasty_manager'], Dynasty, extra_data_functions={
