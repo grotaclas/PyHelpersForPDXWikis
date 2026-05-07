@@ -1136,6 +1136,12 @@ class Language(Eu5AdvancedEntity):
     require_genitive_location_names: bool = False
     ship_names: list[str] = []
 
+    def __init__(self, name: str, display_name: str, **kwargs):
+        for attribute in ['male_names', 'female_names', 'dynasty_names', 'lowborn']:
+            if attribute in kwargs:
+                kwargs[attribute] = [eu5game.parser.localize(f'{n}.{name}', default=eu5game.parser.localize(n)) for n in kwargs[attribute]]
+        super().__init__(name, display_name, **kwargs)
+
 
 class LawPolicy(Eu5AdvancedEntity):
     law: 'Law'
