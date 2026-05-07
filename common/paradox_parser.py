@@ -174,10 +174,10 @@ class ParadoxParser:
         if rakaly_result.returncode != 0:
             rakaly_error_message = str(rakaly_result.stderr, 'UTF-8')[:-1]  # [:-1] removes the final linebreak
             raise Exception('Error reading "{}": {}'.format(file, rakaly_error_message))
-        return self._parse_json(rakaly_result.stdout)
+        return self.json_to_tree(rakaly_result.stdout)
 
-    def _parse_json(self, rakaly_result: str) -> 'Tree':
-        return json.loads(rakaly_result, object_hook=lambda x: Tree(x))
+    def json_to_tree(self, json_string: str) -> 'Tree':
+        return json.loads(json_string, object_hook=lambda x: Tree(x))
 
 
 class Tree(MutableMapping):
