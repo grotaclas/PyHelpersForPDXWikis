@@ -13,5 +13,9 @@ class Eu5Localizer(JominiLocalizer):
     }
 
     def __init__(self, game_installation: Path, language: str = 'english'):
-        self.localization_folder_iterator = (game_installation / 'game' / 'main_menu' / 'localization' / language).glob(
-            f'**/*_l_{language}.yml')
+        localization_files = list((game_installation / 'game' / 'main_menu' / 'localization' / language).glob(
+            f'**/*_l_{language}.yml'))
+        dlc_locs = list((game_installation / 'game' / 'dlc').glob(f'*/main_menu/localization/dlc/{language}/**/*_l_{language}.yml'))
+        localization_files.extend(dlc_locs)
+
+        self.localization_folder_iterator = iter(localization_files)
