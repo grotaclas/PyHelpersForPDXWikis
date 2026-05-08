@@ -1810,9 +1810,9 @@ class CabinetAction(Eu5AdvancedEntity):
     icon_folder = 'CABINET_ACTION_ICON_PATH' # 52 / 63 icons found
     # icon_folder = 'modifier_types' # 19 / 63 icons found
 class CasusBelli(Eu5AdvancedEntity):
-    additional_war_enthusiasm: float = 0
-    additional_war_enthusiasm_attacker: float = 0
-    additional_war_enthusiasm_defender: float = 0
+    additional_war_enthusiasm: ScriptValue = None
+    additional_war_enthusiasm_attacker: ScriptValue = None
+    additional_war_enthusiasm_defender: ScriptValue = None
     ai_cede_location_desire: ScriptValue = None
     ai_cede_province_desire: ScriptValue = None
     ai_selection_desire: ScriptValue = None

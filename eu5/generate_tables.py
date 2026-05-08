@@ -661,9 +661,9 @@ class TableGenerator(Eu5FileGenerator):
         casus_bellis = self.parser.casus_belli.values()
         casus_belli_table_data = [{
             'Name': f'{{{{iconbox|{casus_belli.display_name}|{casus_belli.description}|w=300px|image={casus_belli.get_wiki_filename()}}}}}',
-            'Additional War Enthusiasm': casus_belli.additional_war_enthusiasm,  # additional_war_enthusiasm: <class 'float'>
-            'Additional War Enthusiasm Attacker': casus_belli.additional_war_enthusiasm_attacker,  # additional_war_enthusiasm_attacker: <class 'float'>
-            'Additional War Enthusiasm Defender': casus_belli.additional_war_enthusiasm_defender,  # additional_war_enthusiasm_defender: <class 'float'>
+            'Additional War Enthusiasm': '' if casus_belli.additional_war_enthusiasm is None else casus_belli.additional_war_enthusiasm.format() if hasattr(casus_belli.additional_war_enthusiasm, 'format') else casus_belli.additional_war_enthusiasm,  # additional_war_enthusiasm: <class 'float'>
+            'Additional War Enthusiasm Attacker': '' if casus_belli.additional_war_enthusiasm_attacker is None else casus_belli.additional_war_enthusiasm_attacker.format() if hasattr(casus_belli.additional_war_enthusiasm_attacker, 'format') else casus_belli.additional_war_enthusiasm_attacker,
+            'Additional War Enthusiasm Defender': '' if casus_belli.additional_war_enthusiasm_defender is None else casus_belli.additional_war_enthusiasm_defender.format() if hasattr(casus_belli.additional_war_enthusiasm_defender, 'format') else casus_belli.additional_war_enthusiasm_defender,
             'Ai Cede Location Desire': '' if casus_belli.ai_cede_location_desire is None else casus_belli.ai_cede_location_desire.format() if hasattr(casus_belli.ai_cede_location_desire, 'format') else casus_belli.ai_cede_location_desire,  # ai_cede_location_desire: <class 'eu5.eu5lib.ScriptValue'>
             'Ai Cede Province Desire': '' if casus_belli.ai_cede_province_desire is None else casus_belli.ai_cede_province_desire.format() if hasattr(casus_belli.ai_cede_province_desire, 'format') else casus_belli.ai_cede_province_desire,  # ai_cede_province_desire: <class 'eu5.eu5lib.ScriptValue'>
             'Ai Selection Desire': '' if casus_belli.ai_selection_desire is None else casus_belli.ai_selection_desire.format() if hasattr(casus_belli.ai_selection_desire, 'format') else casus_belli.ai_selection_desire,  # ai_selection_desire: <class 'eu5.eu5lib.ScriptValue'>
