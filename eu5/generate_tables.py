@@ -71,7 +71,18 @@ class TableGenerator(Eu5FileGenerator):
                           (True, False, True): 'city+rural',
                           (False, False, False): 'nowhere',
                           }
-        buildings_by_location_type = {type_names[typ]: list(buildings) for typ, buildings in unsorted_groupby(self.parser.buildings.values(), key=attrgetter('city', 'town', 'rural_settlement'))}
+        buildings_by_location_type = {type_names[typ]: list(buildings) for typ, buildings in
+                                      unsorted_groupby(
+                                          self.parser.buildings.values(),
+                                          key=lambda b: (
+                                              # town and rural_settlement can also be "setup_only" instead of a boolean
+                                              # we interpret that as a False here
+                                              b.city is True,
+                                              b.town is True,
+                                              b.rural_settlement is True
+                                          )
+                                      )
+                                      }
         for type_name, buildings_for_type in buildings_by_location_type.items():
             buildings_by_category = unsorted_groupby(buildings_for_type, key=attrgetter('category'))
             for category, buildings in buildings_by_category:
@@ -590,6 +601,8 @@ class TableGenerator(Eu5FileGenerator):
                     if len(unlock.get_buildings()) > 1:
                         raise Exception(f'Unlocked PM {unlock.name} in advance {advance.name} has more than one building: {unlock.get_buildings()}')
                     unlock_line = f'Production method {self.formatter.quote(unlock.display_name)} for {unlock.get_buildings()[0].get_wiki_link_with_icon()}'
+                elif isinstance(unlock, str):
+                    unlock_line = unlock
                 else:
                     unlock_line = unlock.get_wiki_link_with_icon()
                 unlocks.append(unlock_line)

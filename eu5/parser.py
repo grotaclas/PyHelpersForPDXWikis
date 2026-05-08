@@ -106,7 +106,7 @@ class Eu5Parser(JominiParser):
 
     def _parse_modifier_data(self, data: Tree,
                              modifier_class: Type[ME] = Eu5Modifier,
-                             excludes: Iterable[str] = ('potential_trigger', 'scale', 'pure_tooltip_entry')
+                             excludes: Iterable[str] = ('potential_trigger', 'scale', 'pure_tooltip_entry', 'content_priority')
                              ) -> list[ME]:
         """@TODO: parse potential_trigger and scale and pure_tooltip_entry"""
         return super()._parse_modifier_data(data, modifier_class, excludes)
@@ -173,7 +173,7 @@ class Eu5Parser(JominiParser):
                                                 'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
                                                 'modifiers': lambda name, data: self._parse_modifier_data(
                                                     data,
-                                                    excludes=list(Advance.all_annotations().keys()) + ['requires', 'for']),
+                                                    excludes=list(Advance.all_annotations().keys()) + ['requires', 'for', 'content_priority']),
                                             },
                                             transform_value_functions={
                                                 # so that the parser passes the value through even though requires is not an attribute

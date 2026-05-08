@@ -466,6 +466,8 @@ class Advance(Eu5AdvancedEntity):
     unlock_road_type: list['RoadType'] = []
     unlock_subject_type: list['SubjectType'] = []
     unlock_unit: list['UnitType'] = []
+    #TODO introduce class 'TownRights'
+    unlock_town_rights: list[str] = []
 
     icon_folder = 'ADVANCE_ICON_PATH'
 
@@ -1580,7 +1582,7 @@ class DynamicHistoricalEvent(ParsableObject):
 
 class Event(Eu5AdvancedEntity):
     after: Effect = None
-    desc: TriggeredTextHolder
+    desc: TriggeredTextHolder = None
     dynamic_historical_event: DynamicHistoricalEvent = None
     fire_only_once: bool = False
     hide_portraits: bool = None
@@ -2764,8 +2766,20 @@ class UnitType(Eu5AdvancedEntity):
         else:
             return None
 
+    @cached_property
+    def category(self) -> UnitCategory|None:
+        """Fallback in case the unit has no category itself"""
+        if self.copy_from is None:
+            return None
+        else:
+            return self.copy_from.category
+
+
     def get_wiki_filename(self) -> str:
-        return self.category.get_wiki_filename()
+        if self.category is None:
+            return ''
+        else:
+            return self.category.get_wiki_filename()
 
     def get_wiki_page_name(self) -> str:
         return self.category.get_wiki_page_name()
