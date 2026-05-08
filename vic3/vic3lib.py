@@ -20,8 +20,9 @@ class Vic3AdvancedEntity(AdvancedEntity):
 
 class Vic3ModifierType(ModifierType):
 
-    def _get_fully_localized_display_name_and_desc(self) -> (str, str):
-        display_name, description = super()._get_fully_localized_display_name_and_desc()
+    @cached_property
+    def display_name(self) -> str:
+        display_name = super().display_name
         if display_name == self.name:
             # modifiers which are named like state_catholic_standard_of_living_add
             match = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
@@ -29,9 +30,17 @@ class Vic3ModifierType(ModifierType):
                 pop = match.group(1)
                 pop_loc = self.parser.localize(pop)
                 display_name = f'Standard of Living for {pop_loc} Pops'
-                if description == self.name + '_desc':
-                    description = self.parser.localize('state_standard_of_living_add_desc')
-        return display_name, description
+        return display_name
+
+    @cached_property
+    def description(self) -> str:
+        description = super().description
+        if description == self.name + '_desc':
+            # modifiers which are named like state_catholic_standard_of_living_add
+            match = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
+            if match:
+                description = self.parser.localize('state_standard_of_living_add_desc')
+        return description
 
 
 class NamedModifier(Vic3AdvancedEntity):

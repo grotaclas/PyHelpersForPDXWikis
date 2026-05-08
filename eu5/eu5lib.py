@@ -47,13 +47,22 @@ class Eu5ModifierType(ModifierType):
         for k, v in self.game_data:
             setattr(self, k, v)
 
-    def _get_fully_localized_display_name_and_desc(self) -> (str, str):
+
+
+    @cached_property
+    def display_name(self) -> str:
+        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
         display_name = self.parser.localize('MODIFIER_TYPE_NAME_' + self.name)
         if display_name != '(unused)':
             display_name = self.parser.formatter.strip_formatting(display_name, strip_newlines=True)
+        return display_name
+
+    @cached_property
+    def description(self) -> str:
+        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
         description = self.parser.localize('MODIFIER_TYPE_DESC_' + self.name)
         description = self.parser.formatter.format_localization_text(description, [])
-        return display_name, description
+        return description
 
     def format_value(self, value):
         if isinstance(value, ScriptValue) and value.direct_value:

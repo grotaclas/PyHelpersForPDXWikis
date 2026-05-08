@@ -364,6 +364,8 @@ class ModifierType(NameableEntity):
 
     def __init__(self, name: str, display_name: str, **kwargs):
         super().__init__(name, display_name, **kwargs)
+        # reset display name attribute so that the cached property can be used
+        del self.display_name
         if self.decimals is not None:
             self.decimals = self.decimals
         if self.color == 'good':
@@ -372,17 +374,23 @@ class ModifierType(NameableEntity):
             self.good = False
         if self.color == 'neutral':
             self.neutral = True
-        self.display_name, self.description = self._get_fully_localized_display_name_and_desc()
 
-    def _get_fully_localized_display_name_and_desc(self) -> (str, str):
+    @cached_property
+    def display_name(self) -> str:
+        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
         display_name = self.parser.localize(
             key='modifier_' + self.name,
             # version 1.7 removed the modifier_ prefix from the localisations, but I'm not sure if that's always the case, so this code allows both
             default=self.parser.localize(self.name))
         display_name = self.parser.formatter.format_localization_text(display_name, [])
+        return display_name
+
+    @cached_property
+    def description(self) -> str:
+        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
         description = self.parser.localize(self.name + '_desc')
         description = self.parser.formatter.format_localization_text(description, [])
-        return display_name, description
+        return description
 
     @cached_property
     def icon(self):
