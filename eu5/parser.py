@@ -392,7 +392,7 @@ class Eu5Parser(JominiParser):
         for filename, template in template_data_without_include.items():
             template_data[filename] = self._resolve_includes(template, template_data, template_data_without_include)
 
-        return self._resolve_includes(self._fix_law_values(self.parser.parse_folder_as_one_file('main_menu/setup/start/')),
+        return self._resolve_includes(self._fix_law_values(self.parser.parse_folder_as_one_file('main_menu/setup/start/', overwrite_duplicate_toplevel_keys=False)),
                                       template_data,
                                       other_templates={},
                                       recursive=True

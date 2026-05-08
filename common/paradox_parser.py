@@ -129,7 +129,7 @@ class ParadoxParser:
                 for key, value in self._really_parse_file(file, workarounds):
                     if key in result.dictionary:
                         if isinstance(result.dictionary[key], Tree):
-                            result.dictionary[key].dictionary.update(value)
+                            result.dictionary[key].update(value)
                         elif isinstance(result.dictionary[key], list):
                             result.dictionary[key].append(value)
                         else:
@@ -277,6 +277,8 @@ class Tree(MutableMapping):
                 if isinstance(value, Tree):
                     if isinstance(self[key], Tree):
                         self[key].update(value)
+                    elif isinstance(self[key], list) and len(self[key]) == 0:
+                        self[key] = value
                     else:
                         raise Exception(f'mismatching types for key "{key}" when updating tree. The value from this tree is a "{type(self[key])}" and the value from the other tree is a "{type(value)}".')
                 elif isinstance(value, MutableMapping):
