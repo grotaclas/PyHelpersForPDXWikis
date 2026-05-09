@@ -125,7 +125,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                 'estate_privilege': self.parser.estate_privileges,
                 'estate_type': self.parser.estates,
                 'goods': self.parser.goods,
-                'languages': self.parser.languages,
+                'language': self.parser.languages,
                 'law': self.parser.laws,
                 'policy': self.parser.law_policies,
                 'religion': self.parser.religions,
