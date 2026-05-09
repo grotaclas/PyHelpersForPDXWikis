@@ -1,20 +1,20 @@
 import inspect
+import os
 import re
 import uuid
-from collections import Counter
-from functools import cached_property
-
 import sys
+from collections import Counter
 from collections.abc import Set
 from operator import methodcaller
 from types import UnionType
 from typing import get_type_hints, get_origin, get_args, Iterable, Type, Any
 
+# add the parent folder to the path so that imports work even if this file gets executed directly
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from common.file_generator import FileGenerator
 from common.helper import OneTypeHelper, MultiTypeHelper
-from common.paradox_lib import IconMixin, NE, Modifier, PdxColor, NameableEntity
+from common.paradox_lib import Modifier, NameableEntity
 from common.paradox_parser import Tree, ParsingWorkaround, ScriptedWorkaround
-from eu5 import eu5lib
 from eu5.eu5lib import Eu5AdvancedEntity, Cost, GoodsDemand, Price, Eu5Modifier, Trigger, Effect, ScriptValue
 from eu5.game import eu5game
 from eu5.parser import Eu5Parser

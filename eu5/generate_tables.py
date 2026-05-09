@@ -1,10 +1,11 @@
-from collections.abc import Iterable
-
-from operator import attrgetter
+import os
 import pprint
-
 import sys
+from collections.abc import Iterable
+from operator import attrgetter
 
+# add the parent folder to the path so that imports work even if this file gets executed directly
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from common.paradox_lib import unsorted_groupby
 from common.paradox_parser import Tree
 from eu5.eu5_file_generator import Eu5FileGenerator

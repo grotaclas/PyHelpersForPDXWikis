@@ -4,12 +4,14 @@ Generates script_docs_data.py from the output of the console command script_docs
 Per default, the script docs are expected to be in the "docs" subfolder of the EU5DIR_DOCUMENTS
 from localsettings. A different folder can be provided as a command line argument
 """
+import os
 import re
+import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-import sys
-
+# add the parent folder to the path so that imports work even if this file gets executed directly
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from PyHelpersForPDXWikis.localsettings import EU5DIR_DOCUMENTS
 
 

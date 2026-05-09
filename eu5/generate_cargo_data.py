@@ -1,7 +1,10 @@
+import os
 import sys
 from operator import attrgetter
 from typing import Any, Iterable
 
+# add the parent folder to the path so that imports work even if this file gets executed directly
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from common.paradox_lib import unsorted_groupby
 from eu5.eu5_file_generator import Eu5FileGenerator
 from eu5.eu5lib import Country, Event, EventFile

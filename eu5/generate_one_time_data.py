@@ -4,10 +4,13 @@ generates list and other things which are not run regularly, but which might com
 
 """
 import itertools
+import os
 import re
 import sys
 from collections import Counter
 
+# add the parent folder to the path so that imports work even if this file gets executed directly
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from eu5.eu5_file_generator import Eu5FileGenerator
 
 
