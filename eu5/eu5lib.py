@@ -199,11 +199,11 @@ class Eu5NamedModifier(Eu5AdvancedEntity):
 
 
 class ScriptedEffect(Eu5AdvancedEntity):
-    pass
+    effect: Effect
 
 
 class ScriptedTrigger(Eu5AdvancedEntity):
-    pass
+    trigger: Trigger
 
 
 class ScriptValue(NameableEntity):  # can't have a name, but we want to use logic of the parent class

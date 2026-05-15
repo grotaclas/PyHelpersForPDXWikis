@@ -1313,9 +1313,19 @@ class Eu5Parser(JominiParser):
             """
             replacement_regexes = {r'(?m)^(\s*)(\$[^$]+\$)\s*$': r'\1_only_parameter = "\2"'}
 
+        def create_effect(name, data):
+            if isinstance(data, Tree):
+                return Effect(data.dictionary)
+            elif isinstance(data, list) and len(data) == 0:
+                return None
+            else:
+                raise Exception(f'unexpected data type {type(data)} for scripted effect {name}')
+
         return self.parse_advanced_entities('in_game/common/scripted_effects', ScriptedEffect,
                                             allow_empty_entities=True,
-                                            parsing_workarounds=[ScriptedEffectsWorkaround()])
+                                            parsing_workarounds=[ScriptedEffectsWorkaround()],
+                                            extra_data_functions={'effect': create_effect}
+                                            )
     @cached_property
     def scripted_lists(self) -> dict[str, ScriptedList]:
         return self.parse_advanced_entities('in_game/common/scripted_lists', ScriptedList,
@@ -1328,8 +1338,11 @@ class Eu5Parser(JominiParser):
                                             )
     @cached_property
     def scripted_triggers(self) -> dict[str, ScriptedTrigger]:
-        triggers = self.parse_advanced_entities('main_menu/common/scripted_triggers', ScriptedTrigger)
-        triggers.update(self.parse_advanced_entities('in_game/common/scripted_triggers', ScriptedTrigger))
+        extra_data_functions = {
+            'trigger': lambda name, data: Trigger(data.dictionary)
+        }
+        triggers = self.parse_advanced_entities('main_menu/common/scripted_triggers', ScriptedTrigger, extra_data_functions=extra_data_functions)
+        triggers.update(self.parse_advanced_entities('in_game/common/scripted_triggers', ScriptedTrigger, extra_data_functions=extra_data_functions))
         return triggers
     @cached_property
     def situations(self) -> dict[str, Situation]:
