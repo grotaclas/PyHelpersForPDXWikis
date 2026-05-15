@@ -233,6 +233,7 @@ class BuildingGroup(NameableEntity):
     company_headquarter: bool = False
     regional_company_headquarter: bool = False
     self_investment_chance_modifier: bool = False
+    builds_ships: bool = False
 
     def __init__(self, name: str, display_name: str, parent_group: 'BuildingGroup' = None, **kwargs):
         super().__init__(name, display_name)
@@ -266,7 +267,10 @@ class Building(Vic3AdvancedEntity):
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
-        return 'List of buildings'
+        if self.unique:
+            return 'Unique building'
+        else:
+            return 'List of buildings'
 
     @cached_property
     def production_methods(self) -> list['ProductionMethod']:
@@ -373,6 +377,9 @@ class PopType(Vic3AdvancedEntity):
 class Achievement(Vic3AdvancedEntity):
     possible: Tree
     happened: Tree
+
+    def get_wiki_page_name(self) -> str:
+        return 'Achievements'
 
 
 class Character(NameableEntity):

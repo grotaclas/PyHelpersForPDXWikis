@@ -339,7 +339,7 @@ class Vic3Parser(JominiParser):
                      'pays_taxes', 'is_government_funded', 'created_by_trade_routes', 'subsidized', 'is_military',
                      'default_building', 'ignores_productivity_when_hiring',
                      'min_productivity_to_hire', 'owns_other_buildings', 'always_self_owning', 'has_trade_revenue', 'company_headquarter', 'regional_company_headquarter',
-                     'construction_efficiency_modifier', 'self_investment_chance_modifier']:
+                     'construction_efficiency_modifier', 'self_investment_chance_modifier', 'builds_ships']:
                 entity_values[k] = v
             elif k == 'parent_group':
                 entity_values['parent_group'] = parsed_building_groups[v]
