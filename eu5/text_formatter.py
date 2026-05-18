@@ -106,7 +106,9 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                 if key.startswith('societal_value:'):
                     typ, _, key_without_prefix = key.partition(':')
                     return self.parser.societal_values[key_without_prefix].format(comparison_value, comparison_operator)
-
+        if key in self.parser.scripted_triggers and value is True:
+            return self.format_conditions(self.parser.scripted_triggers[key].trigger, indent)
+        
         return super().format_key_value_pair(key, value, indent)
 
     def format_simple_statement(self, key, value):
