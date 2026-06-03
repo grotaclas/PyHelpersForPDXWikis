@@ -158,7 +158,15 @@ class Eu5AdvancedEntity(AdvancedEntity):
             return False
 
     def get_icon_path(self) -> Path:
-        return self.get_icon_folder() / self.get_icon_filename()
+        icon = self.get_icon_folder() / self.get_icon_filename()
+        if not icon.exists():
+            relative_folder = str(self.get_icon_folder().relative_to(eu5game.game_path / 'game'))
+            dlc_icons = list(eu5game.game_path.glob(f'game/dlc/*/{relative_folder}/{self.get_icon_filename()}'))
+            if len(dlc_icons) == 1:
+                return dlc_icons[0]
+            elif len(dlc_icons) > 1:
+                raise Exception(f'Multiple icons for "{self.display_name}"({self.name}): {"\n".join(dlc_icons)}')
+        return icon
 
     def get_wiki_filename(self) -> str:
         if not self.has_wiki_icon():
