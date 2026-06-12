@@ -22,13 +22,6 @@ class Vic3Parser(JominiParser):
     parse_advanced_entities() and parse_advanced_entities() can be used to easily add parsing for new entities.
     """
 
-    # Valid icon types derived from game/gfx/interface/icons/event_icons
-    VALID_EVENT_ICON_TYPES = {
-        'default', 'election', 'fire', 'industry', 'map', 'military',
-        'newspaper', 'portrait', 'protest', 'raiding', 'scales', 'skull',
-        'trade', 'carlist_beret', 'bicorne_hat', 'tutorial_icon', 'waving_flag'
-    }
-
     localizer: Vic3Localizer
 
     def __init__(self):
