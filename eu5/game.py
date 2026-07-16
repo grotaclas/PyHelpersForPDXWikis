@@ -41,33 +41,54 @@ class EuropaUniversalisV(Game):
     def version(self):
         """the branch from caesar_branch.txt. This is not a good indication of a version number, but there isn't a good way to extract one right now"""
         config_path = self.game_path / 'caesar_branch.txt'
-        with open(config_path, 'r') as config_file:
-            branch = config_file.read().removeprefix('release/')
-        if branch == '1.1.0' or 'ud008' in  branch:
-            version_by_rev = {
-                'dc27a2531a681cb9f00ea1f0dd7d885840c68c46': '1.1.9',
-                'bb626854c1e562fddec318a5a433fb1e4840edf1': '1.1.10',
-                'd4ac783b726c725e30128d9fc2cda2d8ff382c44': '1.2.0',
-                '84ef593274f81edadcf87e0acd86da157ea11a47': '1.2.1',
-                'c85ad4c466c1d832293751c7ce21df98f1a7c0d2': '1.2.2',
-                'a6fa0cc8ffdf63f99aa78c380b6e85691851bbc8': '1.2.3',
+        if config_path.exists():
+            with open(config_path, 'r') as config_file:
+                branch = config_file.read().removeprefix('release/')
+            if branch == '1.1.0' or 'ud008' in  branch:
+                version_by_rev = {
+                    'dc27a2531a681cb9f00ea1f0dd7d885840c68c46': '1.1.9',
+                    'bb626854c1e562fddec318a5a433fb1e4840edf1': '1.1.10',
+                    'd4ac783b726c725e30128d9fc2cda2d8ff382c44': '1.2.0',
+                    '84ef593274f81edadcf87e0acd86da157ea11a47': '1.2.1',
+                    'c85ad4c466c1d832293751c7ce21df98f1a7c0d2': '1.2.2',
+                    'a6fa0cc8ffdf63f99aa78c380b6e85691851bbc8': '1.2.3',
+                    '4b9868250ca2431614a94bad124e4238c984f826': '1.2.4',
+                    '9132ec42a9d9fc5bad21d2bd39781e2b1fd73cd8': '1.2.5',
+                }
+                if self.revision in version_by_rev:
+                    return version_by_rev[self.revision]
+                else:
+                    raise Exception('Specify the real version in version_by_rev')
+            return branch
+        else:
+            checksum_file = self.game_path / 'binaries/checksum.txt'
+            full_checksum = checksum_file.read_text().strip()
+            version_by_checksum = {
+                'e41f04da33d531d0cb7ba70d4c88a2c4': '1.3.10',
+                '0d6cd6f7e3dde34d73585d4a51ef54cd': '1.3.11',
             }
-            if self.revision in version_by_rev:
-                return version_by_rev[self.revision]
+            if full_checksum in version_by_checksum:
+                return version_by_checksum[full_checksum]
             else:
-                raise Exception('Specify the real version in version_by_rev')
-        return branch
+                raise Exception(f'Specify the real version for checksum "{full_checksum}" in version_by_checksum')
 
     @cached_property
     def full_version(self):
         """the build revision from caesar_rev.txt"""
-        return self.version + '-' + self.revision
+        if self.revision is not None:
+            return self.version + '-' + self.revision
+        else:
+            return self.version + '-' + self.checksum
+
 
     @cached_property
-    def revision(self):
+    def revision(self) -> str | None:
         config_path = self.game_path / 'caesar_rev.txt'
-        with open(config_path, 'r') as config_file:
-            return config_file.read()
+        if config_path.exists():
+            with open(config_path, 'r') as config_file:
+                return config_file.read()
+        else:
+            return None
 
     @cached_property
     def checksum(self) -> str | None:
@@ -76,9 +97,17 @@ class EuropaUniversalisV(Game):
             '84ef593274f81edadcf87e0acd86da157ea11a47': 'e429', # 1.2.1
             'c85ad4c466c1d832293751c7ce21df98f1a7c0d2': 'fb04', # 1.2.2
             'a6fa0cc8ffdf63f99aa78c380b6e85691851bbc8': '6a4a', # 1.2.3
+            '4b9868250ca2431614a94bad124e4238c984f826': 'e02d', # 1.2.4
+            '9132ec42a9d9fc5bad21d2bd39781e2b1fd73cd8': 'cf2f', # 1.2.5
+        }
+        checksum_by_version = {
+            '1.3.10': 'c764',
+            '1.3.11': 'b08d',
         }
         if self.revision in checksum_by_rev:
             return checksum_by_rev[self.revision]
+        elif self.version in checksum_by_version:
+            return checksum_by_version[self.version]
         else:
             return super().checksum
 
