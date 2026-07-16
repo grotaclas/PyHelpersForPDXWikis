@@ -462,7 +462,8 @@ class Advance(Eu5AdvancedEntity):
     potential: Trigger = None
 
     # saved as str when parsing to avoid recursion
-    _requires: list['Advance'] = []
+    _requires: list[str] = []
+    _in_tree_of: str = None
 
     research_cost: float = None # percentage?
     starting_technology_level: int = 0
@@ -494,6 +495,11 @@ class Advance(Eu5AdvancedEntity):
             # saved as private attribute and removed to not override the cached_property
             self._requires = kwargs['requires']
             del kwargs['requires']
+        if 'in_tree_of' in kwargs:
+            # saved as private attribute and removed to not override the cached_property
+            self._in_tree_of = kwargs['in_tree_of']
+            del kwargs['in_tree_of']
+
         super().__init__(name, display_name, **kwargs)
 
     @cached_property
@@ -505,6 +511,14 @@ class Advance(Eu5AdvancedEntity):
             return [eu5game.parser.advances[advance] for advance in self._requires]
         else:
             return []
+
+    @cached_property
+    def in_tree_of(self) -> 'Advance|None':
+        """Lazy loaded to avoid infinite recursion"""
+        if self._in_tree_of:
+            return eu5game.parser.advances[self._in_tree_of]
+        else:
+            return None
 
     def get_wiki_icon(self, size: str = '32px') -> str:
         if self.get_wiki_filename().removesuffix(".png") == self.display_name:

@@ -173,7 +173,7 @@ class Eu5Parser(JominiParser):
                                                 'age_specialization': lambda name, data: data['for'] if 'for' in data else None,
                                                 'modifiers': lambda name, data: self._parse_modifier_data(
                                                     data,
-                                                    excludes=list(Advance.all_annotations().keys()) + ['requires', 'for', 'content_priority']),
+                                                    excludes=list(Advance.all_annotations().keys()) + ['requires', 'in_tree_of', 'for', 'content_priority', 'pure_tooltip_entry']),
                                             },
                                             transform_value_functions={
                                                 # so that the parser passes the value through even though requires is not an attribute
