@@ -327,6 +327,9 @@ class JominiParser(metaclass=ABCMeta):
             if isinstance(mod_value, list) and mod_name != 'potential_trigger':
                 if type(mod_value[0]) in [int, float]:
                     mod_value = sum(mod_value)
+                # all values are true or all are false
+                elif all(type(x) == bool and x == mod_value[0] for x in mod_value):
+                    mod_value = mod_value[0]
                 else:
                     print(f'Error: cant sum modifier values in "{mod_name}": {", ".join(str(v) for v in mod_value)}')
             mod_type = self.get_modifier_type_or_default(mod_name)
