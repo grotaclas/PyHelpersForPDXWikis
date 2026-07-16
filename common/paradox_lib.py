@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, get_origin, get_args, get_type_hints, Ty
 from pathlib import Path
 
 from common.paradox_parser import Tree
+from common.wiki_image import WikiImageFileReference
 
 try:
     # when used by PyHelpersForPDXWikis
@@ -268,7 +269,7 @@ class IconMixin:
     def get_wiki_filename(self) -> str:
         if not self.icon:
             return ''
-        filename = self.icon.split('/')[-1].replace('.dds', '.png')
+        filename = self.icon.split('/')[-1].replace('.dds', '.png').replace('.tga', '.png')
         prefix = self.get_wiki_filename_prefix()
         if not filename.lower().startswith(prefix.lower()):
             filename = prefix + ' ' + filename
@@ -278,9 +279,59 @@ class IconMixin:
         """Defaults to the class name. Subclasses can override it to provide their actual names"""
         return self.get_class_name_as_wiki_page_title()
 
+    def get_wiki_file_category(self) -> str:
+        return f'{self.get_class_name_as_wiki_page_title()} icons'
+
+    def get_wiki_file_description(self) -> str:
+        return ''
+
     def get_wiki_page_name(self) -> str:
         """Defaults to the class name. Subclasses can override it to provide their actual names"""
         return self.get_class_name_as_wiki_page_title()
+
+    def get_wiki_image_file_reference(self) -> WikiImageFileReference | None:
+        if not self.icon:
+            return None
+
+        reference = self.get_image_reference()
+        if not reference:
+            return None
+
+        return WikiImageFileReference(
+            self.get_wiki_filename(),
+            self.get_wiki_file_category(),
+            self.get_wiki_file_description(),
+            self.is_image_reference_main_reference(),
+            self.get_alternative_wiki_filenames(),
+            self.get_obsolete_wiki_filenames(),
+            reference,
+            self.get_image_data_hash(),
+        )
+
+    def get_image_reference(self) -> Path | Any | None:
+        """the reference is game specific. It can be a path to an actual file or a reference to a texture"""
+        raise NotImplementedError('Subclasses must override this function')
+
+    def get_image_data_hash(self) -> str | None:
+        """the hash has to be calculated in a game specific way,
+        but it should be the sha256 hash over the raw pixel data
+         to detect identical images from different files"""
+        raise NotImplementedError('Subclasses must override this function')
+
+    def get_alternative_wiki_filenames(self) -> list[str]:
+        """for redirects; if one of these contains the image, it should be moved to one of the main filenames"""
+        return []
+
+    def get_obsolete_wiki_filenames(self) -> list[str]:
+        """these should not be created anymore, but can be used to find an old version of the image which can be moved"""
+        return []
+
+    def is_image_reference_main_reference(self) -> bool:
+        """Should be overridden with game specific code"""
+        image_reference = self.get_image_reference()
+        if isinstance(image_reference, Path):
+            return image_reference.name == self.name
+        return False
 
 
 class IconEntity(NameableEntity, IconMixin):
