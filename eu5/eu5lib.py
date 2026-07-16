@@ -2086,6 +2086,7 @@ class FlagDefinition(Eu5AdvancedEntity):
     coa_with_overlord_canton: str = None  # should be CoatOfArms, but the only case where it is used references a non-existing coa
     overlord_canton_scale: list[float] = []
     priority: int
+    random_select_if_same_priority: bool = False
     subject_canton: CoatOfArms = None
     trigger: Trigger = None
 
@@ -2631,6 +2632,7 @@ class SubjectType(Eu5AdvancedEntity):
     annexation_speed: float = 1
     annexation_stall_opinion: int = 0
     can_attack: Trigger = None
+    can_be_annexed: bool = True
     can_be_force_broken_in_peace_treaty: bool = True
     can_change_heir_selection: bool
     can_change_rank: bool

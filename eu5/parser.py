@@ -22,6 +22,8 @@ class Eu5Parser(JominiParser):
         Language: 'languages_including_dialects',
     }
 
+    _all_production_methods: dict[str, ProductionMethod] = None
+
     localizer: Eu5Localizer
 
     def __init__(self, game_installation: Path = EU5DIR, language: str = 'english'):
@@ -207,8 +209,8 @@ class Eu5Parser(JominiParser):
                                                 'obsolete': lambda value: [value] if isinstance(value, str) else value,
                                                 'price': lambda value: self.prices[value] if isinstance(value, str) else value,
                                                 'pop_size_created': lambda value: (self.script_values[value] if isinstance(value, str) else value) * 1000,
-                                                'possible_production_methods': lambda value: [self.production_methods[pm] if isinstance(pm, str) else pm for pm in value],
-                                                'unique_production_methods': lambda value: [list(self._parse_production_methods(tree).values()) for tree in (value if isinstance(value, list) else [value])],
+                                                'possible_production_methods': lambda value: [self.all_production_methods[pm] if isinstance(pm, str) else pm for pm in value],
+                                                'unique_production_methods': lambda value: [list(self._parse_production_methods(tree, add_to_all_production_methods=True).values()) for tree in (value if isinstance(value, list) else [value])],
                                             })
         # replace str references in obsolete by references to the building objects
         for building in list(buildings.values()):
@@ -818,29 +820,30 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def production_methods(self) -> dict[str, ProductionMethod]:
-        return self._parse_production_methods('in_game/common/production_methods')
+        return self._parse_production_methods('in_game/common/production_methods', add_to_all_production_methods=False)
 
-    @cached_property
+    @property
     def all_production_methods(self) -> dict[str, ProductionMethod]:
         """Also includes unique production methods which are defined in buildings"""
-        production_methods = self.production_methods.copy()
-        for building in self.buildings.values():
-            for pm_list in building.unique_production_methods:
-                for pm in pm_list:
-                    production_methods[pm.name] = pm
-        return production_methods
+        if self._all_production_methods is None:
+            self._all_production_methods = self.production_methods.copy()
+        return self._all_production_methods
 
-    def _parse_production_methods(self, data_source: str | Tree):
+    def _parse_production_methods(self, data_source: str | Tree, add_to_all_production_methods: bool) -> dict[str, ProductionMethod]:
         if isinstance(data_source, list):
             FileGenerator.warn(f'Multiple production method sections:{[[name for name, data in tree] for tree in data_source]}')
             data_source = reduce(lambda t1, t2: t1.update(t2), data_source)
-        return self.parse_nameable_entities(data_source, ProductionMethod,
+        pms = self.parse_nameable_entities(data_source, ProductionMethod,
                                             extra_data_functions={
                                                 'input': lambda name, data: [Cost.create_with_goods(key, value) for key, value in data if key in self.goods],
                                             },
                                             transform_value_functions={
                                                 'produced': lambda value: self.goods[value]
                                             })
+        if add_to_all_production_methods:
+            self.all_production_methods.update(pms)
+
+        return pms
 
     @cached_property
     def religious_aspects(self) -> dict[str, ReligiousAspect]:
