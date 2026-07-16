@@ -470,6 +470,7 @@ class Advance(Eu5AdvancedEntity):
     unlock_building: list['Building'] = []
     unlock_cabinet_action: list['CabinetAction'] = []
     unlock_casus_belli: list['CasusBelli'] = []
+    unlock_chivalric_order: list['ChivalricOrder'] = []
     unlock_country_interaction: list['CountryInteraction'] = []
     unlock_diplomacy: list['Eu5GameConcept'] = []
     unlock_estate_privilege: list['EstatePrivilege'] = []
@@ -1890,6 +1891,12 @@ class ChildEducation(Eu5AdvancedEntity):
     modifier: list[Eu5Modifier]
     price_to_deselect: Price = None
     price_to_select: Price = None
+class ChivalricOrder(Eu5AdvancedEntity):
+    character_eligible: Trigger
+    character_modifier: list[Eu5Modifier]
+    country_modifier: list[Eu5Modifier]
+    potential: Trigger = None
+    icon_folder = 'CHIVALRIC_ORDER_ICON_PATH' # 15 / 15 icons found
 class CountryInteraction(Eu5AdvancedEntity):
     accept: ScriptValue = None
     ai_limit_per_check: int = 0

@@ -1008,6 +1008,16 @@ class Eu5Parser(JominiParser):
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 5/5 Examples: {'expensive_in_depth_education_desc': 'Our wealth is sufficient when it comes to securing in-depth education for our heir. Access to some of the best tutors and material source will grant us unique knowledge as well as the best education money can buy.', 'military_education_desc': 'Projecting military strength is the backbone of our nation. A focus on military matters and the study of the nature of war as well as management of our armed forces are pivotal for educational purposes.'}
                                             )
     @cached_property
+    def chivalric_orders(self) -> dict[str, ChivalricOrder]:
+        return self.parse_advanced_entities('in_game/common/chivalric_orders', ChivalricOrder,
+                                            # localization_prefix='', localization_suffix='', # Used in 15/15 Examples: {'order_of_the_white_eagle': 'Order of the White Eagle', 'order_of_the_swan': 'Order of the Swan'}
+                                            description_localization_prefix='', description_localization_suffix='_desc', # Used in 15/15 Examples: {'society_elephant_tyrol_desc': '$noble_society_tyrol_desc$', 'society_with_the_donkey_desc': '$noble_society_baden_palatine_desc$'}
+                                            # localization_prefix='STATIC_MODIFIER_EFFECT_joined_', localization_suffix='', # Used in 13/15 Examples: {'STATIC_MODIFIER_EFFECT_joined_society_elephant_tyrol': "[ShowModifierEffect('joined_society_elephant_tyrol')]", 'STATIC_MODIFIER_EFFECT_joined_society_with_the_donkey': "[ShowModifierEffect('joined_society_with_the_donkey')]"}
+                                            # localization_prefix='STATIC_MODIFIER_NAME_joined_', localization_suffix='', # Used in 13/15 Examples: {'STATIC_MODIFIER_NAME_joined_order_of_the_black_eagle': 'Joined $order_of_the_black_eagle_policy$', 'STATIC_MODIFIER_NAME_joined_society_hubertus_cologne': 'Joined $society_hubertus_cologne$'}
+                                            # description_localization_prefix='', description_localization_suffix='_policy_desc', # Used in 7/15 Examples: {'order_of_the_ermine_policy_desc': '$order_of_the_ermine_desc$', 'order_of_the_dragon_policy_desc': '$order_of_the_dragon_desc$'}
+                                            # localization_prefix='', localization_suffix='_policy', # Used in 7/15 Examples: {'order_of_the_black_eagle_policy': 'Order of the Black Eagle', 'order_of_the_band_policy': 'Order of the Band'}
+                                            )
+    @cached_property
     def country_interactions(self) -> dict[str, CountryInteraction]:
         return self.parse_advanced_entities('in_game/common/country_interactions', CountryInteraction,
                                             # localization_prefix='', localization_suffix='', # Used in 96/96 Examples: {'lordship_of_ireland_surrender_and_regrant': 'Surrender and Regrant', 'ask_to_lift_interdict': 'Request Lifting Interdict'}
