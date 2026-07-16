@@ -1136,7 +1136,7 @@ class Language(Eu5AdvancedEntity):
     dynasty_template_keys: list[str] = []
     fallback: 'Language' = None
     family: LanguageFamily = None
-    female_names: list[str] = []
+    female_names: dict[int, list[str]] = {} # weight -> list of names
     first_name_conjoiner: str = ''
     location_prefix: str = ''
     location_prefix_ancient: str = ''
@@ -1145,7 +1145,7 @@ class Language(Eu5AdvancedEntity):
     location_prefix_vowel: str = ''
     location_suffix: str = ''
     lowborn: list[str] = []
-    male_names: list[str] = []
+    male_names: dict[int, list[str]] = {} # weight -> list of names
     patronym_prefix_daughter: str = ''
     patronym_prefix_daughter_vowel: str = ''
     patronym_prefix_son: str = ''
@@ -1157,10 +1157,53 @@ class Language(Eu5AdvancedEntity):
     ship_names: list[str] = []
 
     def __init__(self, name: str, display_name: str, **kwargs):
-        for attribute in ['male_names', 'female_names', 'dynasty_names', 'lowborn']:
+        self.name = name # done here so that it can be used inthe namelist processing
+        for attribute in ['dynasty_names', 'lowborn']:
             if attribute in kwargs:
-                kwargs[attribute] = [eu5game.parser.localize(f'{n}.{name}', default=eu5game.parser.localize(n)) for n in kwargs[attribute]]
+                name_list = kwargs[attribute]
+                kwargs[attribute] = self._localize_name_list(name_list)
+        for attribute in ['male_names', 'female_names']:
+            if attribute in kwargs:
+                kwargs[attribute] = self._create_weight_name_dict(kwargs[attribute])
         super().__init__(name, display_name, **kwargs)
+
+    def _localize_name(self, name: str):
+        localized_name = eu5game.parser.localize(f'{name}.{self.name}', return_none_instead_of_default=True)
+        if localized_name is None:
+            localized_name = eu5game.parser.localize(name, return_none_instead_of_default=True)
+        if localized_name is None:
+            if '.' in name:
+                localized_name = ' '.join(self._localize_name(name_part) for name_part in name.split('.'))
+            else:
+                localized_name = name
+        return eu5game.parser.formatter.resolve_nested_localizations(localized_name)
+
+    def _localize_name_list(self, name_list) -> list[str]:
+        return [self._localize_name(n) for n in name_list]
+
+    def _create_weight_name_dict(self, data) -> dict[int, list[str]]:
+        if isinstance(data, list):
+            if len(data) == 0:
+                return {}
+            if isinstance(data[0], str):
+                return {1: self._localize_name_list(data)}
+            else:
+                result = {}
+                for sublist in data:
+                    for weight, names in self._create_weight_name_dict(sublist).items():
+                        if weight in result:
+                            result[weight].extend(names)
+                        else:
+                            result[weight] = names
+                return result
+        elif isinstance(data, Tree):
+            weight = data['weight']['value']
+            names = data['remainder']
+            return {weight: self._localize_name_list(names)}
+        else:
+            raise Exception(f'Unsupported type "{type(data)}" for names list {data}')
+
+
 
 
 class LawPolicy(Eu5AdvancedEntity):

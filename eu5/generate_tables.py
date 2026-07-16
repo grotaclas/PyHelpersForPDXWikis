@@ -866,6 +866,17 @@ class TableGenerator(Eu5FileGenerator):
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
+
+    def format_name_weight_list(self, names_with_weight: dict[int, list[str]]):
+        if len(names_with_weight) == 1 and list(names_with_weight.keys())[0] == 1:
+            indented_weight_list = list(names_with_weight.values())[0]
+        else:
+            indented_weight_list = []
+            for weight, names in names_with_weight.items():
+                indented_weight_list.append(f'Weight {weight}:')
+                indented_weight_list.append(names)
+        return self.create_wiki_list(indented_weight_list)
+
     def generate_languages_table(self):
         languages = self.parser.languages.values()
         languages_table_data = [{
@@ -883,7 +894,7 @@ class TableGenerator(Eu5FileGenerator):
             'Dynasty Template Keys': self.create_wiki_list([dynasty_template_keys for dynasty_template_keys in language.dynasty_template_keys]),  # dynasty_template_keys: list[str]
             'Fallback': language.fallback if isinstance(language.fallback, str) else '' if language.fallback is None else language.fallback.display_name if language.fallback else '',  # fallback: <class 'eu5.eu5lib.Language'>
             'Family': '' if language.family is None else language.family.display_name if language.family else '',  # family: <class 'eu5.eu5lib.LanguageFamily'>
-            'Female Names': self.create_wiki_list([female_names for female_names in language.female_names]),  # female_names: list[str]
+            'Female Names': self.format_name_weight_list(language.female_names),  # female_names: list[str]
             'First Name Conjoiner': language.first_name_conjoiner,  # first_name_conjoiner: <class 'str'>
             'Location Prefix': language.location_prefix,  # location_prefix: <class 'str'>
             'Location Prefix Ancient': language.location_prefix_ancient,  # location_prefix_ancient: <class 'str'>
@@ -892,7 +903,7 @@ class TableGenerator(Eu5FileGenerator):
             'Location Prefix Vowel': language.location_prefix_vowel,  # location_prefix_vowel: <class 'str'>
             'Location Suffix': language.location_suffix,  # location_suffix: <class 'str'>
             'Lowborn': self.create_wiki_list([lowborn for lowborn in language.lowborn]),  # lowborn: list[str]
-            'Male Names': self.create_wiki_list([male_names for male_names in language.male_names]),  # male_names: list[str]
+            'Male Names': self.format_name_weight_list(language.male_names),
             'Patronym Prefix Daughter': language.patronym_prefix_daughter,  # patronym_prefix_daughter: <class 'str'>
             'Patronym Prefix Daughter Vowel': language.patronym_prefix_daughter_vowel,  # patronym_prefix_daughter_vowel: <class 'str'>
             'Patronym Prefix Son': language.patronym_prefix_son,  # patronym_prefix_son: <class 'str'>
