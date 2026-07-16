@@ -10,6 +10,7 @@ from eu5.game import eu5game
 from millennia.game import millenniagame
 
 from localpaths import eu4dir
+from smr.game import survivingmarsrelaunchedgame
 from vic3.game import vic3game
 
 # Generic game classes which have wikis, but no code implementation
@@ -277,7 +278,7 @@ all_games: dict[str, Game] = {game.short_game_name: game for game in [
     ck3game, hoi4game, stellarisgame, # limited wikimirror support
     eosgame, stagame, ck2game, aodgame, eu2game, eu3game, euromegame, hoi2game, hoi3game, steeldivisiongame,
     tyrannygame, vic1game, vic2game, skylinesgame, imperatorgame, prisonarchitectgame,
-    survivingmarsgame, vtmgame, aowplanetfallgame,
+    survivingmarsgame, survivingmarsrelaunchedgame, vtmgame, aowplanetfallgame,
 ]}
 
 
