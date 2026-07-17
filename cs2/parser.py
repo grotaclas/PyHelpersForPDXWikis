@@ -317,7 +317,8 @@ if __name__ == '__main__':
         return {asset.name: asset for asset in self.parsed_assets.values() if
                 hasattr(asset, 'UIObject') and
                 asset.UIObject.group and
-                hasattr(asset.UIObject.group, 'menu')
+                hasattr(asset.UIObject.group, 'menu') and
+                asset.UIObject.group.menu is not None
                 and asset.UIObject.group.menu.name == 'Roads'}
 
     @cached_property
