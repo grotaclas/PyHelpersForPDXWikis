@@ -200,11 +200,11 @@ class OneTypeHelper:
                 self.try_parse_value(key, value)
                 for value in values
             ]
-            for key, values in self.analyze_folder[1].items()
+            for key, values in self.keys.items()
         }
 
     def get_possible_loc_prefixes_or_suffixes(self) -> list[tuple[str, str, int, list[str]]]:
-        loc_keys = set(self.parser._localization_dict.keys())
+        loc_keys = set(self.parser.localizer._localization_dict.keys())
         first_name = list(self.entity_names)[0]
         name_re = re.compile(r'(^|.*_)' + first_name + r'($|_.*)')
         possible_pre_suffix = []
