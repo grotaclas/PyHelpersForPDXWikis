@@ -292,7 +292,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
         level1_indent_str = ' ' * (indent + 8)
         if not isinstance(entities, list):
             entities = list(entities.values())
-        localizations = self.parser._localization_dict
+        localizations = self.parser.localizer._localization_dict
         ignored_names = {'cs2_class', 'file_name', 'path_id', 'parent_asset', 'transform_value_functions', 'extra_data_functions', 'icon_folder', 'name', 'description', 'display_name', 'icon', 'color', '_unformatted_description'}
         if ignored_attributes:
             ignored_names |= ignored_attributes
