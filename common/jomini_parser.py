@@ -340,6 +340,11 @@ class JominiParser(metaclass=ABCMeta):
     def parse_modifier_section(self, name, data, section_name='modifier', modifier_class: Type[ME] = Modifier) -> list[ME]:
         if section_name not in data:
             return []
+        elif isinstance(data[section_name], list):
+            if len(data[section_name]) > 0:
+                print(f'Error: duplicate modifier section "{section_name}" in "{name}"')
+            else:
+                return []
         else:
             return self._parse_modifier_data(data[section_name], modifier_class)
 
