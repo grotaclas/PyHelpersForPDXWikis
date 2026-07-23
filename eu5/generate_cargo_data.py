@@ -75,6 +75,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             'market_center_modifier': self.format_modifier_section('market_center_modifier', building),
             # market_center_modifier: list[eu5.eu5lib.Eu5Modifier]
             'max_levels': building.max_levels,  # max_levels: int | str
+            'megalopolis': 1 if building.megalopolis else 0,  # megalopolis: <class 'bool'>
             'obsolete': ';'.join([obsolete.name if obsolete else '' for obsolete in building.obsolete]),
             # obsolete: list[eu5.eu5lib.Building]
             'on_built': self.formatter.format_effect(building.on_built),  # on_built: <class 'eu5.eu5lib.Effect'>

@@ -816,6 +816,7 @@ class Building(Eu5AdvancedEntity):
     location_potential: Trigger = None
     market_center_modifier: list[Eu5Modifier] = []
     max_levels: ScriptValue
+    megalopolis: bool = False
     modifier: list[Eu5Modifier] = []
     need_good_relation: bool = False
     obsolete: list['Building'] = []

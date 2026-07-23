@@ -63,14 +63,15 @@ class TableGenerator(Eu5FileGenerator):
 
     def get_building_tables(self):
         results = {}
-        type_names = {(True, True, True): 'common',
-                          (False, False, True): 'rural',
-                          (False, True, False): 'town',
-                          (True, False, False): 'city',
-                          (True, True, False): 'town+city',
-                          (False, True, True): 'town+rural',
-                          (True, False, True): 'city+rural',
-                          (False, False, False): 'nowhere',
+        type_names = {(True, True, True, True): 'common',
+                          (False, False, False, True): 'rural',
+                          (False, False, True, False): 'town',
+                          (True, True, False, False): 'megalopolis+city',
+                          (True, True, True, False): 'megalopolis+city+town',
+                          (False, False, True, True): 'town+rural',
+                          (True, True, False, True): 'megalopolis+city+rural',
+                          (False, False, False, False): 'nowhere',
+
                           }
         buildings_by_location_type = {type_names[typ]: list(buildings) for typ, buildings in
                                       unsorted_groupby(
@@ -78,6 +79,7 @@ class TableGenerator(Eu5FileGenerator):
                                           key=lambda b: (
                                               # town and rural_settlement can also be "setup_only" instead of a boolean
                                               # we interpret that as a False here
+                                              b.megalopolis is True,
                                               b.city is True,
                                               b.town is True,
                                               b.rural_settlement is True
