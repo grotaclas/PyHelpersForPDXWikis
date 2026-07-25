@@ -42,7 +42,14 @@ class UnityReader:
     def type_trees(self):
         type_tree_file = self.game.cachepath / (self.game_dll + '.json')
         if not type_tree_file.exists():
-            subprocess.run(
-                ['dotnet', TYPE_TREE_GENERATOR, '-p', self.data_folder / 'Managed', '-a', self.game_dll, '-v', self.unity_version,
-                 '-d', 'json', '-o', type_tree_file])
+            command = [
+                'dotnet',
+                TYPE_TREE_GENERATOR,
+                '-p', self.data_folder / 'Managed',
+                '-a', self.game_dll,
+                '-v', self.unity_version,
+                '-d', 'json',
+                '-o', type_tree_file]
+            print(' '.join(str(s) for s in command))
+            subprocess.run(command)
         return json.load(open(type_tree_file, "rt", encoding="utf8"))
