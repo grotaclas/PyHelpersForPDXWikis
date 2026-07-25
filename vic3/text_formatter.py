@@ -288,7 +288,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
 
     def format_conditions(self, conditions: Tree, indent: int = 1):
         result = []
-        for key, value in conditions:
+        for key, value in conditions.iterate_with_duplicates():
             result.append(self.format_key_value_pair(key, value, indent))
         return self.create_wiki_list(result, indent)
 

@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 from collections.abc import Iterator, MutableMapping
 from tempfile import mkstemp
-from typing import Callable, Any
+from typing import Callable, Any, Iterator
 
 try:  # when used by PyHelpersForPDXWikis
     from PyHelpersForPDXWikis.localsettings import RAKALY_CLI
@@ -170,14 +170,45 @@ class ParadoxParser:
             return self._run_rakaly(file)
 
     def _run_rakaly(self, file: Path):
-        rakaly_result = subprocess.run([RAKALY_CLI, 'json', '--format', 'utf-8', '--interpolation', '--duplicate-keys', 'group', file], capture_output=True)
+        rakaly_result = subprocess.run([RAKALY_CLI, 'json', '--format', 'utf-8', '--interpolation', '--duplicate-keys', 'preserve', file], capture_output=True)
         if rakaly_result.returncode != 0:
             rakaly_error_message = str(rakaly_result.stderr, 'UTF-8')[:-1]  # [:-1] removes the final linebreak
             raise Exception('Error reading "{}": {}'.format(file, rakaly_error_message))
         return self.json_to_tree(rakaly_result.stdout)
 
+    def parse_ordered_pairs_into_tree(self, ordered_pairs) -> 'Tree|TreeWithDuplicates':
+        """
+        Returns a Tree from the ordered pairs
+
+        if there are duplicate keys, it returns a TreeWithDuplicates instead
+        in this case, the Tree gets both a dict and the ordered_pairs. In the dict,
+        the values for duplicate keys are turned into a list. But this does not preserve
+        the order of the duplicate keys. If these are needed,, the ordered_pairs in
+        TreeWithDuplicates have to be used
+        """
+        pairs_as_dict = {}
+        # keep track of duplicate keys, both to determine if there are duplicates
+        # and to know if the values of the duplicate key have already been turned into
+        # a list. We can't check the type of the value, because the value could have been a list to begin with
+        seen_duplicates = set()
+        for key, value in ordered_pairs:
+            if key in pairs_as_dict:
+                if key in seen_duplicates:
+                    pairs_as_dict[key].append(value)
+                else:
+                    pairs_as_dict[key] = [pairs_as_dict[key], value]
+                seen_duplicates.add(key)
+            else:
+                pairs_as_dict[key] = value
+
+        if len(seen_duplicates) > 0:
+            return TreeWithDuplicates(pairs_as_dict, ordered_pairs)
+        else:
+            return Tree(pairs_as_dict)
+
+
     def json_to_tree(self, json_string: str) -> 'Tree':
-        return json.loads(json_string, object_hook=lambda x: Tree(x))
+        return json.loads(json_string, object_pairs_hook=self.parse_ordered_pairs_into_tree)
 
 
 class Tree(MutableMapping):
@@ -206,6 +237,18 @@ class Tree(MutableMapping):
         that we want to iterate over the items.
         """
         return iter(self.dictionary.items())
+
+    def iterate_with_duplicates(self) -> Iterator[tuple[str, Any]]:
+        """iterates over the items in this tree as tuples of key value pairs
+
+        Keys can appear multiple times and are preserved in the order which they had in the file.
+        In contrast, the default __iter__() turns the value of duplicate keys into lists. But this
+        makes them appear together even if the there were other keys inbetween
+
+        this is the basic implementation for the case that there are no duplicate keys.
+        Subclasses with duplicate keys must override this
+        """
+        return self.__iter__()
 
     def keys(self):
         return self.dictionary.keys()
@@ -340,3 +383,19 @@ class Tree(MutableMapping):
             self_dict = self._lowercase(self_dict)
             comparison_dict = self._lowercase(comparison_dict)
         return self_dict == comparison_dict
+
+
+class TreeWithDuplicates(Tree):
+
+    def __init__(self, dictionary: dict, ordered_pairs: list[tuple[str, Any]]):
+        super().__init__(dictionary)
+        self.ordered_pairs = ordered_pairs
+
+    def iterate_with_duplicates(self) -> Iterator[tuple[str, Any]]:
+        """iterates over the items in this tree as tuples of key value pairs
+
+        Keys can appear multiple times and are preserved in the order which they had in the file.
+        In contrast, the default __iter__() turns the value of duplicate keys into lists. But this
+        makes them appear together even if the there were other keys inbetween
+        """
+        return iter(self.ordered_pairs)
