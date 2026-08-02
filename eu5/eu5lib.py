@@ -2283,11 +2283,21 @@ class Mission(Eu5AdvancedEntity):
     icon_folder = 'MISSION_ILLUSTRATION_PATH' # 6 / 11 icons found
 class OnAction(Eu5AdvancedEntity):
     effect: Effect = None
-    events: Any = None # possible types(out of 34): list[str](33), <class 'list'>(1)
-    on_actions: list['OnAction'] = []
-    random_events: Tree = None
-    random_on_action: Any = None
+    # TODO: should be list[Event], but delay needs to be handled somehow
+    events: list[Any] = []
+    fallback: OnAction = None
+    first_valid: list[Event] = []
+    first_valid_on_action: list[OnAction] = []
+    on_actions: list[OnAction] = []
+    random_events: list[tuple[int, Event]] # Events with their weight
+    # the next three are scripted inside random_events, but are moved
+    # to the top level of the OnAction for easier handling
+    random_events_chance_of_no_event: ScriptValue = None
+    random_events_chance_to_happen: float|int = 0
+    random_events_sample_count: int = 0
+    random_on_action: list[tuple[int, OnAction]] # OnActions with their weight
     trigger: Trigger = None
+    weight_multiplier: ScriptValue = None
 class ParliamentAgenda(Eu5AdvancedEntity):
     ai_will_do: ScriptValue = None
     allow: Trigger = None

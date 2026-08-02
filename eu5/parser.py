@@ -1228,9 +1228,32 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='_BUTTON_DETAILS', # Used in 11/11 Examples: {'generic_vassal_ties_BUTTON_DETAILS': 'In turbulent times of uncertainty, we must look to our trusty $vassal$ in order to endure whatever obstacles and foes appear in our path. Only through cooperation and amicable relations shall we persevere!', 'development_of_infrastructure_BUTTON_DETAILS': '$development_of_infrastructure_BUTTON_TOOLTIP$'}
                                             # description_localization_prefix='', description_localization_suffix='_CRITERIA_DESCRIPTION', # Used in 11/11 Examples: {'generic_vassal_ties_CRITERIA_DESCRIPTION': 'Our relationship with our $vassal$ is stronger than ever.', 'development_of_infrastructure_CRITERIA_DESCRIPTION': 'We have developed our capital adequately.'}
                                             )
+
     @cached_property
     def on_action(self) -> dict[str, OnAction]:
-        return self.parse_advanced_entities('in_game/common/on_action', OnAction, allow_empty_entities=True)
+        return self.parse_advanced_entities('in_game/common/on_action', OnAction,
+                                            allow_empty_entities=True,
+                                            transform_value_functions={
+                                                'random_events': lambda tree: [
+                                                    (weight, None if event_id == 0 else self.events[event_id]) for
+                                                    weight, event_id in
+                                                    tree.iterate_with_duplicates()
+                                                    if weight not in ['chance_of_no_event', 'chance_to_happen','sample_count']
+                                                ],
+                                            },
+                                            extra_data_functions={
+                                                'random_events_chance_of_no_event': lambda name, data:
+                                                self.resolve_entity_reference(ScriptValue, data['random_events']['chance_of_no_event']) if 'random_events' in data and 'chance_of_no_event' in
+                                                                             data['random_events'] else None,
+                                                'random_events_chance_to_happen': lambda name, data:
+                                                data['random_events'][
+                                                    'chance_to_happen'] if 'random_events' in data and 'chance_to_happen' in
+                                                                           data['random_events'] else None,
+                                                'random_events_sample_count': lambda name, data: data['random_events'][
+                                                    'sample_count'] if 'random_events' in data and 'sample_count' in
+                                                                       data['random_events'] else None
+                                            }
+                                            )
     @cached_property
     def parliament_agendas(self) -> dict[str, ParliamentAgenda]:
         return self.parse_advanced_entities('in_game/common/parliament_agendas', ParliamentAgenda,
