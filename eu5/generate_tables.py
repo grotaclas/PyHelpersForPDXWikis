@@ -637,6 +637,7 @@ class TableGenerator(Eu5FileGenerator):
             ]),
             'Modifier While Progressing': self.format_modifier_section('modifier_while_progressing', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
             'Requires': self.create_wiki_list([requires.get_wiki_link_with_icon() if requires else '' for requires in advance.requires]),  # requires: list[eu5.eu5lib.Advance]
+            'Tree': '' if advance.in_tree_of is None else advance.in_tree_of.get_wiki_link_with_icon(),
             'Research Cost': '' if advance.research_cost is None else advance.research_cost,  # research_cost: <class 'float'>
             'Starting Technology Level': advance.starting_technology_level,  # starting_technology_level: <class 'int'>
         } for advance in sorted_advances]

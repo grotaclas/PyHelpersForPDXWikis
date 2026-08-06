@@ -180,6 +180,7 @@ class Eu5Parser(JominiParser):
                                             transform_value_functions={
                                                 # so that the parser passes the value through even though requires is not an attribute
                                                 'requires': lambda c: c,
+                                                'in_tree_of': lambda c: c,
                                                 'unlock_production_method': lambda pm_strings: [
                                                     self.all_production_methods[pm]
                                                     for pm in (
@@ -1238,7 +1239,7 @@ class Eu5Parser(JominiParser):
                                                     (weight, None if event_id == 0 else self.events[event_id]) for
                                                     weight, event_id in
                                                     tree.iterate_with_duplicates()
-                                                    if weight not in ['chance_of_no_event', 'chance_to_happen','sample_count']
+                                                    if weight not in ['chance_of_no_event', 'chance_to_happen', 'sample_count']
                                                 ],
                                             },
                                             extra_data_functions={

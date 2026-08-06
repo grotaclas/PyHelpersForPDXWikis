@@ -453,6 +453,7 @@ class Advance(Eu5AdvancedEntity):
     ai_weight: ScriptValue = None
     allow: Trigger = None
     allow_children: bool = True
+    content_priority: int = 0
     country_type: str = None
     depth: int = None
     age_specialization: str = None  # called "for" in the files, but that's a reserved word in python
