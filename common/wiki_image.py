@@ -86,10 +86,13 @@ class WikiImage:
 
     @cached_property
     def category(self):
-        categories = {ref.category for image_file in self.image_files for ref in image_file.references}
-        if len(categories) > 1:
+        if len(self.categories) > 1:
             raise NotImplementedError('TODO: implement handling of multiple categories')
-        return categories.pop()
+        return self.categories[0]
+
+    @cached_property
+    def categories(self) -> list[str]:
+        return list(sorted({ref.category for image_file in self.image_files for ref in image_file.references}))
 
     @cached_property
     def description(self) -> str | None:
@@ -175,8 +178,10 @@ class WikiImage:
             new_text = f'''== Summary ==
 {self.description if self.description else ''}
 == Licensing ==
-{{{{C-Paradox}}}}
-[[Category:{self.category}]]'''
+{{{{C-Paradox}}}}'''
+            for category in self.categories:
+                new_text += f'\n[[Category:{category}]]'
+
             return new_text
         else:
             return page_text
@@ -188,8 +193,12 @@ class WikiImage:
             return True
 
     def category_is_missing(self, page_text: str) -> bool:
-        if re.match(r'\[\[\s*Category\s*:\s*' + self.category.replace(' ', '[ _]') + r'\s*]]', page_text,
-                    flags=re.IGNORECASE):
+        found_categories = 0
+        for category in self.categories:
+            if re.match(r'\[\[\s*Category\s*:\s*' + category.replace(' ', '[ _]') + r'\s*]]', page_text,
+                        flags=re.IGNORECASE):
+                found_categories += 1
+        if found_categories == len(self.categories):
             return False
         else:
             return True
