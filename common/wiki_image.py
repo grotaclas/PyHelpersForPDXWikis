@@ -100,9 +100,13 @@ class WikiImage:
         for image_file in self.image_files:
             for ref in image_file.references:
                 if ref.description and ref.description not in descriptions:
-                    descriptions.append(ref.description)
+                    for line in ref.description.split('\n'):
+                        if line not in descriptions:
+                            descriptions.append(line)
+                    # descriptions.append(ref.description)
         if descriptions:
-            return '\n\n'.join(descriptions)
+            # return '\n\n'.join(descriptions)
+            return '\n'.join(descriptions)
         else:
             return None
 

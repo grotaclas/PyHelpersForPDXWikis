@@ -1,3 +1,5 @@
+import copy
+import re
 from operator import attrgetter
 from typing import Any
 
@@ -53,6 +55,39 @@ class SMRParser:
         if base_folder is None:
             base_folder = self.lua_path
         lua = Lua()
+        missing_functions = [
+            'DefineStoryBitTrigger', 'CreateRealTimeThread',
+            'DefineStoryBitTrigger', 'DefineStoryBitTrigger', 'set', 'GetColonistSpecializationCombo',
+            'ClassDescendantsCombo', 'GetColonistSpecializationCombo',
+            'PresetsCombo', 'PresetsCombo', 'SponsorCombo',
+            'Legacy_DefineStoryBitTrigger', 'FixupObjectNotification', 'Legacy_DefineStoryBitTrigger',
+            'Legacy_DefineStoryBitTrigger', 'Legacy_DefineStoryBitTrigger', 'FixupObjectNotification',
+            'FixupObjectNotification'
+        ]
+        missing_functions_which_return_something = [
+            'TLookupTag',
+        ]
+        missing_objects = [
+            'PFTunnel', 'CargoTransporter', 'LifeSupportGridElement', 'RecursiveCallMethods', 'g_ConsumptionType',
+            'g_CargoWeightCapacityLabels', 'AvailabilityStatus', 'terrain', 'ResourceNoRoundingDecimalPart',
+            'NotificationFns', 'RegolithExtractorBase', 'OpenAirBuilding', 'config',
+            'g_CargoWeightCapacityLabels', 'RecursiveCallMethods', 'EntityData', 'ResourcePile', 'GridObject',
+            'config', 'Dome', 'NotificationFns', 'GridObject', 'NotificationFns',
+            'BreakableSupplyGridElement', 'AutoResolveMethods', 'RocketPayloadObject', 'ServiceFailure',
+            'DustGridElement', 'BaseBuilding', 'Colony', 'RequiresMaintenance', 'City', 'ElectricityGridElement',
+            'UnpersistedMissingClass', 'LabelContainer', 'BaseExtractor', 'BaseExtractor', 'Presets', 'Presets.ConstDef',
+            'io', 'terrain'
+        ]
+
+        for func_name in missing_functions:
+            lua.run(f'function {func_name}(...) end')
+
+        for func_name in missing_functions_which_return_something:
+            lua.run(f'function {func_name}(...) return "" end')
+
+        for obj_name in missing_objects:
+            lua.run(f'{obj_name} = {{}}')
+
         # lua.run('DefineClass = {}')
         lua.run('DefineClass = {}')
         lua.run('''setmetatable(DefineClass, {
@@ -67,7 +102,12 @@ class SMRParser:
 		    return {}
 		end,
 	})''')
-        lua.run('const = { HexWidth = 1, HexHeight = 1, TagLookupTable = {}, pfmDestlock = 1, pfmDestlockSmart = 1, TypeTileSize = 1, efVisible = 1, efApplyToGrids = 1, efCollision = 1}')
+        lua.run('const = { TagLookupTable = {}}')
+        missing_consts = ['HexWidth', 'HexHeight', 'pfmDestlock', 'pfmDestlockSmart', 'TypeTileSize', 'efVisible',
+                          'efApplyToGrids', 'efCollision', 'HeightTileSize', 'rfSupply', 'MaxHeat', 'rfStorageDepot',
+                          'ResourceScale', 'rfSpecialSupplyPairing', 'rfMechanizedStorage']
+        for const_name in missing_consts:
+            lua.run(f'const.{const_name} = 1')
         lua.run('OnMsg = {}')
         lua.run('PersistableGlobals = {}')
         lua.run('pf = {Step = 1}')
@@ -105,6 +145,9 @@ class SMRParser:
         lua.run('function InvalidPos() end')
         lua.run('function procall(f, arg1, ...) end')
         lua.run('function buildUnbuildableZ() return 2^16 - 1 end')
+        lua.run('function ForEachLib(path, func, ...) end')
+        lua.run('io.exists = function(filename) return false end')
+        lua.run('function DefineConstInt(group, name, value, ...) const[group].name = value end')
 
         lua.run('Platform = {cmdline = true}')
         lua.run_file(str(self.unpacked_path / 'Lua/CommonLua/Core/lib.lua'))
@@ -112,6 +155,8 @@ class SMRParser:
         # lua.run_file(str(self.unpacked_path / 'Lua/CommonLua/Core/types.lua'))
         lua.run('Platform = {cmdline = false}')
         lua.run_file(str(self.unpacked_path / 'Lua/CommonLua/Core/const.lua'))
+        lua.run_file(str(self.unpacked_path / 'Lua/Lua/HasConsumption.lua'))
+        lua.run_file(str(self.unpacked_path / 'Lua/Lua/GridTunnelConnector.lua'))
         lua.run('const.Scale.h = 60')
         lua.run('const.Scale.sols = 24 * 60')
         lua.run('const.Scale.Resources = 1')
@@ -132,10 +177,8 @@ class SMRParser:
 end''')
         lua.run_file(str(self.unpacked_path / 'Lua/Lua/_GameConst.lua'))
         lua.run('Platform = {cmdline = true}')
-        # lua.run_file(str(self.unpacked_path / 'Lua/CommonLua/Core/ConstDef.lua'))
         self.run_lua_files(lua, base_folder, folder, extra_files)
         lua_classes = lua.run('return DefineClass')
-        # return self.recursive_Table_to_python_dict(lua_classes)
         result = self.recursive_Table_to_tree(lua_classes)
         return result
 
@@ -158,41 +201,107 @@ end''')
 
     def run_lua_files(self, lua: Lua, base_folder: Path | Any, file_or_folder: str,
                       extra_files: list[str | Path] | None):
+        missing_functions = []
+        missing_objects = []
         if extra_files is None:
             files = []
         else:
             files = [base_folder / file for file in extra_files]
         if file_or_folder.endswith('.lua'):
             files.append(base_folder / file_or_folder)
+            for file in self.unpacked_path.glob(f'DLC/*/Code/{file_or_folder}'):
+                if file not in files:
+                    files.append(file)
         else:
             for file in (base_folder / file_or_folder).glob('*.lua'):
                 if file not in files:
                     files.append(file)
+            for file in self.unpacked_path.glob(f'DLC/*/Code/{file_or_folder}/*.lua'):
+                if file not in files:
+                    files.append(file)
         for file in files:
-            if file.name.startswith('_'):
-                continue
+            # if file.name.startswith('_'):
+            #     continue
             try:
                 lua.run_file(str(file))
             except Exception as e:
+                match = re.search(r"attempt to call a nil value \(global '([^']+)'", str(e))
+                if match is not None:
+                    missing_functions.append(match.group(1))
+                else:
+                    match = re.search(r"a nil value \(global '([^']+)'", str(e))
+                    if match is not None:
+                        missing_objects.append(match.group(1))
                 print(f'Error in file {str(file)}')
                 print(e)
+        print('Missing functions:', missing_functions)
+        print('Missing objects:', missing_objects)
+
+    def _get_building_data_with_parents(self, building: str, data_sources: list[Tree], processed_classes: dict[str, Tree], parents_in_this_recursion = None) -> Tree:
+        if building in processed_classes:
+            return processed_classes[building]
+        if parents_in_this_recursion is None:
+            parents_in_this_recursion = []
+        else:
+            if building in parents_in_this_recursion:
+                return Tree({})
+        parents_in_this_recursion = parents_in_this_recursion + [building]
+        data = Tree({})
+        for data_source in data_sources:
+            if building in data_source:
+                parent_data = Tree({})
+                building_data_from_one_source = Tree(data_source[building].dictionary.copy())
+                if '__parents' in building_data_from_one_source:
+                    for parent in list(building_data_from_one_source['__parents']):
+                        if isinstance(parent, tuple):
+                            parent = parent[1]
+                        new_parent_data = self._get_building_data_with_parents(parent, data_sources, processed_classes, parents_in_this_recursion)
+                        try:
+                            parent_data.update(new_parent_data)
+                        except Exception:
+                            parent_data.dictionary.update(new_parent_data.dictionary)
+                    try:
+                        building_data_from_one_source = parent_data.update(building_data_from_one_source)
+                    except Exception:
+                        parent_data.dictionary.update(building_data_from_one_source.dictionary)
+                        building_data_from_one_source = parent_data
+                data.update(building_data_from_one_source)
+        processed_classes[building] = data
+        return data
 
     @cached_property
     def buildings(self) -> dict[str, Building]:
         buildings = {}
-        # TODO read all files from the Buildings folder(Lua/Lua/Buildings)
-        lua_data = self.read_lua_classes('BuildingTemplate', extra_files=['Passage.lua'])
-        for building, data in lua_data:
+        building_template_data = self.read_lua_classes('BuildingTemplate', extra_files=['Passage.lua'])
+        buildings_data = self.read_lua_classes('Buildings')
+        processed_classes = {}
+        for building in building_template_data.keys():
+            data = self._get_building_data_with_parents(building, [building_template_data, buildings_data], processed_classes)
 
             if 'display_icon' in data:
                 icon = data['display_icon']
-            elif 'object_class' in data and data['object_class'] in lua_data and 'display_icon' in lua_data[data['object_class']]:
-                icon = lua_data[data['object_class']]['display_icon']
+            elif 'object_class' in data and data['object_class'] in building_template_data and 'display_icon' in building_template_data[data['object_class']]:
+                icon = building_template_data[data['object_class']]['display_icon']
             else:
                 icon = None
-
+            if 'name' in data:
+                del data['name']
+            if 'icon' in data:
+                del data['icon']
             buildings[building] = Building(building, icon=icon, **data)
         return buildings
+
+    @cached_property
+    def crops(self) -> dict[str, Crop]:
+        crops = {}
+        for crop, data in self.read_place_obj('CropPreset', 'CropPreset.lua'):
+            if 'Desc' in data:
+                data['description'] = data['Desc']
+            display_name = data['DisplayName']
+            crops[crop] = Crop(crop, display_name, **data)
+
+        return crops
+
 
     @cached_property
     def laws(self) -> dict[str, Law]:
@@ -212,7 +321,7 @@ end''')
     @cached_property
     def units(self) -> dict[str, Unit]:
         units = {}
-        lua_data = self.read_lua_classes('Units', extra_files=[ 'Interests.lua', 'Flight.lua', 'Buildings/BaseRover.lua', 'Units/DroneBase.lua', 'Units/Drone.lua', 'Units/Colonist.lua'])
+        lua_data = self.read_lua_classes('Units', extra_files=[ 'Interests.lua', 'Flight.lua', 'Buildings/BaseRover.lua', 'Units/DroneBase.lua', 'Units/Drone.lua', 'Units/Colonist.lua', 'Buildings/ShuttleHub.lua'])
         for unit, data in lua_data:
             if unit.startswith('Base') or 'display_name' not in data or not data['display_name']:
                 continue
@@ -240,12 +349,18 @@ end''')
             entity.get_wiki_image_file_reference()
             for entity_attribute in [
                 self.buildings,
-                # self.laws,
-                # self.technologies,
+                self.crops,
+                self.laws,
+                self.technologies,
                 self.units,
             ]
             for entity in entity_attribute.values()
         ]
+        # building upgrade icons
+        for building in self.buildings.values():
+            for upgrade in building.upgrades:
+                image_file_references.append(upgrade.get_wiki_image_file_reference())
+
         all_main_filenames = [
             entity.get_wiki_image_file_reference().wiki_filename.casefold()
             for entity_attribute in [
