@@ -391,6 +391,14 @@ class TreeWithDuplicates(Tree):
         super().__init__(dictionary)
         self.ordered_pairs = ordered_pairs
 
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        self.ordered_pairs = [(k, v) for k, v in self.ordered_pairs if k != key]
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self.ordered_pairs.append((key, value))
+
     def iterate_with_duplicates(self) -> Iterator[tuple[str, Any]]:
         """iterates over the items in this tree as tuples of key value pairs
 
@@ -399,3 +407,11 @@ class TreeWithDuplicates(Tree):
         makes them appear together even if the there were other keys inbetween
         """
         return iter(self.ordered_pairs)
+
+    def update(self, other: 'Tree') -> 'Tree':
+        if isinstance(other, TreeWithDuplicates):
+            self.ordered_pairs.extend(other.ordered_pairs)
+        else:
+            for key, value in other:
+                self.ordered_pairs.append((key, value))
+        return super().update(other)
