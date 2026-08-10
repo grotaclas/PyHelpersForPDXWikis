@@ -162,7 +162,11 @@ class CargoDataGenerator(Eu5FileGenerator):
             # court_language: <class 'eu5.eu5lib.Language'>
             'currency_data': ';'.join([currency_value.format() for currency_value in country.currency_data]),
             'difficulty': country.difficulty,  # difficulty: <class 'int'>
-            'dynasty': country.dynasty,  # dynasty: <class 'str'>
+            'dynasty': ';'.join([
+                dynasty.display_name
+                if dynasty else ''
+                for dynasty in country.dynasty
+            ]),
             'formable_level': country.formable_level,  # formable_level: <class 'int'>
             'is_historic': 1 if country.is_historic else 0,  # is_historic: <class 'bool'>
 

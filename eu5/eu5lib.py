@@ -893,7 +893,7 @@ class Country(Eu5AdvancedEntity):
     discovered_areas: list[Area] = []
     discovered_provinces: list[Province] = []
     discovered_regions: list[Region] = []
-    dynasty: str = ''
+    dynasty: list['Dynasty'] = []
     flag: 'CoatOfArms' = None
     government: Tree  # @TODO: government parsing
     # government.type: 'GovernmentType'

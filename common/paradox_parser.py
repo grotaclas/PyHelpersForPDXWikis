@@ -197,7 +197,7 @@ class ParadoxParser:
                     pairs_as_dict[key].append(value)
                 else:
                     pairs_as_dict[key] = [pairs_as_dict[key], value]
-                seen_duplicates.add(key)
+                    seen_duplicates.add(key)
             else:
                 pairs_as_dict[key] = value
 
@@ -322,6 +322,8 @@ class Tree(MutableMapping):
                         self[key].update(value)
                     elif isinstance(self[key], list) and len(self[key]) == 0:
                         self[key] = value
+                    elif isinstance(self[key], list) and isinstance(self[key][0], Tree):
+                        self[key].append(value)
                     else:
                         raise Exception(f'mismatching types for key "{key}" when updating tree. The value from this tree is a "{type(self[key])}" and the value from the other tree is a "{type(value)}".')
                 elif isinstance(value, MutableMapping):
@@ -398,6 +400,12 @@ class TreeWithDuplicates(Tree):
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
         self.ordered_pairs.append((key, value))
+
+    def __getstate__(self):
+        return self.dictionary, self.ordered_pairs
+
+    def __setstate__(self, state):
+        self.dictionary, self.ordered_pairs = state
 
     def iterate_with_duplicates(self) -> Iterator[tuple[str, Any]]:
         """iterates over the items in this tree as tuples of key value pairs

@@ -11,7 +11,7 @@ from common.file_generator import FileGenerator
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NE, AE, ME
-from common.paradox_parser import ParsingWorkaround, ScriptedWorkaround
+from common.paradox_parser import ParsingWorkaround, ScriptedWorkaround, TreeWithDuplicates
 from eu5.localization import Eu5Localizer
 
 
@@ -357,7 +357,7 @@ class Eu5Parser(JominiParser):
         country_data: Tree
         for tag, country_data in countries_from_ingame_setup:
             if tag in self.setup_data['countries']['countries']:
-               country_data.update(self.setup_data['countries']['countries'][tag])
+                country_data.update(self.setup_data['countries']['countries'][tag])
 
         return self.parse_advanced_entities(countries_from_ingame_setup, Country,
                                             transform_value_functions={
@@ -402,7 +402,7 @@ class Eu5Parser(JominiParser):
                                       )
 
     def _fix_law_value(self, law_value):
-        if isinstance(law_value, list):
+        if isinstance(law_value, list) and (len(law_value) == 0 or not isinstance(law_value[0], str)):
             law_value = Tree({law_key: law_value
                               for law_tree in law_value
                               for law_key, law_value in law_tree})
@@ -423,8 +423,8 @@ class Eu5Parser(JominiParser):
 
     def _resolve_includes(self, data: Tree, templates, other_templates, recursive=False):
         if 'include' in data or recursive:
-            new_template = Tree({})
-            for key, value in data:
+            new_template = TreeWithDuplicates({}, [])
+            for key, value in data.iterate_with_duplicates():
                 if key == 'include':
                     if not isinstance(value, list):
                         value = [value]
@@ -433,7 +433,8 @@ class Eu5Parser(JominiParser):
                             included_data = templates[include_file]
                         else:
                             included_data = other_templates[include_file]
-                        new_template.update(copy.deepcopy(included_data))
+                        deepcopy = copy.deepcopy(included_data)
+                        new_template.update(deepcopy)
                 elif key in new_template:
                     if isinstance(value, Tree) or isinstance(value, MutableMapping):
                         new_template[key].update(value)
@@ -447,9 +448,12 @@ class Eu5Parser(JominiParser):
                         pass
                     else:
                         new_template[key] = value
+
                 else:
                     if key in ['laws', 'government']:
                         value = self._fix_law_value(value)
+                    elif key == 'dynasty' and not isinstance(value, list):
+                        value = [value]
                     if isinstance(value, Tree):
                         new_template[key] = self._resolve_includes(value, templates, other_templates, recursive)
                     else:
