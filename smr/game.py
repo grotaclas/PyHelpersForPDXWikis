@@ -1,6 +1,7 @@
 from functools import cached_property
 from pathlib import Path
 
+from PyHelpersForPDXWikis.localsettings import SMR_UNPACKED_DIR
 from common.paradox_lib import Game
 
 
@@ -8,10 +9,11 @@ class SurvivingMarsRelaunched(Game):
     """Never construct this object manually. Use the variable survivingmarsrelaunchedgame instead.
     This way all data can be cached without having to pass on references to the game or the parser"""
     name = 'Surviving Mars: Relaunched'
+    alternative_name = 'Surviving Mars Relaunched'
     short_game_name = 'smr'
     wiki_domain = 'survivingmars.paradoxwikis.com'
 
-    unpacked_path: Path = None
+    unpacked_path: Path = SMR_UNPACKED_DIR
 
     @cached_property
     def parser(self):

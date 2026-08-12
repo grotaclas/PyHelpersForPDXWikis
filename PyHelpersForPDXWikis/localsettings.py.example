@@ -65,6 +65,13 @@ CK3DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Crusader Kings III'
 # CK3DIR = Path('~/.steam/steam/steamapps/common/Crusader Kings III').expanduser()           # linux
 # CK3DIR = Path('~/Library/Application Support/Steam/steamapps/common/Crusader Kings III').expanduser() # macOS
 
+# the folder where the surviving mars remastered fpk files have been unpacked
+# This can be done with the console script posted at https://forum.paradoxplaza.com/forum/threads/open-fpk.1877199/post-31119878
+SMR_UNPACKED_DIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Project Spark/Unpacks')            # windows
+# SMR_UNPACKED_DIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Project Spark/Unpacks') # cygwin
+# SMR_UNPACKED_DIR = Path('~/.steam/steam/steamapps/common/Project Spark/Unpacks').expanduser()           # linux
+# SMR_UNPACKED_DIR = Path('~/Library/Application Support/Steam/steamapps/common/Project Spark/Unpacks').expanduser() # macOS
+
 # the folder where Stellaris is installed
 STELLARISDIR = Path('c:/Program Files (x86)/Steam/steamapps/common/Stellaris')            # windows
 # STELLARISDIR = Path('/cygdrive/c/Program Files (x86)/Steam/steamapps/common/Stellaris') # cygwin
