@@ -527,7 +527,7 @@ class Advance(Eu5AdvancedEntity):
         else:
             localized_name_param = f'|{self.display_name}'
 
-        return f'{{{{Advance|{self.get_wiki_filename().removesuffix(".png")}{localized_name_param}|w={size}}}}}'
+        return f'{{{{Advance icon|{self.get_wiki_filename().removesuffix(".png")}{localized_name_param}|w={size}}}}}'
 
 
 class Resource(IconMixin):
