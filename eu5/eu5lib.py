@@ -483,11 +483,11 @@ class Advance(Eu5AdvancedEntity):
     unlock_levy: list['Levy'] = []
     unlock_policy: list['LawPolicy'] = []
     unlock_production_method: list['ProductionMethod'] = []
+    unlock_relation_type: list['ScriptedRelation'] = []
     unlock_road_type: list['RoadType'] = []
     unlock_subject_type: list['SubjectType'] = []
+    unlock_town_rights: list['TownRights'] = []
     unlock_unit: list['UnitType'] = []
-    #TODO introduce class 'TownRights'
-    unlock_town_rights: list[str] = []
 
     icon_folder = 'ADVANCE_ICON_PATH'
 
@@ -529,6 +529,17 @@ class Advance(Eu5AdvancedEntity):
 
         return f'{{{{Advance icon|{self.get_wiki_filename().removesuffix(".png")}{localized_name_param}|w={size}}}}}'
 
+
+def UnlockedByMixin(unlock_key: str):
+    class _:
+        @cached_property
+        def unlocked_by(self) -> list[Advance]:
+            return [
+                advance
+                for advance in eu5game.parser.advances.values()
+                if self in getattr(advance, unlock_key)
+            ]
+    return _
 
 class Resource(IconMixin):
     pass
@@ -730,7 +741,7 @@ class NoPrice(Price):
         return ''
 
 
-class ProductionMethod(NameableEntity):
+class ProductionMethod(NameableEntity, UnlockedByMixin('unlock_production_method')):
     category: str
     input: list[Cost]
     no_upkeep: bool = False
@@ -784,7 +795,7 @@ class Age(Eu5AdvancedEntity):
 class BuildingCategory(Eu5AdvancedEntity):
     icon_folder = 'building_categories'
 
-class Building(Eu5AdvancedEntity):
+class Building(Eu5AdvancedEntity, UnlockedByMixin('unlock_building')):
     AI_ignore_available_worker_flag: bool = False
     AI_optimization_flag_coastal: bool = False
     ai_foreign_ignore_naval_range: bool = False
@@ -1027,7 +1038,7 @@ class Dynasty(Eu5AdvancedEntity):
     male_names: list[str] = []
 
 
-class EstatePrivilege(Eu5AdvancedEntity):
+class EstatePrivilege(Eu5AdvancedEntity, UnlockedByMixin('unlock_estate_privilege')):
     estate: Estate
 
     potential: Trigger = None
@@ -1053,7 +1064,7 @@ class EstatePrivilege(Eu5AdvancedEntity):
         return 'Privilege'
 
 
-class HeirSelection(Eu5AdvancedEntity):
+class HeirSelection(Eu5AdvancedEntity, UnlockedByMixin('unlock_heir_selection')):
     all_in_country: bool = None
     all_in_dynasty: bool = None
     allow_children: bool = None
@@ -1222,7 +1233,7 @@ class Language(Eu5AdvancedEntity):
 
 
 
-class LawPolicy(Eu5AdvancedEntity):
+class LawPolicy(Eu5AdvancedEntity, UnlockedByMixin('unlock_policy')):
     law: 'Law'
     allow: Trigger = None
     country_modifier: list[Eu5Modifier]
@@ -1267,7 +1278,7 @@ class LawPolicy(Eu5AdvancedEntity):
         return self.law.get_wiki_link_target()
 
 
-class Law(Eu5AdvancedEntity):
+class Law(Eu5AdvancedEntity, UnlockedByMixin('unlock_law')):
     allow: Trigger = None  # trigger
     custom_tags: list[str] = []
     has_levels: bool = False
@@ -1864,7 +1875,7 @@ class Bias(Eu5AdvancedEntity):
     yearly_decay: float = None
     yearly_gain: float = 0
     years: int = 0
-class CabinetAction(Eu5AdvancedEntity):
+class CabinetAction(Eu5AdvancedEntity, UnlockedByMixin('unlock_cabinet_action')):
     ability: str
     ai_will_do: ScriptValue = None
     allow: Trigger = None
@@ -1888,7 +1899,7 @@ class CabinetAction(Eu5AdvancedEntity):
     years: int = 0
     icon_folder = 'CABINET_ACTION_ICON_PATH' # 52 / 63 icons found
     # icon_folder = 'modifier_types' # 19 / 63 icons found
-class CasusBelli(Eu5AdvancedEntity):
+class CasusBelli(Eu5AdvancedEntity, UnlockedByMixin('unlock_casus_belli')):
     additional_war_enthusiasm: ScriptValue = None
     additional_war_enthusiasm_attacker: ScriptValue = None
     additional_war_enthusiasm_defender: ScriptValue = None
@@ -1927,7 +1938,7 @@ class CoatOfArms(Eu5AdvancedEntity):
     pattern: str = ''
     sub: Tree = None
     textured_emblem: list[Tree] = []
-class CharacterInteraction(Eu5AdvancedEntity):
+class CharacterInteraction(Eu5AdvancedEntity, UnlockedByMixin('unlock_interaction')):
     ai_tick: Any = None # possible types(out of 27): <class 'str'>(26), list[str](1)
     ai_tick_frequency: int = 0
     ai_will_do: ScriptValue = None
@@ -1950,13 +1961,13 @@ class ChildEducation(Eu5AdvancedEntity):
     modifier: list[Eu5Modifier]
     price_to_deselect: Price = None
     price_to_select: Price = None
-class ChivalricOrder(Eu5AdvancedEntity):
+class ChivalricOrder(Eu5AdvancedEntity, UnlockedByMixin('unlock_chivalric_order')):
     character_eligible: Trigger
     character_modifier: list[Eu5Modifier]
     country_modifier: list[Eu5Modifier]
     potential: Trigger = None
     icon_folder = 'CHIVALRIC_ORDER_ICON_PATH' # 15 / 15 icons found
-class CountryInteraction(Eu5AdvancedEntity):
+class CountryInteraction(Eu5AdvancedEntity, UnlockedByMixin('unlock_country_interaction')):
     accept: ScriptValue = None
     ai_limit_per_check: int = 0
     ai_prerequisite: Trigger = None
@@ -2177,7 +2188,7 @@ class God(Eu5AdvancedEntity):
     icon_folder = 'GOD_ICON_PATH' # 23 / 112 icons found
 class GoodsDemandCategory(Eu5AdvancedEntity):
     display: Any # possible types(out of 4): <class 'str'>(3), <class 'eu5.eu5lib.AttributeColumn'>(1), <class 'eu5.eu5lib.Eu5GameConcept'>(1)
-class GovernmentReform(Eu5AdvancedEntity):
+class GovernmentReform(Eu5AdvancedEntity, UnlockedByMixin('unlock_government_reform')):
     age: Age = None
     allow: Trigger = None
     block_for_rebel: bool = False
@@ -2253,7 +2264,7 @@ class InternationalOrganizationSpecialStatus(Eu5AdvancedEntity):
     priority: int
     special_status_power: Any = None # possible types(out of 16): <class 'eu5.eu5lib.ScriptValue'>(15), <class 'eu5.eu5lib.Eu5GameConcept'>(1), <class 'eu5.eu5lib.Eu5ModifierType'>(1), <class 'eu5.eu5lib.TriggerLocalization'>(1)
     icon_folder = 'INTERNATIONAL_ORGANIZATION_SPECIAL_STATUS_ICON_PATH' # 23 / 24 icons found
-class Levy(Eu5AdvancedEntity):
+class Levy(Eu5AdvancedEntity, UnlockedByMixin('unlock_levy')):
     allow: Trigger = None
     allow_as_crew: Trigger = None
     allowed_culture: list[Culture] = []
@@ -2411,7 +2422,7 @@ class Resolution(Eu5AdvancedEntity):
 
 class RivalCriteria(Eu5AdvancedEntity):
     enabled: Trigger
-class RoadType(Eu5AdvancedEntity):
+class RoadType(Eu5AdvancedEntity, UnlockedByMixin('unlock_road_type')):
     build_time_per_unit_distance: int
     color: PdxColor
     construction_demand: GoodsDemand
@@ -2461,7 +2472,7 @@ class ScriptedDiplomaticObjective(Eu5AdvancedEntity):
     recipient_priority: ScriptValue
     recipient_trigger: Trigger
     spy_network_target: int = 0
-class ScriptedRelation(Eu5AdvancedEntity):
+class ScriptedRelation(Eu5AdvancedEntity, UnlockedByMixin('unlock_relation_type')):
     annulled_by_peace_treaty: bool = False
     block_building: bool = False
     block_when_at_war: bool = None
@@ -2636,7 +2647,7 @@ class SubjectMilitaryStance(Eu5AdvancedEntity):
     support_armies_priority: int
     support_sieges_priority: int = None
     suppress_rebel_priority: int
-class SubjectType(Eu5AdvancedEntity):
+class SubjectType(Eu5AdvancedEntity, UnlockedByMixin('unlock_subject_type')):
     ai_wants_to_be_overlord: ScriptValue = None
     allow_declaring_wars: bool = False
     annexation_min_opinion: int = 0
@@ -2698,6 +2709,14 @@ class SubjectType(Eu5AdvancedEntity):
     visible_through_treaty: Trigger = None
     war_score_cost: float = 0
     icon_folder = 'SUBJECT_TYPES_ICON_PATH' # 19 / 19 icons found
+class TownRights(Eu5AdvancedEntity, UnlockedByMixin('unlock_town_rights')):
+    allow: Trigger = None
+    color: PdxColor
+    country_modifier: list[Eu5Modifier] = []
+    kept_at_conquest: bool = True
+    location_modifier: list[Eu5Modifier]
+    potential: Trigger = None
+    icon_folder = 'TOWN_RIGHTS_ICON_PATH' # 42 / 50 icons found
 class TownSetup(Eu5AdvancedEntity):
     building_counts: dict[Building, int]  # TODO: parsing
 class Trait(Eu5AdvancedEntity):
@@ -2718,7 +2737,7 @@ class TriggerLocalization(Eu5AdvancedEntity):
     none_not: str = ''
     third: str = '' # possible types(out of 1252): <class 'str'>(1252), <class 'eu5.eu5lib.TriggerLocalization'>(4)
     third_not: str = ''
-class UnitAbility(Eu5AdvancedEntity):
+class UnitAbility(Eu5AdvancedEntity, UnlockedByMixin('unlock_ability')):
     ai_will_do: ScriptValue = None
     ai_will_revoke: ScriptValue = None
     allow: Trigger
@@ -2788,7 +2807,7 @@ class UnitCategory(Eu5AdvancedEntity):
             return 'Navy'
 
 
-class UnitType(Eu5AdvancedEntity):
+class UnitType(Eu5AdvancedEntity, UnlockedByMixin('unlock_unit')):
     age: Age = None
     artillery_barrage: int = 0
     attrition_loss: float = 0

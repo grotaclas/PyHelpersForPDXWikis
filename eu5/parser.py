@@ -1438,6 +1438,12 @@ class Eu5Parser(JominiParser):
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 19/19 Examples: {'trade_company_desc': "A $trade_company$ is an investment conglomerate, directed at incurring monetary benefits for itself and its [overlord|e]. They are always a [ShowGovernmentTypeName('republic')] and get increased [ShowModifierTypeName('trade_efficiency')], as well as increased payment obligations to their overlord compared to a regular [ShowSubjectTypeName('vassal')].", 'dominion_desc': "A $dominion$ is a self-governed [subject|e] with relative autonomy, exclusive for a [ShowGovernmentTypeName('monarchy')] of the same [religion_group|e] as the [overlord|e]. Additionally, to be able to create a $dominion$, both countries must be in a [union|e] or the overlord must be either $ENG$ or $GBR$. A $dominion$ enjoys increased [ShowModifierTypeName('country_cabinet_efficiency')], a bigger increase compared to a regular [ShowSubjectTypeName('vassal')]."}
                                             )
     @cached_property
+    def town_rights(self) -> dict[str, TownRights]:
+        return self.parse_advanced_entities('in_game/common/town_rights', TownRights,
+                                            # localization_prefix='', localization_suffix='', # Used in 50/50 Examples: {'ville_franche_town_rights': 'Ville Franche Rights', 'mining_charter': 'Mining Charter'}
+                                            description_localization_prefix='', description_localization_suffix='_desc',  # Used in 50/50 Examples: {'royal_textile_rights_desc': "This [location|e] has been granted legal privileges over the production and distribution of [ShowGoodsName('cloth')] and [ShowGoodsName('fine_cloth')], conferring a significant competitive advantage.", 'fuero_de_aragon_town_rights_desc': 'The $fuero_de_aragon_town_rights$ compiled the various municipal rights that spread throughout $aragon_area$ during its expansion. Therefore, they are rigorously defended by both the $nobles_estate$ and the $peasants_estate$.'}
+                                            )
+    @cached_property
     def town_setups(self) -> dict[str, TownSetup]:
         return self.parse_advanced_entities('in_game/common/town_setups', TownSetup)
     @cached_property

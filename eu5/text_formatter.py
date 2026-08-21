@@ -120,6 +120,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                 'policy': self.parser.law_policies,
                 'religion': self.parser.religions,
                 'religion_group': self.parser.religion_groups,
+                'town_rights_type': self.parser.town_rights,
             }
             if typ in type_sources and value_without_prefix_and_suffix in type_sources[typ]:
                 value = type_sources[typ][value_without_prefix_and_suffix]
