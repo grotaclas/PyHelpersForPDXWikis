@@ -7,7 +7,7 @@ from typing import Any, Iterable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from common.paradox_lib import unsorted_groupby
 from eu5.eu5_file_generator import Eu5FileGenerator
-from eu5.eu5lib import Country, Event, EventFile
+from eu5.eu5lib import Country, Event, EventFile, Advance
 
 
 class CargoDataGenerator(Eu5FileGenerator):
@@ -29,9 +29,75 @@ class CargoDataGenerator(Eu5FileGenerator):
             lines.append(self.formatter.create_section_heading(display_name, include_header_level))
         lines.append(f'{{{{{template_name}')
         for column, value in item_data.items():
-            lines.append(f'|{column}={value}')
+            if value is not None:  # skip None values so that cargo stores them as NULL in the DB
+                lines.append(f'|{column}={value}')
         lines.append('}}')
         return '\n'.join(lines)
+
+    def generate_advances_cargo(self):
+        result = []
+        for age, cargo_data in self.get_advances_cargo_by_ages().items():
+            result.append(f'== {self.parser.age[age]} ==')
+            result.append(cargo_data)
+        return result
+
+    def get_advances_cargo_by_ages(self):
+        cargo_data = {}
+        advances: list[Advance]
+        for initial, advances in unsorted_groupby(
+                self.parser.advances.values(),
+                key=lambda a: a.age.name):
+            advances_cargo_templates = []
+            for advance in sorted(advances, key=attrgetter('display_name')):
+                advances_cargo_templates.append(self.get_advances_cargo(advance, 3))
+            cargo_data[initial] = '\n'.join(advances_cargo_templates)
+        return cargo_data
+
+    def get_advances_cargo(self, advance: Advance, include_header_level: int = None):
+        advance_data_for_cargo = {
+            'name': advance.name,
+            'display_name': advance.display_name,
+            'description': advance.description,
+            'icon': advance.get_wiki_filename(),
+            'age': advance.age.display_name if advance.age else '',  # age: <class 'eu5.eu5lib.Age'>
+            'ai_preference_tags': ';'.join([ai_preference_tags for ai_preference_tags in advance.ai_preference_tags]),  # ai_preference_tags: list[str]
+            'ai_weight': '' if advance.ai_weight is None else advance.ai_weight.format() if hasattr(advance.ai_weight, 'format') else advance.ai_weight,  # ai_weight: <class 'eu5.eu5lib.ScriptValue'>
+            'allow': self.formatter.format_trigger(advance.allow),  # allow: <class 'eu5.trigger.Trigger'>
+            'allow_children': 1 if advance.allow_children else 0,  # allow_children: <class 'bool'>
+            'content_priority': advance.content_priority,  # content_priority: <class 'int'>
+            'country_type': '' if advance.country_type is None else advance.country_type,  # country_type: <class 'str'>
+            'depth': advance.depth,  # int, but can be None
+            'age_specialization': '' if advance.age_specialization is None else advance.age_specialization,  # age_specialization: <class 'str'>
+            'government': advance.government.display_name if advance.government else '',  # government: <class 'eu5.eu5lib.GovernmentType'>
+            'modifier_while_progressing': self.format_modifier_section('modifier_while_progressing', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
+            'potential': self.formatter.format_trigger(advance.potential),  # potential: <class 'eu5.trigger.Trigger'>
+            'requires': ';'.join([requires.name for requires in advance.requires]),  # requires: list[str]
+            'in_tree_of': advance.in_tree_of,  # in_tree_of: <class 'str'>
+            'research_cost': advance.research_cost,  # float, but can be None
+            'starting_technology_level': advance.starting_technology_level,  # int, default 0
+            'tags': ';'.join(advance.tags),
+            'unlock_ability': ';'.join([unlock_ability.display_name for unlock_ability in advance.unlock_ability]),  # unlock_ability: list[eu5.eu5lib.UnitAbility]
+            'unlock_building': ';'.join([unlock_building.display_name for unlock_building in advance.unlock_building]),  # unlock_building: list[eu5.eu5lib.Building]
+            'unlock_cabinet_action': ';'.join([unlock_cabinet_action.display_name for unlock_cabinet_action in advance.unlock_cabinet_action]),  # unlock_cabinet_action: list[eu5.eu5lib.CabinetAction]
+            'unlock_casus_belli': ';'.join([unlock_casus_belli.display_name for unlock_casus_belli in advance.unlock_casus_belli]),  # unlock_casus_belli: list[eu5.eu5lib.CasusBelli]
+            'unlock_chivalric_order': ';'.join([unlock_chivalric_order.display_name for unlock_chivalric_order in advance.unlock_chivalric_order]),  # unlock_chivalric_order: list[eu5.eu5lib.ChivalricOrder]
+            'unlock_country_interaction': ';'.join([unlock_country_interaction.display_name for unlock_country_interaction in advance.unlock_country_interaction]),  # unlock_country_interaction: list[eu5.eu5lib.CountryInteraction]
+            'unlock_diplomacy': ';'.join([unlock_diplomacy.display_name if unlock_diplomacy else '' for unlock_diplomacy in advance.unlock_diplomacy]),  # unlock_diplomacy: list[eu5.eu5lib.Eu5GameConcept]
+            'unlock_estate_privilege': ';'.join([unlock_estate_privilege.display_name for unlock_estate_privilege in advance.unlock_estate_privilege]),  # unlock_estate_privilege: list[eu5.eu5lib.EstatePrivilege]
+            'unlock_government_reform': ';'.join([unlock_government_reform.display_name for unlock_government_reform in advance.unlock_government_reform]),  # unlock_government_reform: list[eu5.eu5lib.GovernmentReform]
+            'unlock_heir_selection': ';'.join([unlock_heir_selection.display_name for unlock_heir_selection in advance.unlock_heir_selection]),  # unlock_heir_selection: list[eu5.eu5lib.HeirSelection]
+            'unlock_interaction': ';'.join([unlock_interaction.display_name for unlock_interaction in advance.unlock_interaction]),  # unlock_interaction: list[eu5.eu5lib.CharacterInteraction]
+            'unlock_law': ';'.join([unlock_law.display_name for unlock_law in advance.unlock_law]),  # unlock_law: list[eu5.eu5lib.Law]
+            'unlock_levy': ';'.join([unlock_levy.display_name if unlock_levy else '' for unlock_levy in advance.unlock_levy]),  # unlock_levy: list[eu5.eu5lib.Levy]
+            'unlock_policy': ';'.join([unlock_policy.display_name if unlock_policy else '' for unlock_policy in advance.unlock_policy]),  # unlock_policy: list[eu5.eu5lib.LawPolicy]
+            'unlock_production_method': ';'.join([unlock_production_method.display_name for unlock_production_method in advance.unlock_production_method]),  # unlock_production_method: list[eu5.eu5lib.ProductionMethod]
+            'unlock_road_type': ';'.join([unlock_road_type.display_name for unlock_road_type in advance.unlock_road_type]),  # unlock_road_type: list[eu5.eu5lib.RoadType]
+            'unlock_subject_type': ';'.join([unlock_subject_type.display_name for unlock_subject_type in advance.unlock_subject_type]),  # unlock_subject_type: list[eu5.eu5lib.SubjectType]
+            'unlock_unit': ';'.join([unlock_unit.display_name for unlock_unit in advance.unlock_unit]),  # unlock_unit: list[eu5.eu5lib.UnitType]
+            'unlock_town_rights': ';'.join([unlock_town_rights.display_name for unlock_town_rights in advance.unlock_town_rights]),  # unlock_town_rights: list[str]
+        }
+
+        return self.create_cargo_template_call('Advance', advance_data_for_cargo, include_header_level)
 
     def generate_building_table_cargo(self):
         sorted_buildings = sorted(
