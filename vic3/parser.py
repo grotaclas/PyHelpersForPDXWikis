@@ -233,7 +233,9 @@ class Vic3Parser(JominiParser):
     @cached_property
     def state_population(self) -> dict[str, int]:
         state_populations = {}
-        for name_with_s, state in self.parser.parse_folder_as_one_file('common/history/pops', overwrite_duplicate_toplevel_keys=False)['POPS']:
+        for name_with_s, state in self.parser.parse_folder_as_one_file(
+                'common/history/pops',
+                overwrite_duplicate_keys_at_level=None)['POPS']:
             state_name = name_with_s.removeprefix('s:')
             state_populations[state_name] = 0
             for region_state_name, region_state in state:

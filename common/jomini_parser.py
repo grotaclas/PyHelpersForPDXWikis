@@ -85,16 +85,17 @@ class JominiParser(metaclass=ABCMeta):
             extra_data_functions['display_name'] = lambda entity_name, entity_data: self.localize(localization_prefix + entity_name + localization_suffix)
         class_attributes = entity_class.all_annotations()
         if entity_level == 0:
-            overwrite_duplicate_toplevel_keys = True
+            overwrite_duplicate_keys_at_level = 0
         else:
-            overwrite_duplicate_toplevel_keys = False
+            overwrite_duplicate_keys_at_level = None
         if isinstance(folder, Tree):
             tree = folder
         elif folder.endswith('.txt'):
             tree = self.parser.parse_file(folder, workarounds=parsing_workarounds)
         else:
-            tree = self.parser.parse_folder_as_one_file(folder, overwrite_duplicate_toplevel_keys=overwrite_duplicate_toplevel_keys,
-                                                    workarounds=parsing_workarounds)
+            tree = self.parser.parse_folder_as_one_file(folder,
+                                                        overwrite_duplicate_keys_at_level=overwrite_duplicate_keys_at_level,
+                                                        workarounds=parsing_workarounds)
         entities = self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
                                                  previous_headings=[],
                                                  transform_value_functions=transform_value_functions,

@@ -395,11 +395,14 @@ class Eu5Parser(JominiParser):
         for filename, template in template_data_without_include.items():
             template_data[filename] = self._resolve_includes(template, template_data, template_data_without_include)
 
-        return self._resolve_includes(self._fix_law_values(self.parser.parse_folder_as_one_file('main_menu/setup/start/', overwrite_duplicate_toplevel_keys=False)),
-                                      template_data,
-                                      other_templates={},
-                                      recursive=True
-                                      )
+        return self._resolve_includes(self._fix_law_values(self.parser.parse_folder_as_one_file(
+            'main_menu/setup/start/',
+            overwrite_duplicate_keys_at_level=None
+        )),
+            template_data,
+            other_templates={},
+            recursive=True
+        )
 
     def _fix_law_value(self, law_value):
         if isinstance(law_value, list) and (len(law_value) == 0 or not isinstance(law_value[0], str)):
@@ -482,14 +485,20 @@ class Eu5Parser(JominiParser):
 
     @cached_property
     def defines(self):
-        # TODO: add defines from jomini folder
         class DoubleSlashCommentWorkaround(ParsingWorkaround):
             """removes lines which start with spaces and //
             they are not valid paradox script and cause a debug message when loading, but the defines have them
             """
             replacement_regexes = {r'(?m)^\s*//.*$': ''}
 
-        return self.parser.parse_folder_as_one_file('loading_screen/common/defines', workarounds=[DoubleSlashCommentWorkaround()]).merge_duplicate_keys()
+        jomini_defines = self.parser.parse_folder_as_one_file('../jomini/*/common/defines',
+                                                    workarounds=[DoubleSlashCommentWorkaround()],
+                                                    overwrite_duplicate_keys_at_level=1,
+                                                    ).merge_duplicate_keys()
+        return jomini_defines.update(self.parser.parse_folder_as_one_file('*/common/defines',
+                                                    workarounds=[DoubleSlashCommentWorkaround()],
+                                                    overwrite_duplicate_keys_at_level=1,
+                                                    ).merge_duplicate_keys(), overwrite_duplicate_keys_at_level=1)
 
     def get_define(self, define: str):
         """get a define by its game syntax e.g. NGame.START_DATE"""

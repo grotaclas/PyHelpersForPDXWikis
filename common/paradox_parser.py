@@ -98,7 +98,8 @@ class ParadoxParser:
 
     def parse_folder_as_one_file(self, folder: str, recursive=True, file_extension='txt',
                                  workarounds: list[ParsingWorkaround] = None,
-                                 overwrite_duplicate_toplevel_keys=True) -> 'Tree':
+                                 overwrite_duplicate_keys_at_level: int|None = 0,
+                                 ) -> 'Tree':
         """Parse all text files in a folder with rakaly and merge them into one Tree.
 
         If there are duplicate keys, their values will be grouped into a list(rakaly --duplicate-keys group).
@@ -109,11 +110,11 @@ class ParadoxParser:
             recursive: parse subfolders as well
             file_extension: only files with this extension will be parsed
             workarounds: workarounds to apply before handling the file to rakaly
-            overwrite_duplicate_toplevel_keys: how to handle duplicate top level keys from different files. If this
-                is set to true, later files will overwrite the keys from previous files. If set to false, the behavior
+            overwrite_duplicate_keys_at_level: how to handle duplicate top level keys from different files. If this
+                is set to 0, later files will overwrite the keys from previous files. If set to None, the behavior
                 depends on the value of the key. If it is a Tree, it will be merged (overwriting keys in that tree if
                 there are duplications) If it is a list, the new value will be appended. Otherwise, it will be turned
-                into a list.
+                into a list. If set to a number above 0, overwriting will start at that level
 
         Returns:
             the merged Tree
@@ -122,14 +123,15 @@ class ParadoxParser:
         glob = '*.' + file_extension
         if recursive:
             glob = '**/' + glob
-        for file in sorted((self.base_folder / folder).glob(glob)):
-            if overwrite_duplicate_toplevel_keys:
+        glob = f'{folder}/{glob}'
+        for file in sorted(self.base_folder.glob(glob)):
+            if overwrite_duplicate_keys_at_level == 0:
                 result.dictionary.update(self._really_parse_file(file, workarounds).dictionary)
             else:
                 for key, value in self._really_parse_file(file, workarounds):
                     if key in result.dictionary:
                         if isinstance(result.dictionary[key], Tree):
-                            result.dictionary[key].update(value)
+                            result.dictionary[key].update(value, (overwrite_duplicate_keys_at_level - 1) if overwrite_duplicate_keys_at_level is not None else None)
                         elif isinstance(result.dictionary[key], list):
                             result.dictionary[key].append(value)
                         else:
@@ -307,7 +309,7 @@ class Tree(MutableMapping):
         """create a new tree which only contains the elements for which filter_func returns True"""
         return Tree({k: v for k, v in self.dictionary.items() if filter_func(k, v)})
 
-    def update(self, other: 'Tree') -> 'Tree':
+    def update(self, other: 'Tree', overwrite_duplicate_keys_at_level: int|None = None) -> 'Tree':
         """Update the tree with the key/value pairs from other. Existing keys are handled depending on the type
         of the value:
 
@@ -316,10 +318,10 @@ class Tree(MutableMapping):
         everything else: the value from the other tree overwrites the value from this tree"""
 
         for key, value in other:
-            if key in self:
+            if key in self and overwrite_duplicate_keys_at_level != 0:
                 if isinstance(value, Tree):
                     if isinstance(self[key], Tree):
-                        self[key].update(value)
+                        self[key].update(value,  (overwrite_duplicate_keys_at_level - 1) if overwrite_duplicate_keys_at_level is not None else None)
                     elif isinstance(self[key], list) and len(self[key]) == 0:
                         self[key] = value
                     elif isinstance(self[key], list) and isinstance(self[key][0], Tree):
@@ -416,10 +418,10 @@ class TreeWithDuplicates(Tree):
         """
         return iter(self.ordered_pairs)
 
-    def update(self, other: 'Tree') -> 'Tree':
+    def update(self, other: 'Tree', overwrite_duplicate_keys_at_level: int|None = None) -> 'Tree':
         if isinstance(other, TreeWithDuplicates):
             self.ordered_pairs.extend(other.ordered_pairs)
         else:
             for key, value in other:
                 self.ordered_pairs.append((key, value))
-        return super().update(other)
+        return super().update(other, overwrite_duplicate_keys_at_level)
