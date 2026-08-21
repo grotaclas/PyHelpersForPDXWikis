@@ -291,6 +291,20 @@ class Tree(MutableMapping):
                     if isinstance(item, Tree):
                         yield from item.find_all_recursively(search_key)
 
+    def find_all_recursively_with_parents(self, search_key: str, parents: list[str] = None) -> Iterator[tuple[list[str], Any]]:
+        """Like find_all_recursively, but also returns the keys which were descended to find the search term"""
+        if parents is None:
+            parents = []
+        for key, value in self.iterate_with_duplicates():
+            if key == search_key:
+                yield parents, value,
+            elif isinstance(value, Tree):
+                yield from value.find_all_recursively_with_parents(search_key, parents + [key])
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, Tree):
+                        yield from item.find_all_recursively_with_parents(search_key, parents + [key])
+
     def merge_duplicate_keys(self):
         """merges duplicate keys which have Tree as their value
 

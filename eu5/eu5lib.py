@@ -529,6 +529,21 @@ class Advance(Eu5AdvancedEntity):
 
         return f'{{{{Advance icon|{self.get_wiki_filename().removesuffix(".png")}{localized_name_param}|w={size}}}}}'
 
+    @cached_property
+    def tags(self) -> list[str]:
+        """All tags which are in the potential or allow with has_or_had_tag"""
+        tags = []
+        for condition_tree in (self.potential, self.allow):
+            if condition_tree:
+                for parents, tag in condition_tree.find_all_recursively_with_parents('has_or_had_tag'):
+                    if 'NOT' not in parents and 'NOR' not in parents and tag not in tags:
+                        tags.append(tag)
+        return tags
+
+    @cached_property
+    def countries(self) -> list['Country']:
+        """Tags -> Country if the tag exists"""
+        return [eu5game.parser.countries_including_formables[tag] for tag in self.tags if tag in eu5game.parser.countries_including_formables]
 
 def UnlockedByMixin(unlock_key: str):
     class _:
@@ -876,6 +891,7 @@ class CountryDescriptionCategory(NameableEntity):
 
 
 class Country(Eu5AdvancedEntity):
+    tag: str # for non-formable countries, it is the same as the name
     # From in_game/setup/countries
     color: PdxColor
     color2: PdxColor = None
@@ -930,6 +946,8 @@ class Country(Eu5AdvancedEntity):
     def __init__(self, name: str, display_name: str, default_rank: 'CountryRank', **kwargs):
         if 'country_rank' not in kwargs:
             kwargs['country_rank'] = default_rank
+        if 'tag' not in kwargs:
+            kwargs['tag'] = name
         super().__init__(name, display_name, **kwargs)
         if self.country_name and self.country_name != self.name:
             self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'
