@@ -1297,18 +1297,18 @@ class LawPolicy(Eu5AdvancedEntity, UnlockedByMixin('unlock_policy')):
 
 
 class Law(Eu5AdvancedEntity, UnlockedByMixin('unlock_law')):
-    allow: Trigger = None  # trigger
+    allow: Trigger = None
     custom_tags: list[str] = []
     has_levels: bool = False
     law_category: str = ''
-    law_country_group: str = None # tag
-    law_gov_group: str = None # gov type
-    law_religion_group: list[str] = [] # religions
-    locked: Trigger = None  # trigger
-    potential: Trigger = None  # trigger
+    law_country_group: Country = None
+    law_gov_group: GovernmentType = None
+    law_religion_group: list[Religion] = []
+    locked: Trigger = None
+    potential: Trigger = None
     requires_vote: bool = None
     type: str = ''
-    unique: bool = None# no Idea what this does
+    unique: bool = None  # no Idea what this does
 
     policies: dict[str, LawPolicy]
 

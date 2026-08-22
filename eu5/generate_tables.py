@@ -437,12 +437,13 @@ class TableGenerator(Eu5FileGenerator):
     def get_law_data(self, law: Law) -> dict[str, str]:
         return {
             'Name': f'{{{{iconbox|{law.display_name}|{law.description}|w=300px|image={law.get_wiki_filename()}}}}}',
+            'Unlocked by': ', '.join(advance.get_wiki_link_with_icon() for advance in law.unlocked_by),
             'Potential': self.formatter.format_trigger(law.potential),  # potential: <class 'eu5.eu5lib.Trigger'>
             'Allow': self.formatter.format_trigger(law.allow),  # allow: <class 'common.paradox_parser.Tree'>
             # 'Law Category': law.law_category_loc,  # law_category: <class 'str'>
-            'Country': self.parser.localize(law.law_country_group) if law.law_country_group else '',  # law_country_group: <class 'str'>
-            'Government type': self.parser.localize(law.law_gov_group) if law.law_gov_group else '',  # law_gov_group: <class 'str'>
-            'Religion groups': self.create_wiki_list([self.parser.localize(law_religion_group) for law_religion_group in law.law_religion_group]),
+            'Country': law.law_country_group.get_wiki_link_with_icon() if law.law_country_group else '',  # law_country_group: <class 'str'>
+            'Government type': law.law_gov_group.get_wiki_link_with_icon() if law.law_gov_group else '',  # law_gov_group: <class 'str'>
+            'Religion groups': self.create_wiki_list([law_religion_group.get_wiki_link_with_icon() for law_religion_group in law.law_religion_group]),
             # law_religion_group: list[str]
             'Locked': self.formatter.format_trigger(law.locked),  # locked: <class 'eu5.eu5lib.Trigger'>
             'Requires Vote': '' if law.requires_vote is None else (
@@ -459,7 +460,7 @@ class TableGenerator(Eu5FileGenerator):
         ignored_attributes = ['Name', 'Policies']  # added in other ways
         attribute_map = {'Country': 'Only for',
                          'Government type': 'Only for',
-                         'Religion groups': 'Requires one of the following religion groups',
+                         'Religion groups': 'Requires one of the following religions',
                          }
         for law in laws:
             result.append(self.formatter.create_section_heading(law.display_name, section_level))
@@ -508,7 +509,11 @@ class TableGenerator(Eu5FileGenerator):
     def get_law_policy_table(self, policies: Iterable[LawPolicy]):
         policy_table_data = [{
             'width=20% | Policy': f"'''{policy.display_name}'''\n\n<div class=\"hidem\" style=\"font-style: italic; font-size:smaller;\">{policy.description}</div>",
-            'Allow': self.formatter.format_trigger(policy.allow),  # allow: <class 'eu5.eu5lib.Trigger'>
+            'Requirements': self.merge_multiple_sections([
+                ('', self.formatter.format_trigger(policy.allow)),
+                ('', self.formatter.format_trigger(policy.potential)),
+                ('Unlocked by', self.create_wiki_list(list(advance.get_wiki_link_with_icon() for advance in policy.unlocked_by))),
+            ]),
             'Country Modifier': self.format_modifier_section('country_modifier', policy),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
             'Estate Preferences': self.create_wiki_list([estate_preferences.get_wiki_link_with_icon() for estate_preferences in policy.estate_preferences]),
             # estate_preferences: list[str]
@@ -517,7 +522,6 @@ class TableGenerator(Eu5FileGenerator):
             'On Deactivate': self.formatter.format_effect(policy.on_deactivate),  # on_deactivate: <class 'eu5.eu5lib.Effect'>
             'On Pay Price': self.formatter.format_effect(policy.on_pay_price),  # on_pay_price: <class 'eu5.eu5lib.Effect'>
             'On Fully Activated': self.formatter.format_effect(policy.on_fully_activated),  # on_fully_activated: <class 'eu5.eu5lib.Effect'>
-            'Potential': self.formatter.format_trigger(policy.potential),  # potential: <class 'eu5.eu5lib.Trigger'>
             'Price': policy.price.format(icon_only=True) if hasattr(policy.price, 'format') else policy.price,  # price: <class 'eu5.eu5lib.Price'>
             # TODO: AI preference wants_this_policy_bias should be included eventually
             # 'Wants This Policy Bias': '' if policy.wants_this_policy_bias is None else policy.wants_this_policy_bias,
