@@ -316,7 +316,7 @@ class TableGenerator(Eu5FileGenerator):
         else:
             shadow = 'text-shadow:1px 1px 3px'
         shadow = f';{shadow}'
-        return f'{{{{iconbox|{good.display_name}|{good.description}|w=300px|desc_class=hidem|image={good.get_wiki_filename()}|color={good.color.css_color_string}{shadow}}}}}'
+        return f'[[File:{good.get_wiki_filename()}|{good.display_name}|32px]] {{{{tooltip|{{{{color|{good.color.css_color_string}{shadow}|{good.display_name}|bold=normal;font-size:larger}}}}|\'\'{good.description}\'\'}}}}'
 
     def get_goods_table(self, goods: Iterable[Good]):
         sorted_goods = sorted(goods, key=attrgetter('display_name'))
