@@ -527,7 +527,10 @@ class Advance(Eu5AdvancedEntity):
         else:
             localized_name_param = f'|{self.display_name}'
 
-        return f'{{{{Advance icon|{self.get_wiki_filename().removesuffix(".png")}{localized_name_param}|w={size}}}}}'
+        return f'{{{{Advance icon|{self.get_wiki_filename().removesuffix(".png")}{localized_name_param}|link={self.get_wiki_link_target()}|w={size}}}}}'
+
+    def get_wiki_page_name(self) -> str:
+        return self.age.get_wiki_page_name()
 
     @cached_property
     def tags(self) -> list[str]:
@@ -805,6 +808,9 @@ class Age(Eu5AdvancedEntity):
             return self.year < other.year
         else:
             return super().__lt__(other)
+
+    def get_wiki_page_name(self) -> str:
+        return self.long_name
 
 
 class BuildingCategory(Eu5AdvancedEntity):
