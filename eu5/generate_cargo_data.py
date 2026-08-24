@@ -54,35 +54,7 @@ class CargoDataGenerator(Eu5FileGenerator):
         return cargo_data
 
     def _get_all_unlocks(self, advance: Advance) -> str:
-        unlock_lines = []
-        for unlocks in [
-            advance.unlock_ability,
-            advance.unlock_building,
-            advance.unlock_cabinet_action,
-            advance.unlock_casus_belli,
-            advance.unlock_chivalric_order,
-            advance.unlock_country_interaction,
-            advance.unlock_diplomacy,
-            advance.unlock_estate_privilege,
-            advance.unlock_government_reform,
-            advance.unlock_heir_selection,
-            advance.unlock_interaction,
-            advance.unlock_law,
-            advance.unlock_levy,
-            advance.unlock_policy,
-            advance.unlock_production_method,
-            advance.unlock_relation_type,
-            advance.unlock_road_type,
-            advance.unlock_subject_type,
-            advance.unlock_town_rights,
-            advance.unlock_unit,
-        ]:
-            for unlock in unlocks:
-                if isinstance(unlock, IconMixin):
-                    unlock_lines.append(unlock.get_wiki_link_with_icon())
-                else:
-                    unlock_lines.append(unlock.display_name)
-
+        unlock_lines = advance.unlock_lines
         if len(unlock_lines) > 0:
             return f'Unlocks:{self.create_wiki_list(unlock_lines)}'
         else:

@@ -10,7 +10,7 @@ from common.paradox_lib import unsorted_groupby
 from common.paradox_parser import Tree
 from eu5.eu5_file_generator import Eu5FileGenerator
 from eu5.eu5lib import GoodCategory, Eu5GameConcept, Building, Law, LawPolicy, Good, EstatePrivilege, Advance, \
-    Eu5AdvancedEntity, ScriptValue, Event, ChivalricOrder
+    Eu5AdvancedEntity, ScriptValue, ChivalricOrder
 from eu5.parser import Eu5Parser
 
 
@@ -599,23 +599,6 @@ class TableGenerator(Eu5FileGenerator):
     def get_advances_sections(self):
         return {f'advances_{age}': self.get_advances_table(advances) for age, advances in unsorted_groupby(self.parser.advances.values(), key=lambda advance: advance.age.name)}
 
-    def _format_advance_unlocks(self, advance: Advance):
-        unlocks = []
-        unlock_attributes = [attribute for attribute in Advance.all_annotations().keys() if attribute.startswith('unlock_')]
-        for unlock_attribute in unlock_attributes:
-            for unlock in getattr(advance, unlock_attribute):
-                if unlock_attribute == 'unlock_production_method':
-                    if len(unlock.get_buildings()) > 1:
-                        raise Exception(f'Unlocked PM {unlock.name} in advance {advance.name} has more than one building: {unlock.get_buildings()}')
-                    unlock_line = f'Production method {self.formatter.quote(unlock.display_name)} for {unlock.get_buildings()[0].get_wiki_link_with_icon()}'
-                elif isinstance(unlock, str):
-                    unlock_line = unlock
-                else:
-                    unlock_line = unlock.get_wiki_link_with_icon()
-                unlocks.append(unlock_line)
-
-        return self.create_wiki_list(unlocks)
-
     def get_advances_table(self, advances: Iterable[Advance]):
         sorted_advances = sorted(advances, key=attrgetter('display_name'))
         advances_table_data = [{
@@ -637,7 +620,7 @@ class TableGenerator(Eu5FileGenerator):
 
             'Effects': self.merge_multiple_sections([
                 ('', self.format_modifier_section('modifiers', advance)),
-                ('Unlocks', self._format_advance_unlocks(advance))
+                ('Unlocks', self.create_wiki_list(advance.unlock_lines))
             ]),
             'Modifier While Progressing': self.format_modifier_section('modifier_while_progressing', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
             'Requires': self.create_wiki_list([requires.get_wiki_link_with_icon() if requires else '' for requires in advance.requires]),  # requires: list[eu5.eu5lib.Advance]

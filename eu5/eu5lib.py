@@ -548,6 +548,25 @@ class Advance(Eu5AdvancedEntity):
         """Tags -> Country if the tag exists"""
         return [eu5game.parser.countries_including_formables[tag] for tag in self.tags if tag in eu5game.parser.countries_including_formables]
 
+    @cached_property
+    def unlock_lines(self) -> list[str]:
+        """One formatted line per unlock"""
+        unlocks = []
+        unlock_attributes = [attribute for attribute in Advance.all_annotations().keys() if attribute.startswith('unlock_')]
+        for unlock_attribute in unlock_attributes:
+            for unlock in getattr(self, unlock_attribute):
+                if unlock_attribute == 'unlock_production_method':
+                    if len(unlock.get_buildings()) > 1:
+                        raise Exception(f'Unlocked PM {unlock.name} in advance {self.name} has more than one building: {unlock.get_buildings()}')
+                    unlock_line = f'Production method {eu5game.parser.formatter.quote(unlock.display_name)} for {unlock.get_buildings()[0].get_wiki_link_with_icon()}'
+                elif isinstance(unlock, str):
+                    unlock_line = unlock
+                else:
+                    unlock_line = unlock.get_wiki_link_with_icon()
+                unlocks.append(unlock_line)
+        return unlocks
+
+
 def UnlockedByMixin(unlock_key: str):
     class _:
         @cached_property
