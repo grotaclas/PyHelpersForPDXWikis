@@ -100,7 +100,24 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         return super().format_key_value_pair(key, value, indent)
 
     def format_simple_statement(self, key, value):
-        return f'{key}: {self.format_RHS(value)}'
+        mapping = {
+            'has_or_had_tag': ('Is or was {value}', self.parser.countries_including_formables),
+            'country_exists': ('{value} exists', self.parser.countries_including_formables),
+            'has_reform': ('Has the {value} Government Reform', self.parser.government_reforms),
+            'country_has_estate': ('Has the {value} estate', self.parser.estates),
+        }
+        if key in mapping:
+            if isinstance(mapping[key], str):
+                return mapping[key]
+            else:
+                try:
+                    value = mapping[key][1][value]
+                except KeyError:
+                    pass
+                value = self.format_RHS(value)
+                return mapping[key][0].format(value=value)
+        else:
+            return f'{key}: {self.format_RHS(value)}'
 
     def format_RHS(self, value) -> str:
         suffix = None
@@ -115,6 +132,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                 'estate_privilege': self.parser.estate_privileges,
                 'estate_type': self.parser.estates,
                 'goods': self.parser.goods,
+                'government_reform': self.parser.government_reforms,
                 'language': self.parser.languages,
                 'law': self.parser.laws,
                 'policy': self.parser.law_policies,
