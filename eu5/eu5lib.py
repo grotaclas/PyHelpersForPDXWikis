@@ -458,7 +458,7 @@ class Advance(Eu5AdvancedEntity):
     depth: int = None
     age_specialization: str = None  # called "for" in the files, but that's a reserved word in python
     government: 'GovernmentType' = None
-    modifier: list[Eu5Modifier] = []
+    modifiers: list[Eu5Modifier] = []
     modifier_while_progressing: list[Eu5Modifier] = []
     potential: Trigger = None
 

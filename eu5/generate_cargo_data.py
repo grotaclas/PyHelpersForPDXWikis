@@ -5,7 +5,7 @@ from typing import Any, Iterable
 
 # add the parent folder to the path so that imports work even if this file gets executed directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from common.paradox_lib import unsorted_groupby
+from common.paradox_lib import unsorted_groupby, IconMixin
 from eu5.eu5_file_generator import Eu5FileGenerator
 from eu5.eu5lib import Country, Event, EventFile, Advance
 
@@ -44,14 +44,49 @@ class CargoDataGenerator(Eu5FileGenerator):
     def get_advances_cargo_by_ages(self):
         cargo_data = {}
         advances: list[Advance]
-        for initial, advances in unsorted_groupby(
+        for age, advances in unsorted_groupby(
                 self.parser.advances.values(),
                 key=lambda a: a.age.name):
             advances_cargo_templates = []
             for advance in sorted(advances, key=attrgetter('display_name')):
                 advances_cargo_templates.append(self.get_advances_cargo(advance, 3))
-            cargo_data[initial] = '\n'.join(advances_cargo_templates)
+            cargo_data[age] = '\n'.join(advances_cargo_templates)
         return cargo_data
+
+    def _get_all_unlocks(self, advance: Advance) -> str:
+        unlock_lines = []
+        for unlocks in [
+            advance.unlock_ability,
+            advance.unlock_building,
+            advance.unlock_cabinet_action,
+            advance.unlock_casus_belli,
+            advance.unlock_chivalric_order,
+            advance.unlock_country_interaction,
+            advance.unlock_diplomacy,
+            advance.unlock_estate_privilege,
+            advance.unlock_government_reform,
+            advance.unlock_heir_selection,
+            advance.unlock_interaction,
+            advance.unlock_law,
+            advance.unlock_levy,
+            advance.unlock_policy,
+            advance.unlock_production_method,
+            advance.unlock_relation_type,
+            advance.unlock_road_type,
+            advance.unlock_subject_type,
+            advance.unlock_town_rights,
+            advance.unlock_unit,
+        ]:
+            for unlock in unlocks:
+                if isinstance(unlock, IconMixin):
+                    unlock_lines.append(unlock.get_wiki_link_with_icon())
+                else:
+                    unlock_lines.append(unlock.display_name)
+
+        if len(unlock_lines) > 0:
+            return f'Unlocks:{self.create_wiki_list(unlock_lines)}'
+        else:
+            return ''
 
     def get_advances_cargo(self, advance: Advance, include_header_level: int = None):
         advance_data_for_cargo = {
@@ -69,6 +104,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             'depth': advance.depth,  # int, but can be None
             'age_specialization': '' if advance.age_specialization is None else advance.age_specialization,  # age_specialization: <class 'str'>
             'government': advance.government.display_name if advance.government else '',  # government: <class 'eu5.eu5lib.GovernmentType'>
+            'modifiers': self.format_modifier_section('modifiers', advance),
             'modifier_while_progressing': self.format_modifier_section('modifier_while_progressing', advance),  # modifier_while_progressing: list[eu5.eu5lib.Eu5Modifier]
             'potential': self.formatter.format_trigger(advance.potential),  # potential: <class 'eu5.trigger.Trigger'>
             'requires': ';'.join([requires.name for requires in advance.requires]),  # requires: list[str]
@@ -76,6 +112,7 @@ class CargoDataGenerator(Eu5FileGenerator):
             'research_cost': advance.research_cost,  # float, but can be None
             'starting_technology_level': advance.starting_technology_level,  # int, default 0
             'tags': ';'.join(advance.tags),
+            'unlocks': self._get_all_unlocks(advance),
             'unlock_ability': ';'.join([unlock_ability.display_name for unlock_ability in advance.unlock_ability]),  # unlock_ability: list[eu5.eu5lib.UnitAbility]
             'unlock_building': ';'.join([unlock_building.display_name for unlock_building in advance.unlock_building]),  # unlock_building: list[eu5.eu5lib.Building]
             'unlock_cabinet_action': ';'.join([unlock_cabinet_action.display_name for unlock_cabinet_action in advance.unlock_cabinet_action]),  # unlock_cabinet_action: list[eu5.eu5lib.CabinetAction]
