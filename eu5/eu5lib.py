@@ -915,10 +915,49 @@ class CountryDescriptionCategory(NameableEntity):
     pass
 
 
-class Country(Eu5AdvancedEntity):
-    tag: str # for non-formable countries, it is the same as the name
+class BaseCountry(Eu5AdvancedEntity):
+    tag: str
+    adjective: str = ''
+    flag: CoatOfArms = None
+    color: PdxColor = None
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if 'adjective' not in kwargs:
+            kwargs['adjective'] = f'{name}_ADJ'
+        kwargs['adjective'] = eu5game.parser.localize(kwargs['adjective'])
+        super().__init__(name, display_name, **kwargs)
+
+    @classmethod
+    def has_wiki_icon(cls):
+        return True
+
+    def get_wiki_link_with_icon(self) -> str:
+        return f'{{{{flag|{self.display_name}}}}}'
+
+    @cached_property
+    def description(self) -> str:
+        """tag specific history
+         from game/in_game/common/customizable_localization/country_history.txt
+
+         Can't be done during parsing, because the localization references other countries
+        """
+        return eu5game.parser.tag_specific_descriptions.get(self.name, '')
+
+    @cached_property
+    def long_name(self) -> str:
+        """from _LONG localization.
+        "Rank of Name" if loc is not set
+
+        Can't be done during parsing, because it needs
+        the resolved country_rank and display_name
+
+         @TODO: possibly get the long name from the game
+        """
+        return eu5game.parser.localize(f'{self.name}_LONG', return_none_instead_of_default=True)
+
+
+class Country(BaseCountry):
     # From in_game/setup/countries
-    color: PdxColor
     color2: PdxColor = None
     culture_definition: 'Culture' = None  # only unset for special tags DUMMY, PIR and MER
     description_category: CountryDescriptionCategory = None
@@ -946,10 +985,8 @@ class Country(Eu5AdvancedEntity):
     discovered_provinces: list[Province] = []
     discovered_regions: list[Region] = []
     dynasty: list['Dynasty'] = []
-    flag: 'CoatOfArms' = None
     government: Tree  # @TODO: government parsing
     # government.type: 'GovernmentType'
-    include: str = ''
     is_valid_for_release: bool = True
     liturgical_language: 'Language' = None
     our_cores_conquered_by_others: list[Location] = []
@@ -980,15 +1017,6 @@ class Country(Eu5AdvancedEntity):
             self.timed_modifier = [self.timed_modifier]
 
     @cached_property
-    def description(self) -> str:
-        """tag specific history
-         from game/in_game/common/customizable_localization/country_history.txt
-
-         Can't be done during parsing, because the localization references other countries
-        """
-        return eu5game.parser.tag_specific_descriptions.get(self.name, '')
-
-    @cached_property
     def long_name(self) -> str:
         """from _LONG localization.
         "Rank of Name" if loc is not set
@@ -998,7 +1026,7 @@ class Country(Eu5AdvancedEntity):
 
          @TODO: possibly get the long name from the game
         """
-        from_loc = eu5game.parser.localize(f'{self.name}_LONG', return_none_instead_of_default=True)
+        from_loc = super().long_name
         if from_loc is None:
             return f'{self.country_rank.display_name} of {self.display_name}'
         else:
@@ -1014,13 +1042,6 @@ class Country(Eu5AdvancedEntity):
                 ):
                     return True
         return False
-
-    @classmethod
-    def has_wiki_icon(cls):
-        return True
-
-    def get_wiki_link_with_icon(self) -> str:
-        return f'{{{{flag|{self.display_name}}}}}'
 
 
 class CultureGroup(NameableEntity):
@@ -2171,15 +2192,12 @@ class FlagDefinitionList:
         else:
             return None
 
-class FormableCountry(Eu5AdvancedEntity):
-    adjective: str = '' # possible types(out of 129): <class 'str'>(129), <class 'eu5.eu5lib.CustomizableLocalization'>(12)
+class FormableCountry(BaseCountry):
     allow: Trigger = None
     areas: list[Area] = []
     capital_required: bool = True
-    color: PdxColor = None
     continents: list[str] = []
     country_name: str  # name in the script
-    flag: CoatOfArms = None
     form_effect: Effect
     level: int
     locations: list[Location] = []
@@ -2189,7 +2207,8 @@ class FormableCountry(Eu5AdvancedEntity):
     required_locations_fraction: float = 0
     rule: str
     sub_continents: list[SubContinent] = []
-    tag: str
+
+
 class GameRule(Eu5AdvancedEntity):
     default: str = ''
     options: list = []  # TODO: parsing
