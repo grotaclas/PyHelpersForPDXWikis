@@ -661,6 +661,7 @@ class Good(Eu5AdvancedEntity, Resource):
     color: PdxColor
     custom_tags: list[str] = []
     default_market_price: float = 1
+    development_threshold: int = None
     demand_add: Tree = None
     demand_multiply: Tree = None
     food: float = 0

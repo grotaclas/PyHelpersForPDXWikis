@@ -333,6 +333,7 @@ class TableGenerator(Eu5FileGenerator):
                 'rowspan="2" | RGO type': self.localize(good.method),
                 'rowspan="2" | Inflation': 'yes' if good.inflation else '',
                 'rowspan="2" | Transport cost': good.transport_cost,
+                'rowspan="2" | Dev threshold': '' if good.development_threshold is None else good.development_threshold,
             }
             for pop in self.parser.pop_types.values():
                 row[pop.get_wiki_icon()] = self.formatter.format_float(good.demands[pop]) if good.demands[pop] != 0 else 0
