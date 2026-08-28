@@ -297,15 +297,8 @@ class TableGenerator(Eu5FileGenerator):
         result = {}
         for category in GoodCategory:
             goods_in_category = [good for good in self.parser.goods.values() if good.category == category]
-            special_goods = []
-            if category == GoodCategory.produced:
-                goods_in_category_without_method = []
-                for good in goods_in_category:
-                    special_goods.append(good) if good.method else goods_in_category_without_method.append(good)
-                goods_in_category = goods_in_category_without_method
             result[f'{category}'] = self.get_goods_table([good for good in goods_in_category if good.food == 0])
             result[f'{category}_food'] = self.get_goods_table([good for good in goods_in_category if good.food > 0])
-            result[f'{category}_special'] = self.get_goods_table(special_goods)
 
         return result
 
