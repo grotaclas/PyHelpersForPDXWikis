@@ -9,7 +9,8 @@ class Eu5Localizer(JominiLocalizer):
         # the default is "Trade Embark/Disembark Cost" which is problematic for redirects and filenames, because of the slash
         'MODIFIER_TYPE_NAME_local_trade_embark_disembark_cost_modifier': 'Trade Embark-Disembark Cost',
         'BGP': 'Burgundy (BGP)',
-        'MAM': 'Egypt (MAM)'
+        'MAM': 'Egypt (MAM)',
+        'MGE': 'Mongol Empire',
     }
 
     def __init__(self, game_installation: Path, language: str = 'english'):
