@@ -736,6 +736,21 @@ class TableGenerator(Eu5FileGenerator):
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
+        
+    def generate_disasters_table(self):
+        disasters = self.parser.disasters.values()
+        disasters_table_data = [{
+            'Name': f'{{{{iconbox|{disaster.display_name}|{disaster.description}||w=300px|image={disaster.get_wiki_filename()}|link=on}}}}',
+            'Starting Requirement': self.formatter.format_trigger(disaster.can_start), # <class 'eu5.trigger.Trigger'>
+            'Monthly Chance': disaster.monthly_spawn_chance,
+            'Modifiers':self.format_modifier_section('modifier',disaster),
+            'Ending Requirement': self.formatter.format_trigger(disaster.can_end), # <class 'eu5.trigger.Trigger'>
+        } for disaster in disasters]
+        return self.make_wiki_table(disasters_table_data, table_classes=['mildtable', 'plainlist'],
+                                        one_line_per_cell=True,
+                                        remove_empty_columns=True,
+                                        )
+    
     def generate_government_reforms_table(self):
         government_reforms = self.parser.government_reforms.values()
         government_reforms_table_data = [{
