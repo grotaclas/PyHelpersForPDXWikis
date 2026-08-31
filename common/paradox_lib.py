@@ -397,7 +397,7 @@ class AttributeEntity:
 
 class ModifierType(NameableEntity):
     percent: bool = False
-    already_percent: bool = False  # used by ck3
+    already_percent: bool = False  # used by ck3 and eu5
     boolean: bool = False
     decimals: int = None
     good: bool = None
@@ -519,6 +519,8 @@ class ModifierType(NameableEntity):
         if self.percent:
             self.assert_number(value)
             formatted_value *= 100
+            postfix += '%'
+        elif self.already_percent:
             postfix += '%'
 
         if self.decimals is not None:
