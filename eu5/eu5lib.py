@@ -570,7 +570,7 @@ class Advance(Eu5AdvancedEntity):
 def UnlockedByMixin(unlock_key: str):
     class _:
         @cached_property
-        def unlocked_by(self) -> list[Advance]:
+        def unlocked_by(self) -> list['Advance']:
             return [
                 advance
                 for advance in eu5game.parser.advances.values()
@@ -919,7 +919,7 @@ class CountryDescriptionCategory(NameableEntity):
 class BaseCountry(Eu5AdvancedEntity):
     tag: str
     adjective: str = ''
-    flag: CoatOfArms = None
+    flag: 'CoatOfArms' = None
     color: PdxColor = None
 
     def __init__(self, name: str, display_name: str, **kwargs):
@@ -1350,7 +1350,7 @@ class Law(Eu5AdvancedEntity, UnlockedByMixin('unlock_law')):
     law_category: str = ''
     law_country_group: Country = None
     law_gov_group: GovernmentType = None
-    law_religion_group: list[Religion] = []
+    law_religion_group: list['Religion'] = []
     locked: Trigger = None
     potential: Trigger = None
     requires_vote: bool = None
@@ -2360,17 +2360,17 @@ class OnAction(Eu5AdvancedEntity):
     effect: Effect = None
     # TODO: should be list[Event], but delay needs to be handled somehow
     events: list[Any] = []
-    fallback: OnAction = None
+    fallback: 'OnAction' = None
     first_valid: list[Event] = []
-    first_valid_on_action: list[OnAction] = []
-    on_actions: list[OnAction] = []
+    first_valid_on_action: list['OnAction'] = []
+    on_actions: list['OnAction'] = []
     random_events: list[tuple[int, Event]] # Events with their weight
     # the next three are scripted inside random_events, but are moved
     # to the top level of the OnAction for easier handling
     random_events_chance_of_no_event: ScriptValue = None
     random_events_chance_to_happen: float|int = 0
     random_events_sample_count: int = 0
-    random_on_action: list[tuple[int, OnAction]] # OnActions with their weight
+    random_on_action: list[tuple[int, 'OnAction']] # OnActions with their weight
     trigger: Trigger = None
     weight_multiplier: ScriptValue = None
 class ParliamentAgenda(Eu5AdvancedEntity):
