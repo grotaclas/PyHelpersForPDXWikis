@@ -10,7 +10,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from collections.abc import Iterator, MutableMapping
+from collections.abc import MutableMapping
 from tempfile import mkstemp
 from typing import Callable, Any, Iterator
 

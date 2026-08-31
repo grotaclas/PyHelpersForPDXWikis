@@ -1,5 +1,4 @@
 import re
-from decimal import Decimal
 
 from common.paradox_lib import NameableEntity
 from common.paradox_parser import Tree

@@ -989,12 +989,6 @@ class TableGenerator(Eu5FileGenerator):
                                         remove_empty_columns=True,
                                         )
 
-    def get_sections(self, parser_attribute, groupby: str):
-        sections = {}
-        for category, traits in unsorted_groupby(entities, key=attrgetter(groupby)):
-            traits = sorted(traits, key=attrgetter('display_name'))
-            sections[f'traits_{category}'] = self.get_trait_table(traits)
-
     def generate_religions_table(self):
         religions = self.parser.religions.values()
         religions_table_data = [{
