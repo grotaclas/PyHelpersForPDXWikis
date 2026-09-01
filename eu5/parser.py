@@ -1,13 +1,17 @@
 import copy
+import hashlib
+import os
 import pprint
 import uuid
 from collections.abc import MutableMapping, Iterable
 from functools import reduce
+from operator import attrgetter
 from typing import Callable, Type
 
 from PyHelpersForPDXWikis.localsettings import EU5DIR
 from common.cache import disk_cache
 from common.file_generator import FileGenerator
+from common.wiki_image import WikiImage, WikiImageFile, WikiImageFileReference
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NE, AE, ME
@@ -526,6 +530,13 @@ class Eu5Parser(JominiParser):
                 'display_name': lambda _name, data: self.formatter.strip_formatting(self.localize(data['localizable_name'])).replace("'", "")
             }
         )
+
+    @cached_property
+    def dlcs_including_base_game(self) -> dict[str, DLC]:
+        base_game = BaseGame(self.parser.base_folder)
+        dlcs = { base_game.name: base_game }
+        dlcs.update(self.dlcs)
+        return dlcs
 
     @cached_property
     def dynasties(self) -> dict[str, Dynasty]:
@@ -1506,3 +1517,36 @@ class Eu5Parser(JominiParser):
                                             localization_prefix='war_goal_', # Used in 53/53 Examples: {'war_goal_hundred_years_war_wargoal': 'Win The Hundred Years War', 'war_goal_clan_expansion_wargoal': 'Clan Expansion'}
                                             description_localization_prefix='war_goal_', description_localization_suffix='_desc', # Used in 53/53 Examples: {'war_goal_take_country_desc': '[war_goal|e] is to take the enemy country. Get bonus [war_score|e] from winning sieges of enemy fortifications and from occupying enemy territory.', 'war_goal_take_capital_imperial_desc': "[war_goal|e] is to take Emperor's Capital."}
                                             )
+
+    @cached_property
+    def wiki_images(self) -> list[WikiImage]:
+        image_file_references = []
+
+        # unit illustrations
+        for dlc in self.dlcs_including_base_game.values():
+            for file in (dlc.path / 'main_menu/gfx/interface/illustrations/units').glob('*.dds'):
+                relative_path = file.relative_to(self.parser.base_folder)
+                top_folder = relative_path.parts[0]
+                relative_path = relative_path.relative_to(top_folder)
+                image_file_references.append(WikiImageFileReference(
+                    f'Unit illustration {file.stem.replace("_", " ").strip()}.png',
+                    'Unit illustrations',
+                    f'Uploaded from {{{{path|{relative_path}|{top_folder}}}}}.',
+                    True,
+                    image_reference=file,
+                    image_data_hash=hashlib.sha256(file.read_bytes()).hexdigest(),
+                ))
+
+        image_files: dict[str, WikiImageFile] = {}
+        sorted_refs = sorted(filter(lambda x: x is not None, image_file_references),
+                             key=attrgetter('wiki_filename', 'description'))
+        for ref in sorted_refs:
+            if ref is None:
+                continue
+            if ref.image_data_hash not in image_files:
+                image_files[ref.image_data_hash] = WikiImageFile([ref])
+            else:
+                image_files[ref.image_data_hash].references.append(ref)
+
+        return [WikiImage([image_file]) for image_file in
+                sorted(image_files.values(), key=attrgetter('main_wiki_filename'))]
