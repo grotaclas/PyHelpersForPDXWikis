@@ -533,38 +533,19 @@ class Advance(Eu5AdvancedEntity):
         return self.age.get_wiki_page_name()
 
     def get_wiki_filename(self) -> str:
-        unit_class: UnitCategory
+        advance: Eu5AdvancedEntity
         if self.unlock_unit:
-            unit_class = self.unlock_unit[0].category
+            advance = self.unlock_unit[0].category
         elif self.unlock_levy:
-            unit_class = self.unlock_levy[0].unit.category
+            advance = self.unlock_levy[0].unit.category
+        elif self.unlock_building:
+            advance = self.unlock_building[0]
+        elif self.unlock_production_method:
+            advance = self.unlock_production_method[0].produced
         else:
             return super().get_wiki_filename()
 
-        return unit_class.get_wiki_filename()
-
-    def get_wiki_filename_prefix(self):
-        if self.unlock_building:
-            return 'Building'
-        if self.unlock_production_method:
-            return 'Production_method'
-
-        return 'Advance'
-
-    def get_icon_filename(self) -> str:
-        if self.unlock_unit:
-            name = self.unlock_unit[0].name
-        elif self.unlock_levy:
-            name = self.unlock_levy[0].name
-        elif self.unlock_building:
-            name = self.unlock_building[0].name
-        elif self.unlock_production_method:
-            name = self.unlock_production_method[0].name
-        elif self.icon:
-            name = self.icon
-        else:
-            name = self.name
-        return f'{name}.dds'
+        return advance.get_wiki_filename()
 
     @cached_property
     def tags(self) -> list[str]:
