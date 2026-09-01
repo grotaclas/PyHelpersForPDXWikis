@@ -546,12 +546,8 @@ class Advance(Eu5AdvancedEntity):
     def get_wiki_filename_prefix(self):
         if self.unlock_building:
             return 'Building'
-
         if self.unlock_production_method:
             return 'Production_method'
-
-        if self.icon:
-            return 'Advance'
 
         return 'Advance'
 
@@ -1840,6 +1836,7 @@ class DLC(Eu5AdvancedEntity):
         return 'DLC'
 
     def get_wiki_filename(self) -> str:
+
         return f'{self.get_wiki_filename_prefix()} {self.display_name}.png'
 
 
