@@ -41,6 +41,18 @@ class CargoDataGenerator(Eu5FileGenerator):
             result.append(cargo_data)
         return result
 
+    def get_advances_cargo_by_initials(self):
+        cargo_data = {}
+        advances: list[Advance]
+        for initial, advances in unsorted_groupby(
+                self.parser.advances.values(),
+                key=lambda a: a.display_name[0]):
+            advances_cargo_templates = []
+            for advance in sorted(advances, key=attrgetter('display_name')):
+                advances_cargo_templates.append(self.get_advances_cargo(advance, 3))
+            cargo_data[initial] = '\n'.join(advances_cargo_templates)
+        return cargo_data
+
     def get_advances_cargo_by_ages(self):
         cargo_data = {}
         advances: list[Advance]
