@@ -6,7 +6,7 @@ from common.paradox_lib import AdvancedEntity, NameableEntity
 from common.paradox_parser import Tree
 from common.wiki import WikiTextFormatter
 from vic3.vic3_file_generator import vic3game, Vic3FileGenerator
-from vic3.vic3lib import Vic3AdvancedEntity
+from vic3.vic3lib import Vic3AdvancedEntity, Event, Option
 
 
 class Vic3WikiTextFormatter(WikiTextFormatter):
@@ -355,3 +355,69 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             value = value.display_name
 
         return value
+
+    def format_event(self, event: 'Event') -> str:
+        """Format an Event object into the {{event}} wiki template.
+
+        Args:
+            event: the Event object to format
+
+        Returns:
+            wiki text for the event
+        """
+
+        lines = ["{{event"]
+        lines.append(f"|version = {event.version if event.version else self.parser.game.version}")
+        lines.append(f"|event_id = {event.event_id}")
+        if event.collapse:
+            lines.append(f"|collapse = {event.collapse}")
+        if event.header:
+            lines.append(f"|header = {event.header}")
+        if event.icon_group:
+            lines.append(f"|icon_group = {event.icon_group}")
+        if event.icon_type:
+            lines.append(f"|icon_type = {event.icon_type}")
+        if event.event_name:
+            lines.append(f"|event_name = {event.event_name}")
+        if event.cond_event_text:
+            lines.append(f"|cond_event_text = {event.cond_event_text}")
+        if event.event_text:
+            lines.append(f"|event_text = {self.format_localization_text(event.event_text)}")
+        if event.flavor_text:
+            lines.append(f"|flavor_text = {self.format_localization_text(event.flavor_text)}")
+        lines.append("|triggered by = FILL IN MANUALLY")
+        if event.trigger:
+            lines.append(f"|trigger = {self.format_conditions(event.trigger)}")
+        if event.immediate:
+            lines.append(f"|immediate = {self.format_conditions(event.immediate)}")
+
+        option_texts = []
+        lines.append("|options = ")
+        for opt in event.options:
+            option_texts.append(self.format_option(opt))
+        lines.append('\n'.join(option_texts))
+
+        lines.append("}}")
+
+        return '\n'.join(lines)
+
+    def format_option(self, option: Option) -> str:
+        """Format an Option object into the {{option}} wiki template.
+
+        Args:
+            option: the Option object to format
+
+        Returns:
+            wiki text for the option
+        """
+
+        lines = ["{{option"]
+        lines.append(f"|option_text = {self.format_localization_text(option.option_text)}")
+        if option.trigger is not None:
+            lines.append(f"|trigger = {self.format_conditions(option.trigger)}")
+        if option.default:
+            lines.append("|default = yes")
+        lines.append(f"|effect = {self.format_conditions(option.effect)}")
+        lines.append("}}")
+
+        return '\n'.join(lines)
