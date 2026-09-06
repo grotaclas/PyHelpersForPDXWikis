@@ -990,6 +990,12 @@ class Eu5Parser(JominiParser):
     def auto_modifiers(self) -> dict[str, AutoModifier]:
         return self.parse_advanced_entities('in_game/common/auto_modifiers', AutoModifier,
                                             localization_prefix='AUTO_MODIFIER_NAME_', # Used in 74/74 Examples: {'AUTO_MODIFIER_NAME_positive_yanantin': 'Positive [yanantin|e]', 'AUTO_MODIFIER_NAME_positive_harmony': 'Yáng'}
+                                            extra_data_functions={
+                                                'modifier': lambda name, data: self._parse_modifier_data(
+                                                    Tree({name: value for name, value in data if
+                                                          name not in ['category', 'limit', 'potential_trigger', 'requires_real', 'scales_with', 'type', 'alert']}),
+                                                    modifier_class=Eu5Modifier),
+                                            }
                                             )
     @cached_property
     def avatars(self) -> dict[str, Avatar]:

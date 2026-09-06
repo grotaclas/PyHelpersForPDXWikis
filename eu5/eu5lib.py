@@ -1943,12 +1943,17 @@ class ArtistWork(Eu5AdvancedEntity):
 class AttributeColumn(Eu5AdvancedEntity):
     pass
 class AutoModifier(Eu5AdvancedEntity):
-    category: str = ''
+    alert: bool = False
+    category: str = 'country'
     limit: Trigger = None
     potential_trigger: Trigger = None
     requires_real: bool = True
     scales_with: ScriptValue = None # possible types(out of 50): <class 'common.paradox_parser.Tree'>(41), <class 'eu5.eu5lib.ScriptValue'>(38), <class 'eu5.eu5lib.TriggerLocalization'>(9), <class 'eu5.eu5lib.Eu5GameConcept'>(4), <class 'eu5.eu5lib.AutoModifier'>(2), <class 'eu5.eu5lib.Eu5NamedModifier'>(1), <class 'eu5.eu5lib.Eu5ModifierType'>(1)
     type: str = 'country'
+
+    modifier: list[Eu5Modifier]
+
+
 class Avatar(Eu5AdvancedEntity):
     allow: Trigger = None
     country_modifier: list[Eu5Modifier]
