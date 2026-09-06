@@ -739,13 +739,19 @@ class TableGenerator(Eu5FileGenerator):
         
     def generate_disasters_table(self):
         disasters = self.parser.disasters.values()
-        disasters_table_data = [{
-            'Name': f'{{{{iconbox|{disaster.display_name}|{disaster.description}||w=300px|image={disaster.get_wiki_filename()}|link=on}}}}',
-            'Starting Requirement': self.formatter.format_trigger(disaster.can_start), # <class 'eu5.trigger.Trigger'>
-            'Monthly Chance': disaster.monthly_spawn_chance,
-            'Modifiers':self.format_modifier_section('modifier',disaster),
-            'Ending Requirement': self.formatter.format_trigger(disaster.can_end), # <class 'eu5.trigger.Trigger'>
-        } for disaster in disasters]
+        disasters_table_data = []
+        for disaster in disasters:
+            if disaster.display_name.lower() == 'fate of the phoenix':
+                link = 'Fate of the Phoenix (disaster)'
+            else:
+                link = 'on'
+            disasters_table_data.append({
+                'Name': f'{{{{iconbox|{disaster.display_name}|{disaster.description}||w=300px|image={disaster.get_wiki_filename()}|link={link}}}}}',
+                'Starting Requirement': self.formatter.format_trigger(disaster.can_start),
+                'Monthly Chance': disaster.monthly_spawn_chance,
+                'Modifiers': self.format_modifier_section('modifier', disaster),
+                'Ending Requirement': self.formatter.format_trigger(disaster.can_end),
+            })
         return self.make_wiki_table(disasters_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
