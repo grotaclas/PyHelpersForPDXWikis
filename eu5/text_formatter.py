@@ -1,4 +1,5 @@
 import re
+from typing import Collection
 
 from common.paradox_lib import NameableEntity
 from common.paradox_parser import Tree
@@ -95,6 +96,8 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
                 if key.startswith('societal_value:'):
                     typ, _, key_without_prefix = key.partition(':')
                     return self.parser.societal_values[key_without_prefix].format(comparison_value, comparison_operator)
+                elif isinstance(comparison_value, str) or not isinstance(comparison_value, Collection):
+                    return f'{key} {comparison_operator} {self.format_RHS(comparison_value)}'
         if key in self.parser.scripted_triggers and value is True:
             return self.format_conditions(self.parser.scripted_triggers[key].trigger, indent)
         
