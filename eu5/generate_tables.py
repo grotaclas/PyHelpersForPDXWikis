@@ -1273,7 +1273,7 @@ class TableGenerator(Eu5FileGenerator):
                     "Region": historical_earthquake.location.region,
                     "Location": historical_earthquake.location.display_name,
                     "Date range": f"{historical_earthquake.possible_start}-{historical_earthquake.possible_end}",
-                    "Severity": f"<span style='color: {severity_colors[historical_earthquake.severity]}'>{historical_earthquake.severity}</span>",
+                    "Severity": f"{{{{color|{severity_colors[historical_earthquake.severity]}|{historical_earthquake.severity}}}}}",
                 }
                 for historical_earthquake in historical_earthquakes
             ],
