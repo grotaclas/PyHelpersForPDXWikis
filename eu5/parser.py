@@ -1559,11 +1559,10 @@ class Eu5Parser(JominiParser):
 
 
     @cached_property
-    def historical_earthquakes(self) -> list[HistoricalEarthquake]:
+    def historical_earthquakes(self) -> dict[str,HistoricalEarthquake]:
         events = {event_id: event for event_id, event in self.events.items() if "earthquake" in event_id}
-        events_list = list(events.values())
-        historical_earthquakes = []
-        for event in events_list:
+        historical_earthquakes = {}
+        for event_id, event in events.items():
             location = None
             possible_start = None
             possible_end = None
@@ -1601,13 +1600,12 @@ class Eu5Parser(JominiParser):
                 # print(f"Event {event.name} does not match the pattern")
                 continue
             else:
-                historical_earthquakes.append(
-                    HistoricalEarthquake(
-                        location=location,
-                        possible_start=possible_start,
-                        possible_end=possible_end,
-                        severity=severity,
-                    )
+                historical_earthquakes[event_id] = HistoricalEarthquake(
+                    event_id=event_id,
+                    location=location,
+                    possible_start=possible_start,
+                    possible_end=possible_end,
+                    severity=severity,
                 )
         return historical_earthquakes
         

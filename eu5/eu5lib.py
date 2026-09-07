@@ -3002,6 +3002,7 @@ class Wargoal(Eu5AdvancedEntity):
 
 @dataclass
 class HistoricalEarthquake:
+    event_id: str
     location: Location
     possible_start: str
     possible_end: str

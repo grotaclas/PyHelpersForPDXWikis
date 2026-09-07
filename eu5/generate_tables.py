@@ -1275,7 +1275,7 @@ class TableGenerator(Eu5FileGenerator):
                     "Date range": f"{historical_earthquake.possible_start}-{historical_earthquake.possible_end}",
                     "Severity": f"{{{{color|{severity_colors[historical_earthquake.severity]}|{historical_earthquake.severity}}}}}",
                 }
-                for historical_earthquake in historical_earthquakes
+                for historical_earthquake in historical_earthquakes.values()
             ],
             key=lambda d: d["Date range"],
         )
