@@ -1133,7 +1133,7 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='', # Used in 127/127 Examples: {'denmark_f': 'Denmark', 'MGE_f': '$MGE$'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 125/127 Examples: {'WES_f_desc': "With the clerical influences over our lands slowly fading into the past it is time to form a new state for [ShowAreaName('westphalia_area')] and proclaim a new era for our people.", 'PUN_f_desc': "We must unite the [ShowCultureName('punjabi')] people if we are ever to be able to stand against foreign invaders. Together we will build a modern state with armies capable of taking on the many enemies who would attack us for our lands, and who would do anything to extinguish our faith!"}
                                             extra_data_functions={
-                                                'country_name': lambda name, data: data['name'] if 'name' in data else data['tag'],
+                                                'country_name': lambda name, data: data.get('name')
                                             }
                                             )
     @cached_property
