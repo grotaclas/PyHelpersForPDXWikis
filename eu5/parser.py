@@ -1569,11 +1569,11 @@ class Eu5Parser(JominiParser):
             for key, node in event.trigger.iterate_with_duplicates():
                 if key == "owns":
                     location = self.locations[node.removeprefix("location:")]
-                elif key == "current_year":
+                elif key == "current_year" or key == "current_date":
                     for key2, node2 in node.iterate_with_duplicates():
-                        if key2 == "GREATER_THAN_EQUAL":
+                        if key2.startswith("GREATER_THAN"):
                             possible_start = node2
-                        elif key2 == "LESS_THAN_EQUAL":
+                        elif key2.startswith("LESS_THAN"):
                             possible_end = node2
                         else:
                             raise ValueError(key2)
