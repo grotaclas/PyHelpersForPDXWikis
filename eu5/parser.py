@@ -1608,4 +1608,4 @@ class Eu5Parser(JominiParser):
                     severity=severity,
                 )
         return historical_earthquakes
-        
+
