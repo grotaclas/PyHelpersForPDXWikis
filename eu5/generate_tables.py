@@ -1258,6 +1258,33 @@ class TableGenerator(Eu5FileGenerator):
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
+        
+    def generate_historical_earthquakes_table(self):
+        historical_earthquakes = self.parser.historical_earthquakes
+        severity_colors = {
+            "Minor": "orange",
+            "Major": "red",
+            "Catastrophic": "darkred",
+            "Special": "black",
+        }
+        historical_earthquakes_table_data = sorted(
+            [
+                {
+                    "Region": historical_earthquake.location.region,
+                    "Location": historical_earthquake.location.display_name,
+                    "Date range": f"{historical_earthquake.possible_start}-{historical_earthquake.possible_end}",
+                    "Severity": f"{{{{color|{severity_colors[historical_earthquake.severity]}|{historical_earthquake.severity}}}}}",
+                }
+                for historical_earthquake in historical_earthquakes.values()
+            ],
+            key=lambda d: d["Date range"],
+        )
+        return self.make_wiki_table(
+            historical_earthquakes_table_data,
+            table_classes=["mildtable", "plainlist"],
+            one_line_per_cell=True,
+            remove_empty_columns=True,
+        )
 
 
 if __name__ == '__main__':

@@ -2999,3 +2999,11 @@ class Wargoal(Eu5AdvancedEntity):
     war_name_is_country_order_agnostic: bool = False
     icon_folder = 'WARGOAL_ICON_PATH' # 54 / 58 icons found
     # icon_folder = 'CASUS_BELLI_ICON_PATH' # 54 / 58 icons found
+
+@dataclass
+class HistoricalEarthquake:
+    event_id: str
+    location: Location
+    possible_start: str
+    possible_end: str
+    severity: str

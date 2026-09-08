@@ -1556,3 +1556,56 @@ class Eu5Parser(JominiParser):
 
         return [WikiImage([image_file]) for image_file in
                 sorted(image_files.values(), key=attrgetter('main_wiki_filename'))]
+
+
+    @cached_property
+    def historical_earthquakes(self) -> dict[str,HistoricalEarthquake]:
+        events = {event_id: event for event_id, event in self.events.items() if "earthquake" in event_id}
+        historical_earthquakes = {}
+        for event_id, event in events.items():
+            location = None
+            possible_start = None
+            possible_end = None
+            for key, node in event.trigger.iterate_with_duplicates():
+                if key == "owns":
+                    location = self.locations[node.removeprefix("location:")]
+                elif key == "current_year" or key == "current_date":
+                    for key2, node2 in node.iterate_with_duplicates():
+                        if key2.startswith("GREATER_THAN"):
+                            possible_start = node2
+                        elif key2.startswith("LESS_THAN"):
+                            possible_end = node2
+                        else:
+                            raise ValueError(key2)
+                else:
+                    break
+
+            severity = None
+
+            for option_key in event.option:
+                if "major" in option_key:
+                    severity = "Major"
+                elif "minor" in option_key:
+                    severity = "Minor"
+                elif "catastrophic" in option_key or "catastrophy" in option_key:
+                    severity = "Catastrophic"
+                else:
+                    severity = "Special"
+            if (
+                location is None
+                or possible_start is None
+                or possible_end is None
+                or severity is None
+            ):
+                # print(f"Event {event.name} does not match the pattern")
+                continue
+            else:
+                historical_earthquakes[event_id] = HistoricalEarthquake(
+                    event_id=event_id,
+                    location=location,
+                    possible_start=possible_start,
+                    possible_end=possible_end,
+                    severity=severity,
+                )
+        return historical_earthquakes
+
