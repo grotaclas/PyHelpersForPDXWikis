@@ -2226,7 +2226,7 @@ class FormableCountry(BaseCountry):
     areas: list[Area] = []
     capital_required: bool = True
     continents: list[str] = []
-    country_name: str  # name in the script
+    country_name: str | None  # name in the script
     form_effect: Effect
     level: int
     locations: list[Location] = []
@@ -2237,6 +2237,11 @@ class FormableCountry(BaseCountry):
     rule: str
     sub_continents: list[SubContinent] = []
 
+    @cached_property
+    def country_name_loc(self) -> str | None:
+        if self.country_name is None:
+            return None
+        return self._formatter.resolve_nested_localizations(eu5game.parser.localize(self.country_name))
 
 class GameRule(Eu5AdvancedEntity):
     default: str = ''
