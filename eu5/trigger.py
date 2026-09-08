@@ -1,12 +1,11 @@
 import re
 
-from common.paradox_parser import Tree
+from common.paradox_parser import Tree, TreeWithDuplicates
 from eu5.event_target import EventTarget
 from eu5.game import eu5game
 from eu5.script_docs_data import triggers_from_script_docs
 
-
-class Trigger(Tree):
+class Trigger:
     triggers_from_script_docs = triggers_from_script_docs
 
     scripted_triggers: set[str] = None
@@ -48,3 +47,19 @@ class Trigger(Tree):
         script_keys = cls._get_script_keys_without_event_targets(script)
         triggers_in_script_keys = script_keys & cls.get_all_triggers()
         return len(triggers_in_script_keys) == len(script_keys)
+
+
+class TriggerBlock:
+
+    triggers: Tree|TreeWithDuplicates
+
+    def __init__(self, triggers: Tree|TreeWithDuplicates):
+        self.triggers = triggers
+
+    def __getattr__(self, item):
+        """Pass through everything to the underlying Tree for compatibility
+
+        @TODO: eventually self.triggers should use a different type and
+         these accesses should be either implemented here or the calling code be moved here
+        """
+        return getattr(self.triggers, item)

@@ -287,6 +287,8 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         return self.parser.localize(concept_name)
 
     def format_conditions(self, conditions: Tree, indent: int = 1):
+        if not conditions:
+            return ''
         result = []
         for key, value in conditions.iterate_with_duplicates():
             result.append(self.format_key_value_pair(key, value, indent))

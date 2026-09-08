@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 from collections.abc import MutableMapping
 from tempfile import mkstemp
-from typing import Callable, Any, Iterator
+from typing import Callable, Any, Iterator, Sequence
 
 try:  # when used by PyHelpersForPDXWikis
     from PyHelpersForPDXWikis.localsettings import RAKALY_CLI

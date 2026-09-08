@@ -15,9 +15,10 @@ from common.file_generator import FileGenerator
 from common.helper import OneTypeHelper, MultiTypeHelper
 from common.paradox_lib import Modifier, NameableEntity
 from common.paradox_parser import Tree, ParsingWorkaround, ScriptedWorkaround
-from eu5.eu5lib import Eu5AdvancedEntity, Cost, GoodsDemand, Price, Eu5Modifier, Trigger, Effect, ScriptValue
+from eu5.eu5lib import Eu5AdvancedEntity, Cost, GoodsDemand, Price, Eu5Modifier, Effect, ScriptValue
 from eu5.game import eu5game
 from eu5.parser import Eu5Parser
+from eu5.trigger import Trigger, TriggerBlock
 
 
 class Eu5OneTypeHelper(OneTypeHelper):
@@ -57,9 +58,9 @@ class Eu5OneTypeHelper(OneTypeHelper):
     def guess_type_from_name(self, attribute_name: str) -> type | None:
         if attribute_name in ['enabled', 'visible', 'potential', 'allow']:
             # return 'Trigger'
-            return Trigger
+            return TriggerBlock
         if attribute_name.startswith('enabled_'):
-            return Trigger
+            return TriggerBlock
             # return 'Trigger'
         if attribute_name in ['effect', 'hidden_effect'] or attribute_name.startswith('on_'):
             # return 'Effect'
@@ -75,7 +76,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
             if ScriptValue.could_be_script_value(value):
                 return ScriptValue(f'inline_script_value_{uuid.uuid1()}', '', **value.dictionary), value
             if Trigger.could_be_trigger(value):
-                parsed_values.append(Trigger(value.dictionary))
+                parsed_values.append(TriggerBlock(value.dictionary))
             if Effect.could_be_effect(value):
                 parsed_values.append(Effect(value.dictionary))
         if parsed_values:
@@ -85,7 +86,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
 
     def get_value_for_example(self, value, key):
         if isinstance(value, Tree) and Trigger.could_be_trigger(value):
-            return Trigger
+            return TriggerBlock
         example = super().get_value_for_example(value, key)
         return example
 
@@ -214,7 +215,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
                 return f"'[[File:Yes.png|20px|{attribute_loc}]]' if {attribute_access} else '[[File:No.png|20px|Not {attribute_loc}]]'"
         elif attribute_type == Any:
             return attribute_access
-        elif issubclass(attribute_type, Trigger):
+        elif issubclass(attribute_type, TriggerBlock):
             return f'self.formatter.format_trigger({attribute_access})'
         elif issubclass(attribute_type, Effect):
             return f'self.formatter.format_effect({attribute_access})'
@@ -372,7 +373,7 @@ class Eu5OneTypeHelper(OneTypeHelper):
                 loc = self.parser.localize(attribute)
             else:
                 loc = attribute.replace('_', ' ').title()
-            if attribute in default_values and default_values[attribute] is None and typ not in [Effect, Trigger]:
+            if attribute in default_values and default_values[attribute] is None and typ not in [Effect, TriggerBlock]:
                 none_check = f"'' if {var_name}.{attribute} is None else "
             else:
                 none_check = ''

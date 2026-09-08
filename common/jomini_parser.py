@@ -1,7 +1,5 @@
 import enum
 import inspect
-import numbers
-import re
 import typing
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
@@ -14,6 +12,24 @@ from typing import Type, Callable, get_origin, get_args, Any
 from common.localization import JominiLocalizer
 from common.paradox_parser import ParadoxParser, Tree, ParsingWorkaround
 from common.paradox_lib import Modifier, AE, NE, PE, ME, ModifierType, NameableEntity, PdxColor, ParsableObject
+
+
+class UnhandledEntityValueNotice(Exception):
+    def __init__(self, key: str, value: Any, name: str, entity_class: Type[NE], problem: str = 'Unhandled attribute') -> None:
+        self.key = key
+        self.value = value
+        self.name = name
+        self.entity_class = entity_class
+        self.problem = problem
+        if isinstance(value,(str, int, float)):
+            value_str = f'"{value}"'
+        else:
+            value_str = f'of type "{type(value)}"'
+        super().__init__(f'{problem} "{key}" with value {value_str} in entity "{name}"(class {entity_class})')
+
+
+class UnhandledEntityValueWarning(UnhandledEntityValueNotice):
+    pass
 
 
 class JominiParser(metaclass=ABCMeta):
@@ -186,75 +202,88 @@ class JominiParser(metaclass=ABCMeta):
                 entity_values[key] = func(name, data)
 
         for k, v in data:
-            if isinstance(v, str) and v.startswith('define:'):
-                category, _, define = v.removeprefix('define:').partition('|')
-                v = self.defines[category][define]
             if hasattr(entity_class, 'attribute_name_map') and k in entity_class.attribute_name_map:
                 k = entity_class.attribute_name_map[k]
-            if k in transform_value_functions:
-                entity_values[k] = transform_value_functions[k](v)
-            elif k in class_attributes and k not in entity_values:
-                if inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], enum.Enum):
-                    entity_values[k] = class_attributes[k](v)
-                elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], PdxColor):
-                    entity_values[k] = self.parse_color_value(v)
-                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(
-                        typing.get_args(class_attributes[k])[0]) and issubclass(typing.get_args(class_attributes[k])[0],
-                                                                                Modifier):
-                    if type(v) == list and len(v) > 0:
-                        print(f'Error: duplicate section "{k}" in "{name}"')
-                        continue
-                    entity_values[k] = self._parse_modifier_data(v, typing.get_args(class_attributes[k])[0])
-                elif typing.get_origin(class_attributes[k]) == list and inspect.isclass(
-                        typing.get_args(class_attributes[k])[0]) and issubclass(
-                        typing.get_args(class_attributes[k])[0], NameableEntity) and \
-                        typing.get_args(class_attributes[k])[0] != entity_class:
-                    if isinstance(v, str):
-                        v = [v]
-                    else:
-                        flat_v = []
-                        for item in v:
-                            if isinstance(item, str):
-                                flat_v.append(item)
-                            elif isinstance(item, list):
-                                flat_v.extend(item)
-                            else:
-                                raise Exception(
-                                    f'Unexpected type "{type(item)}" in list for attribute "{k}" in "{name}"')
-                        v = flat_v
-
-                    entity_values[k] = [
-                        self.resolve_entity_reference(typing.get_args(class_attributes[k])[0], entity_name) for
-                        entity_name in v]
-                elif typing.get_origin(class_attributes[k]) == list and \
-                        inspect.isclass(typing.get_args(class_attributes[k])[0]) and \
-                        issubclass(typing.get_args(class_attributes[k])[0], ParsableObject) and \
-                        not issubclass(
-                        typing.get_args(class_attributes[k])[0], NameableEntity):
-                    if not isinstance(v, list):
-                        v = [v]
-                    entity_values[k] = [self.parse_parsable_object(object_data, typing.get_args(class_attributes[k])[0]) for object_data in v]
-                elif inspect.isclass(class_attributes[k]) and issubclass(class_attributes[k], ParsableObject) and \
-                        class_attributes[k] != entity_class:
-                    if isinstance(v, list):
-                        if len(v) == 0:
-                            continue
-                        different_values = set(v)
-                        v = v[-1]
-                        if len(different_values) > 1:
-                            print(f'Warning: duplicate section "{k}" in "{name}". Using last entry "{v}"')
-                    if issubclass(class_attributes[k], NameableEntity):
-                        entity_values[k] = self.resolve_entity_reference(class_attributes[k], v)
-                    else:
-                        entity_values[k] = self.parse_parsable_object(v, class_attributes[k])
-                else:
-                    entity_values[k] = v
+            try:
+                parsed_value = self._parse_entity_value(k, v, name, class_attributes, entity_class,
+                                                                  entity_values, transform_value_functions)
+                entity_values[k] = parsed_value
+            except UnhandledEntityValueWarning as warning:
+                print(warning, file=sys.stderr)
+            except UnhandledEntityValueNotice as notice:
+                pass
         if conditions is not None:
             if 'conditions' in class_attributes:
                 entity_values['conditions'] = conditions
             elif 'dlc' in class_attributes:
                 entity_values['dlc'] = self.parse_dlc_from_conditions(conditions)
         return entity_values
+
+    def _parse_entity_value(self, key, value, name, class_attributes, entity_class, entity_values: dict[Any, Any],
+                            transform_value_functions) -> Any:
+        if isinstance(value, str) and value.startswith('define:'):
+            category, _, define = value.removeprefix('define:').partition('|')
+            value = self.defines[category][define]
+        if key in transform_value_functions:
+            return transform_value_functions[key](value)
+        elif key in class_attributes and key not in entity_values:
+            if inspect.isclass(class_attributes[key]) and issubclass(class_attributes[key], enum.Enum):
+                return class_attributes[key](value)
+            elif inspect.isclass(class_attributes[key]) and issubclass(class_attributes[key], PdxColor):
+                return self.parse_color_value(value)
+            elif typing.get_origin(class_attributes[key]) == list and inspect.isclass(
+                    typing.get_args(class_attributes[key])[0]) and issubclass(typing.get_args(class_attributes[key])[0],
+                                                                              Modifier):
+                if type(value) == list and len(value) > 0:
+                    raise UnhandledEntityValueWarning(key, value, name, entity_class, 'Duplicate section')
+                else:
+                    return self._parse_modifier_data(value, typing.get_args(class_attributes[key])[0])
+            elif typing.get_origin(class_attributes[key]) == list and inspect.isclass(
+                    typing.get_args(class_attributes[key])[0]) and issubclass(
+                typing.get_args(class_attributes[key])[0], NameableEntity) and \
+                    typing.get_args(class_attributes[key])[0] != entity_class:
+                if isinstance(value, str):
+                    value = [value]
+                else:
+                    flat_v = []
+                    for item in value:
+                        if isinstance(item, str):
+                            flat_v.append(item)
+                        elif isinstance(item, list):
+                            flat_v.extend(item)
+                        else:
+                            raise UnhandledEntityValueWarning(key, value, name, entity_class, f'Unexpected type "{type(item)}" in list for attribute')
+                    value = flat_v
+
+                return [
+                    self.resolve_entity_reference(typing.get_args(class_attributes[key])[0], entity_name) for
+                    entity_name in value]
+            elif typing.get_origin(class_attributes[key]) == list and \
+                    inspect.isclass(typing.get_args(class_attributes[key])[0]) and \
+                    issubclass(typing.get_args(class_attributes[key])[0], ParsableObject) and \
+                    not issubclass(
+                        typing.get_args(class_attributes[key])[0], NameableEntity):
+                if not isinstance(value, list):
+                    value = [value]
+                return [self.parse_parsable_object(object_data, typing.get_args(class_attributes[key])[0]) for
+                                object_data in value]
+            elif inspect.isclass(class_attributes[key]) and issubclass(class_attributes[key], ParsableObject) and \
+                    class_attributes[key] != entity_class:
+                if isinstance(value, list):
+                    if len(value) == 0:
+                        ignore_value = True
+                    else:
+                        different_values = set(value)
+                        value = value[-1]
+                        if len(different_values) > 1:
+                            print(f'Warning: duplicate section "{key}" in "{name}". Using last entry "{value}"')
+                if issubclass(class_attributes[key], NameableEntity):
+                    return self.resolve_entity_reference(class_attributes[key], value)
+                else:
+                    return self.parse_parsable_object(value, class_attributes[key])
+            else:
+                return value
+        raise UnhandledEntityValueNotice(key, value, name, entity_class)
 
     @abstractmethod
     def parse_dlc_from_conditions(self, conditions):

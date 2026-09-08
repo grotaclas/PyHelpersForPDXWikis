@@ -42,6 +42,13 @@ class Eu5Parser(JominiParser):
     def localize_and_format(self, key):
         return self.formatter.format_localization_text(self.localize(key))
 
+    def _parse_entity_value(self, key, value, name, class_attributes, entity_class, entity_values: dict[Any, Any],
+                            transform_value_functions) -> Any:
+        if key in class_attributes and class_attributes[key] == TriggerBlock:
+            return TriggerBlock(value)
+        return super()._parse_entity_value(key, value, name, class_attributes, entity_class, entity_values,
+                                           transform_value_functions)
+
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
                                 transform_value_functions: dict[str, Callable[[Any], Any]] = None, entity_level: int = 0,
                                 level_headings_keys: dict[str, 0] = None, parsing_workarounds: list[ParsingWorkaround] = None, localization_prefix: str = '',
@@ -1406,7 +1413,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def scripted_triggers(self) -> dict[str, ScriptedTrigger]:
         extra_data_functions = {
-            'trigger': lambda name, data: Trigger(data.dictionary)
+            'triggers': lambda name, data: data
         }
         triggers = self.parse_advanced_entities('main_menu/common/scripted_triggers', ScriptedTrigger, extra_data_functions=extra_data_functions)
         triggers.update(self.parse_advanced_entities('in_game/common/scripted_triggers', ScriptedTrigger, extra_data_functions=extra_data_functions))
