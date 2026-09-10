@@ -398,7 +398,7 @@ class CargoDataGenerator(Eu5FileGenerator):
                 'description': formable_country.description,
                 'tag': getattr(formable_country, 'tag', 'MISSING'),  # tag: <class 'str'>
                 'adjective': formable_country.adjective,  # adjective: <class 'str'>
-                'flag': '' if formable_country.flag is None else f'Flag {formable_country.flag}.png', # flag: <class 'eu5.eu5lib.CoatOfArms'>
+                'flag': '' if formable_country.flag is None else f'{formable_country.flag}.png', # flag: <class 'eu5.eu5lib.CoatOfArms'>
                 'allow': self.formatter.format_trigger(formable_country.allow),  # allow: <class 'eu5.trigger.Trigger'>
                 'areas': ';'.join([areas.display_name if areas else '' for areas in formable_country.areas]),  # areas: list[eu5.eu5lib.Area]
                 'capital_required': 1 if formable_country.capital_required else 0,  # capital_required: <class 'bool'>
@@ -413,6 +413,7 @@ class CargoDataGenerator(Eu5FileGenerator):
                 'required_locations_fraction': formable_country.required_locations_fraction,  # required_locations_fraction: <class 'float'>
                 'rule': formable_country.rule,  # rule: <class 'str'>
                 'sub_continents': ';'.join([sub_continents.display_name if sub_continents else '' for sub_continents in formable_country.sub_continents]),  # sub_continents: list[eu5.eu5lib.SubContinent]
+                'color': '' if formable_country.color is None else formable_country.color.get_css_color_string(),
             })
 
         return self.create_cargo_template_calls('Formable country', formable_country_table_data)
