@@ -398,7 +398,7 @@ class CargoDataGenerator(Eu5FileGenerator):
                 'description': formable_country.description,
                 'tag': getattr(formable_country, 'tag', 'MISSING'),  # tag: <class 'str'>
                 'adjective': formable_country.adjective,  # adjective: <class 'str'>
-                'flag': '' if formable_country.flag is None else f'{formable_country.flag}.png', # flag: <class 'eu5.eu5lib.CoatOfArms'>
+                'flag': '' if formable_country.flag is None and formable_country.tag is None else (f'{formable_country.flag}.png' if formable_country.tag is None else f'Flag_{formable_country.tag}.png'), # Prefer Flag_{formable_country.tag}.png, if tag is None, {formable_country.flag}.png, and if both tag and flag is None, just an empty string
                 'allow': self.formatter.format_trigger(formable_country.allow),  # allow: <class 'eu5.trigger.Trigger'>
                 'areas': ';'.join([areas.display_name if areas else '' for areas in formable_country.areas]),  # areas: list[eu5.eu5lib.Area]
                 'capital_required': 1 if formable_country.capital_required else 0,  # capital_required: <class 'bool'>
