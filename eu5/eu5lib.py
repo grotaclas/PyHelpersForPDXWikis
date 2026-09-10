@@ -958,7 +958,7 @@ class CountryDescriptionCategory(NameableEntity):
 
 
 class BaseCountry(Eu5AdvancedEntity):
-    tag: str
+    tag: str = None
     adjective: str = ''
     flag: 'CoatOfArms' = None
     color: PdxColor = None
@@ -975,15 +975,6 @@ class BaseCountry(Eu5AdvancedEntity):
 
     def get_wiki_link_with_icon(self) -> str:
         return f'{{{{flag|{self.display_name}}}}}'
-
-    @cached_property
-    def description(self) -> str:
-        """tag specific history
-         from game/in_game/common/customizable_localization/country_history.txt
-
-         Can't be done during parsing, because the localization references other countries
-        """
-        return eu5game.parser.tag_specific_descriptions.get(self.name, '')
 
     @cached_property
     def long_name(self) -> str:
