@@ -109,8 +109,9 @@ class Eu5AdvancedEntity(AdvancedEntity):
     """Set in Eu5Parser.parse_advanced_entities()
     :type: eu5.text_formatter.Eu5WikiTextFormatter"""
 
-    icon_folder: str = None
+    icon_folder: str | None = None
     "either the name of the define in NGameIcons or the folder name relative to game/main_menu/gfx/interface/icons"
+    illustration_folder: str | None = None
 
     base_icon_folder = eu5game.game_path / 'game/main_menu/gfx/interface/icons'
 
@@ -124,6 +125,9 @@ class Eu5AdvancedEntity(AdvancedEntity):
         else:
             name = self.name
         return f'{name}.dds'
+
+    def get_illustration_filename(self) -> str:
+        return self.get_icon_filename()
 
     @classmethod
     def get_icon_folder(cls):
@@ -158,21 +162,39 @@ class Eu5AdvancedEntity(AdvancedEntity):
             return False
 
     def get_icon_path(self) -> Path:
-        icon = self.get_icon_folder() / self.get_icon_filename()
-        if not icon.exists():
-            relative_folder = str(self.get_icon_folder().relative_to(eu5game.game_path / 'game'))
-            dlc_icons = list(eu5game.game_path.glob(f'game/dlc/*/{relative_folder}/{self.get_icon_filename()}'))
-            if len(dlc_icons) == 1:
-                return dlc_icons[0]
-            elif len(dlc_icons) > 1:
-                raise Exception(f'Multiple icons for "{self.display_name}"({self.name}): {"\n".join(dlc_icons)}')
-        return icon
+        return self._get_path(self.get_icon_folder(), self.get_icon_filename())
+
+    def get_illustration_path(self) -> Path | None:
+        if self.illustration_folder is None:
+            return None
+        elif self.illustration_folder in eu5game.parser.defines['NGameIllustrations']:
+            folder = eu5game.game_path / 'game/main_menu' / eu5game.parser.defines['NGameIllustrations'][self.illustration_folder]
+        else:
+            folder = eu5game.game_path / 'game/main_menu/gfx/interface/illustrations'
+        return self._get_path(folder, self.get_illustration_filename())
+
+    def _get_path(self, folder, filename) -> Path:
+        file = folder / filename
+        if not file.exists():
+            relative_folder = str(folder.relative_to(eu5game.game_path / 'game'))
+            dlc_files = list(eu5game.game_path.glob(f'game/dlc/*/{relative_folder}/{filename}'))
+            if len(dlc_files) == 1:
+                return dlc_files[0]
+            elif len(dlc_files) > 1:
+                raise Exception(f'Multiple icons for "{self.display_name}"({self.name}): {"\n".join(dlc_files)}')
+        return file
+
 
     def get_wiki_filename(self) -> str:
         if not self.has_wiki_icon():
             return ''
-        filename = self.get_icon_filename().replace('.dds', '.png')
-        prefix = self.get_wiki_filename_prefix()
+        return self._construct_wiki_filename(self.get_wiki_filename_prefix(), self.get_icon_filename())
+
+    def get_wiki_illustration_filename(self):
+        return self._construct_wiki_filename(self.get_wiki_illustration_prefix(), self.get_illustration_filename())
+
+    def _construct_wiki_filename(self, prefix: str, filename: str) -> str:
+        filename = filename.replace('.dds', '.png')
         filename = filename.removeprefix('icon_')
         filename = filename.replace(':', '')
         filename = filename.replace('_', ' ')
@@ -180,6 +202,10 @@ class Eu5AdvancedEntity(AdvancedEntity):
         if not filename.lower().startswith(prefix.lower()):
             filename = f'{prefix} {filename}'
         return filename.capitalize()
+
+    def get_wiki_illustration_prefix(self) -> str:
+        """Defaults to the filename prefix + illustration. Subclasses can override it to provide their actual names"""
+        return self.get_wiki_filename_prefix() + ' illustration'
 
     def get_wiki_icon(self, size: str = '32px') -> str:
         if not self.has_wiki_icon():
@@ -1938,8 +1964,16 @@ class ArtistWork(Eu5AdvancedEntity):
     captured: bool
     location_modifier: list[Eu5Modifier] = []
     religion_scale_modifier: Eu5ModifierType = None
-    icon_folder = 'WORK_OF_ART_ICON_PATH' # 21 / 21 icons found
-    # icon_folder = 'WORK_OF_ART_ILLUSTRATION_PATH' # 20 / 21 icons found
+    icon_folder = 'WORK_OF_ART_ICON_PATH'
+    illustration_folder = 'WORK_OF_ART_ILLUSTRATION_PATH'
+
+    def get_wiki_filename_prefix(self) -> str:
+        return 'Work of art'
+
+    def get_wiki_file_category(self) -> str:
+        return 'Work of art icons'
+
+
 class AttributeColumn(Eu5AdvancedEntity):
     pass
 class AutoModifier(Eu5AdvancedEntity):
