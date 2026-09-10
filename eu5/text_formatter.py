@@ -1,9 +1,11 @@
 import re
+from typing import Collection
 
 from common.paradox_lib import NameableEntity
 from common.paradox_parser import Tree
 from eu5.eu5lib import Resource, HardcodedResource, Eu5AdvancedEntity
 from eu5.game import eu5game
+from eu5.trigger import TriggerBlock
 from vic3.text_formatter import Vic3WikiTextFormatter
 
 
@@ -70,6 +72,11 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
     def format_cost(self, resource: str, value: int, icon_only=False):
         return self.format_resource(resource, value, cost=True, icon_only=icon_only)
 
+    def format_conditions(self, conditions: Tree, indent: int = 1):
+        if isinstance(conditions, TriggerBlock):
+            conditions = conditions.triggers
+        return super().format_conditions(conditions, indent)
+
     def format_trigger(self, trigger: Tree|None):
         if not trigger:
             return ''
@@ -92,11 +99,14 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         if isinstance(value, Tree) and len(value) == 1 and list(value.keys())[0] in comparison_operators:
             for comparison_str, comparison_value in value:
                 comparison_operator = comparison_operators[comparison_str]
-                if key.startswith('societal_value:'):
-                    typ, _, key_without_prefix = key.partition(':')
-                    return self.parser.societal_values[key_without_prefix].format(comparison_value, comparison_operator)
+                if isinstance(comparison_value, str) or not isinstance(comparison_value, Collection):
+                    if key.startswith('societal_value:'):
+                        typ, _, key_without_prefix = key.partition(':')
+                        return self.parser.societal_values[key_without_prefix].format(comparison_value, comparison_operator)
+                    else:
+                        return f'{key} {comparison_operator} {self.format_RHS(comparison_value)}'
         if key in self.parser.scripted_triggers and value is True:
-            return self.format_conditions(self.parser.scripted_triggers[key].trigger, indent)
+            return self.format_conditions(self.parser.scripted_triggers[key].triggers, indent)
         
         return super().format_key_value_pair(key, value, indent)
 

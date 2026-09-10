@@ -361,7 +361,7 @@ class CargoDataGenerator(Eu5FileGenerator):
                 if event.dynamic_historical_event.to_date != '':
                     event_data['dhe_to'] = event.dynamic_historical_event.to_date
                 event_data['dhe_monthly_chance'] = event.dynamic_historical_event.monthly_chance
-            if event.trigger:
+            if event.trigger and event.trigger.triggers:
                 event_data['trigger'] = self.formatter.format_trigger(event.trigger)
             if event.major:
                 event_data['major'] = 'yes'

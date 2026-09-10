@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 from collections.abc import MutableMapping
 from tempfile import mkstemp
-from typing import Callable, Any, Iterator
+from typing import Callable, Any, Iterator, Sequence
 
 try:  # when used by PyHelpersForPDXWikis
     from PyHelpersForPDXWikis.localsettings import RAKALY_CLI
@@ -231,6 +231,20 @@ class Tree(MutableMapping):
 
     def __len__(self) -> int:
         return len(self.dictionary)
+
+    def _internal_str(self, indent: str = "") -> str:
+        base = ""
+        iter_list = list(self.iterate_with_duplicates())
+        for i, (key, node) in enumerate(iter_list):
+            first_char = "└" if i == len(iter_list)-1 else "├"
+            is_tree = isinstance(node,Tree)
+            base += f"{indent}{first_char}{key} {node if not is_tree else ""}\n"
+            if is_tree:
+                base += Tree._internal_str(node, indent=indent + "│" * (i != len(iter_list)-1) + "\t")
+        return base
+
+    def __str__(self) -> str:
+        return self._internal_str()
 
     def __iter__(self) -> Iterator:
         """iterates over the items of the dictionary.

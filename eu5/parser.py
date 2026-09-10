@@ -42,6 +42,13 @@ class Eu5Parser(JominiParser):
     def localize_and_format(self, key):
         return self.formatter.format_localization_text(self.localize(key))
 
+    def _parse_entity_value(self, key, value, name, class_attributes, entity_class, entity_values: dict[Any, Any],
+                            transform_value_functions) -> Any:
+        if key in class_attributes and class_attributes[key] == TriggerBlock:
+            return TriggerBlock(value)
+        return super()._parse_entity_value(key, value, name, class_attributes, entity_class, entity_values,
+                                           transform_value_functions)
+
     def parse_nameable_entities(self, folder: str, entity_class: Type[NE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
                                 transform_value_functions: dict[str, Callable[[Any], Any]] = None, entity_level: int = 0,
                                 level_headings_keys: dict[str, 0] = None, parsing_workarounds: list[ParsingWorkaround] = None, localization_prefix: str = '',
@@ -990,6 +997,12 @@ class Eu5Parser(JominiParser):
     def auto_modifiers(self) -> dict[str, AutoModifier]:
         return self.parse_advanced_entities('in_game/common/auto_modifiers', AutoModifier,
                                             localization_prefix='AUTO_MODIFIER_NAME_', # Used in 74/74 Examples: {'AUTO_MODIFIER_NAME_positive_yanantin': 'Positive [yanantin|e]', 'AUTO_MODIFIER_NAME_positive_harmony': 'Yáng'}
+                                            extra_data_functions={
+                                                'modifier': lambda name, data: self._parse_modifier_data(
+                                                    Tree({name: value for name, value in data if
+                                                          name not in ['category', 'limit', 'potential_trigger', 'requires_real', 'scales_with', 'type', 'alert']}),
+                                                    modifier_class=Eu5Modifier),
+                                            }
                                             )
     @cached_property
     def avatars(self) -> dict[str, Avatar]:
@@ -1127,7 +1140,7 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='', # Used in 127/127 Examples: {'denmark_f': 'Denmark', 'MGE_f': '$MGE$'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 125/127 Examples: {'WES_f_desc': "With the clerical influences over our lands slowly fading into the past it is time to form a new state for [ShowAreaName('westphalia_area')] and proclaim a new era for our people.", 'PUN_f_desc': "We must unite the [ShowCultureName('punjabi')] people if we are ever to be able to stand against foreign invaders. Together we will build a modern state with armies capable of taking on the many enemies who would attack us for our lands, and who would do anything to extinguish our faith!"}
                                             extra_data_functions={
-                                                'country_name': lambda name, data: data['name'] if 'name' in data else data['tag'],
+                                                'country_name': lambda name, data: data.get('name')
                                             }
                                             )
     @cached_property
@@ -1400,7 +1413,7 @@ class Eu5Parser(JominiParser):
     @cached_property
     def scripted_triggers(self) -> dict[str, ScriptedTrigger]:
         extra_data_functions = {
-            'trigger': lambda name, data: Trigger(data.dictionary)
+            'triggers': lambda name, data: data
         }
         triggers = self.parse_advanced_entities('main_menu/common/scripted_triggers', ScriptedTrigger, extra_data_functions=extra_data_functions)
         triggers.update(self.parse_advanced_entities('in_game/common/scripted_triggers', ScriptedTrigger, extra_data_functions=extra_data_functions))
@@ -1550,3 +1563,56 @@ class Eu5Parser(JominiParser):
 
         return [WikiImage([image_file]) for image_file in
                 sorted(image_files.values(), key=attrgetter('main_wiki_filename'))]
+
+
+    @cached_property
+    def historical_earthquakes(self) -> dict[str,HistoricalEarthquake]:
+        events = {event_id: event for event_id, event in self.events.items() if "earthquake" in event_id}
+        historical_earthquakes = {}
+        for event_id, event in events.items():
+            location = None
+            possible_start = None
+            possible_end = None
+            for key, node in event.trigger.iterate_with_duplicates():
+                if key == "owns":
+                    location = self.locations[node.removeprefix("location:")]
+                elif key == "current_year" or key == "current_date":
+                    for key2, node2 in node.iterate_with_duplicates():
+                        if key2.startswith("GREATER_THAN"):
+                            possible_start = node2
+                        elif key2.startswith("LESS_THAN"):
+                            possible_end = node2
+                        else:
+                            raise ValueError(key2)
+                else:
+                    break
+
+            severity = None
+
+            for option_key in event.option:
+                if "major" in option_key:
+                    severity = "Major"
+                elif "minor" in option_key:
+                    severity = "Minor"
+                elif "catastrophic" in option_key or "catastrophy" in option_key:
+                    severity = "Catastrophic"
+                else:
+                    severity = "Special"
+            if (
+                location is None
+                or possible_start is None
+                or possible_end is None
+                or severity is None
+            ):
+                # print(f"Event {event.name} does not match the pattern")
+                continue
+            else:
+                historical_earthquakes[event_id] = HistoricalEarthquake(
+                    event_id=event_id,
+                    location=location,
+                    possible_start=possible_start,
+                    possible_end=possible_end,
+                    severity=severity,
+                )
+        return historical_earthquakes
+
