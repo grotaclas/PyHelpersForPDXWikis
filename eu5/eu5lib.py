@@ -977,15 +977,6 @@ class BaseCountry(Eu5AdvancedEntity):
         return f'{{{{flag|{self.display_name}}}}}'
 
     @cached_property
-    def description(self) -> str:
-        """tag specific history
-         from game/in_game/common/customizable_localization/country_history.txt
-
-         Can't be done during parsing, because the localization references other countries
-        """
-        return eu5game.parser.tag_specific_descriptions.get(self.name, '')
-
-    @cached_property
     def long_name(self) -> str:
         """from _LONG localization.
         "Rank of Name" if loc is not set
@@ -1057,6 +1048,15 @@ class Country(BaseCountry):
             self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'
         if isinstance(self.timed_modifier, Tree):
             self.timed_modifier = [self.timed_modifier]
+
+    @cached_property
+    def description(self) -> str:
+        """tag specific history
+         from game/in_game/common/customizable_localization/country_history.txt
+
+         Can't be done during parsing, because the localization references other countries
+        """
+        return eu5game.parser.tag_specific_descriptions.get(self.tag, '')
 
     @cached_property
     def long_name(self) -> str:
