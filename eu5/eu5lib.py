@@ -579,7 +579,7 @@ class Advance(Eu5AdvancedEntity):
         tags = []
         for trigger_block in (self.potential, self.allow):
             if trigger_block and trigger_block.triggers:
-                for parents, tag in trigger_block.triggers.find_all_recursively_with_parents(('has_or_had_tag', 'tag')):
+                for parents, tag in trigger_block.triggers_with_inlined_scripted_triggers.find_all_recursively_with_parents(('has_or_had_tag', 'tag')):
                     if 'NOT' not in parents and 'NOR' not in parents and tag not in tags:
                         tags.append(tag)
         return tags
