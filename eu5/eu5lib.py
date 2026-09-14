@@ -1045,7 +1045,7 @@ class Country(BaseCountry):
             kwargs['tag'] = name
         super().__init__(name, display_name, **kwargs)
         if self.country_name and self.country_name != self.name:
-            self.display_name = f'{eu5game.parser.localize(self.country_name)}({self.name})'
+            self.display_name = f'{eu5game.parser.localize(self.country_name)} ({self.name})'
         if isinstance(self.timed_modifier, Tree):
             self.timed_modifier = [self.timed_modifier]
 
