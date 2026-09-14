@@ -178,7 +178,8 @@ class ParadoxParser:
             raise Exception('Error reading "{}": {}'.format(file, rakaly_error_message))
         return self.json_to_tree(rakaly_result.stdout)
 
-    def parse_ordered_pairs_into_tree(self, ordered_pairs) -> 'Tree|TreeWithDuplicates':
+    @staticmethod
+    def parse_ordered_pairs_into_tree(ordered_pairs) -> 'Tree|TreeWithDuplicates':
         """
         Returns a Tree from the ordered pairs
 
