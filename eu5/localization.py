@@ -11,6 +11,12 @@ class Eu5Localizer(JominiLocalizer):
         'BGP': 'Burgundy (BGP)',
         'MAM': 'Egypt (MAM)',
         'MGE': 'Mongol Empire',
+        'BYZ_trebizond_f': 'Byzantine Empire (as Trebizond)',
+        'IRE_high_kingship_f': 'Ireland (High Kingship)',
+        'IRE_lordship_of_ireland_f': 'Ireland (Lordship of Ireland)',
+        'LAT_REDUCED_REQUIREMENTS_f': 'Latin Empire (reduced requirements)',
+        'ROM_BYZ_f': 'Roman Empire (As Byzantium)',
+        'THE_REDUCED_REQUIREMENTS_f': 'Thessalonica (reduced requirements)',
     }
 
     def __init__(self, game_installation: Path, language: str = 'english'):
