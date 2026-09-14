@@ -958,7 +958,7 @@ class CountryDescriptionCategory(NameableEntity):
 
 
 class BaseCountry(Eu5AdvancedEntity):
-    tag: str
+    tag: str = None
     adjective: str = ''
     flag: 'CoatOfArms' = None
     color: PdxColor = None
