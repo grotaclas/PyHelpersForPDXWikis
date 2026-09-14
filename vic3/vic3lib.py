@@ -475,3 +475,27 @@ class Principle(Vic3AdvancedEntity):
 class Religion(Vic3AdvancedEntity):
     traits: list[str]
     taboos: list[str]
+
+
+class Option(NameableEntity):
+    option_text: str = ''
+    default: bool = False
+    trigger: Tree = None
+    effect: Tree = None
+
+
+class Event(NameableEntity):
+    version: str = ""  # Filled manually after generated
+    collapse: str = "no"  # Filled manually after generated
+    event_id: str = ""
+    event_name: str = ""
+    icon_group: str = None
+    icon_type: str = "default"
+    header: str = "h3"
+    cond_event_text: str = None
+    event_text: str = ""
+    flavor_text: str = ""
+    triggered_by: Tree = None
+    trigger: Tree = None
+    immediate: Tree = None
+    options: list[Option]
