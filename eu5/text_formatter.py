@@ -113,6 +113,7 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
     def format_simple_statement(self, key, value):
         mapping = {
             'has_or_had_tag': ('Is or was {value}', self.parser.countries_including_formables),
+            'tag': ('Is {value}', self.parser.countries_including_formables),
             'country_exists': ('{value} exists', self.parser.countries_including_formables),
             'has_reform': ('Has the {value} Government Reform', self.parser.government_reforms),
             'country_has_estate': ('Has the {value} estate', self.parser.estates),
