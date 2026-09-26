@@ -335,7 +335,7 @@ class TableGenerator(Eu5FileGenerator):
                                      one_line_per_cell=True,
                                      remove_empty_columns=True,
                                      )
-        table = table.replace('!! [[File:', f'''!! colspan="{len(self.parser.pop_types)}" | Pop demands
+        table = table.replace('!! [[File:', f'''!! colspan="{len(self.parser.pop_types)}" | Pop demands (per 1000 pops)
 |-
 ! [[File:''', 1)
         return table
