@@ -43,5 +43,9 @@ class JominiLocalizer(Localizer):
                 for line in f:
                     match = re.fullmatch(r'\s*([^#\s:]+):\d?\s*"(.*)"[^"]*', line)
                     if match:
-                        localization_dict[match.group(1)] = match.group(2)
+                        localization_key = match.group(1)
+                        localization = match.group(2)
+                        # remove escaping
+                        localization = localization.replace(r'\"', '"')
+                        localization_dict[localization_key] = localization
         return localization_dict

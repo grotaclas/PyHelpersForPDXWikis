@@ -11,6 +11,10 @@ class Eu5Localizer(JominiLocalizer):
         'BGP': 'Burgundy (BGP)',
         'MAM': 'Egypt (MAM)',
         'MGE': 'Mongol Empire',
+        'DAU': 'Dauphiné',
+        'GLH': 'Golden Horde',
+        'PAL': 'Palatinate',
+        'PAP': 'Papal States',
     }
 
     def __init__(self, game_installation: Path, language: str = 'english'):

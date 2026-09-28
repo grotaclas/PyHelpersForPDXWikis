@@ -22,21 +22,27 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         return f'{{{{icon|{icon_key}}}}}'
 
 
-    def _resolve_data_function(self, data_function: str, parameter: str, name_function: str = None):
+    def _resolve_data_function(self, data_function: str, parameter: str, name_function: str|None = None, format_str: str|None = None) -> str:
         if data_function in ['GetEstateNameWithNoTooltip', 'GetEstateName']:
-            return self.parser.estates[parameter].display_name
-        if data_function in ['ShowSocietyDirectionName']:
-            return self.parser.localize(f'{parameter}_focus')
-        if data_function == 'GetCountry' and name_function in ['GetAdjectiveWithNoTooltip', 'GetAdjective']:
-            return self.parser.localize(f'{parameter}_ADJ')
-        if data_function == 'GetCountry' and name_function in ['GetLongName', 'GetLongNameWithNoTooltip'] and parameter in self.parser.countries:
-            return self.parser.countries[parameter].long_name
-        return self.parser.localize(parameter)
+            result = self.parser.estates[parameter].display_name
+        elif data_function in ['ShowSocietyDirectionName']:
+            result =self.parser.localize(f'{parameter}_focus')
+        elif data_function == 'GetCountry' and name_function in ['GetAdjectiveWithNoTooltip', 'GetAdjective']:
+            result =self.parser.localize(f'{parameter}_ADJ')
+        elif data_function == 'GetCountry' and name_function in ['GetLongName', 'GetLongNameWithNoTooltip'] and parameter in self.parser.countries:
+            result =self.parser.countries[parameter].long_name
+        else:
+            result = self.parser.localize(parameter)
+
+        if format_str:
+            result = self._apply_formatting_markers(format_str, result)
+
+        return result
 
     def apply_localization_formatting(self, text: str) -> str:
         text = super().apply_localization_formatting(text)
-        text = re.sub(r"\[\s*(?P<data_function>(Show|Get)[a-zA-Z_]+)\s*\(\s*'(?P<loc_key>[^']+)'\s*\)(.(?P<name_function>(GetNameWithNoTooltip|GetLongNameWithNoTooltip|GetLongName|GetShortNameWithNoTooltip|GetAdjectiveWithNoTooltip|GetAdjective)))?\s*]",
-                      lambda match: self._resolve_data_function(match.group('data_function'), match.group('loc_key'), match.group('name_function')), text)
+        text = re.sub(r"\[\s*(?P<data_function>(Show|Get)[a-zA-Z_]+)\s*\(\s*'(?P<loc_key>[^']+)'\s*\)(.(?P<name_function>(GetNameWithNoTooltip|GetLongNameWithNoTooltip|GetLongName|GetShortNameWithNoTooltip|GetAdjectiveWithNoTooltip|GetAdjective)))?\s*(\|(?P<format>[^]|()[]+)\s*)?]",
+                      lambda match: self._resolve_data_function(match.group('data_function'), match.group('loc_key'), match.group('name_function'), match.group('format')), text)
 
         return text
 
@@ -45,6 +51,13 @@ class Eu5WikiTextFormatter(Vic3WikiTextFormatter):
         text = re.sub(r"\\n\$BULLET_WITH_TAB\$", '\n* ', text)
         text = re.sub(r"\\n\$BULLET\$", '\n* ', text)
         return super().resolve_nested_localizations(text, seen_keys)
+
+    def get_concept_link(self, match: re.Match) -> str:
+        concept_name = match.group('concept_name').removesuffix('_with_icon')
+        if concept_name in self.parser.game_concepts:
+            return super().get_concept_link(match)
+        else:
+            return match.group(0)
 
     def format_resource(self, resource: str | Resource, value=None, cost=False, icon_only=False, add_plus=False):
         if  isinstance(resource, str):

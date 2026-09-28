@@ -1730,12 +1730,15 @@ class TriggeredTextHolder(ParsableObject):
     random_valid: list['TriggeredTextHolder'] = []
     triggered_desc: list['TriggeredTextHolder'] = []
 
-    def __init__(self, desc: str = None, **kwargs):
-        if isinstance(desc, list):
-            self.localized_desc = [eu5game.parser.localize(d) for d in desc]
-        elif desc is not None:
-            self.localized_desc = eu5game.parser.localize(desc)
+    def __init__(self, desc: str|list[str]|None = None, **kwargs):
         super().__init__(desc=desc, **kwargs)
+        if isinstance(desc, list):
+            self.localized_desc = [
+                eu5game.parser.formatter.format_localization_text(eu5game.parser.localize(d))
+                for d in desc
+            ]
+        elif desc is not None:
+            self.localized_desc = eu5game.parser.formatter.format_localization_text(eu5game.parser.localize(desc))
 
     def __str__(self):
         if self.desc is None:
