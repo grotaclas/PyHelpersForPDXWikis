@@ -2842,6 +2842,7 @@ class SubjectType(Eu5AdvancedEntity, UnlockedByMixin('unlock_subject_type')):
     visible_through_treaty: TriggerBlock = None
     war_score_cost: float = 0
     icon_folder = 'SUBJECT_TYPES_ICON_PATH' # 19 / 19 icons found
+
 class TownRights(Eu5AdvancedEntity, UnlockedByMixin('unlock_town_rights')):
     allow: TriggerBlock = None
     color: PdxColor
@@ -2850,6 +2851,20 @@ class TownRights(Eu5AdvancedEntity, UnlockedByMixin('unlock_town_rights')):
     location_modifier: list[Eu5Modifier]
     potential: TriggerBlock = None
     icon_folder = 'TOWN_RIGHTS_ICON_PATH' # 42 / 50 icons found
+
+    def get_default_wiki_filename(self) -> str:
+        return f'{self.get_wiki_filename_prefix()} default icon.png'
+
+    def get_default_icon_path(self) -> Path:
+        return self.get_icon_folder() / '_default.dds'
+
+    def get_wiki_filename(self) -> str:
+        if self.get_icon_path().exists():
+            return super().get_wiki_filename()
+        else:
+            return self.get_default_wiki_filename()
+
+
 class TownSetup(Eu5AdvancedEntity):
     building_counts: dict[Building, int]  # TODO: parsing
 class Trait(Eu5AdvancedEntity):

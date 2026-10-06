@@ -1084,12 +1084,15 @@ class TableGenerator(Eu5FileGenerator):
     def get_town_rights_table(self):
         town_rights = self.parser.town_rights.values()
         town_right_table_data = [{
-            'Name': f' style="background-color: {town_right.color.get_css_color_string() if town_right.color else "white"}" | ' + f'{{{{iconbox|{town_right.display_name}|{town_right.description}|w=300px|image={town_right.get_wiki_filename()}}}}}',
-            'Allow': self.formatter.format_trigger(town_right.allow),  # allow: <class 'eu5.trigger.Trigger'>
+            'class="unsortable" style="width:5px;" | ': f'style="background-color: {town_right.color.get_css_color_string() if town_right.color else "white"}"| ',
+            'Name': f'{{{{iconbox|{town_right.display_name}|{town_right.description}|w=300px|image={town_right.get_wiki_filename()}}}}}',
+            'Requirements': self.merge_multiple_sections([
+                ('', self.formatter.format_trigger(town_right.potential)),
+                ('', self.formatter.format_trigger(town_right.allow)),
+            ]),
             'Country Modifier': self.format_modifier_section('country_modifier', town_right),  # country_modifier: list[eu5.eu5lib.Eu5Modifier]
             'Kept At Conquest': '[[File:Yes.png|20px|Kept At Conquest]]' if town_right.kept_at_conquest else '[[File:No.png|20px|Not Kept At Conquest]]',  # kept_at_conquest: <class 'bool'>
             'Location Modifier': self.format_modifier_section('location_modifier', town_right),  # location_modifier: list[eu5.eu5lib.Eu5Modifier]
-            'Potential': self.formatter.format_trigger(town_right.potential),  # potential: <class 'eu5.trigger.Trigger'>
         } for town_right in town_rights]
         return self.make_wiki_table(town_right_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,
