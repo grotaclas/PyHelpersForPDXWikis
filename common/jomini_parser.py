@@ -43,7 +43,14 @@ class JominiParser(metaclass=ABCMeta):
         self.parser = ParadoxParser(game_path)
         self._entity_reference_cache = {}
 
-    def localize(self, key: str, default: str = None, return_none_instead_of_default=False) -> str|None:
+    @typing.overload
+    def localize(self, key: str, default: str | None = None, return_none_instead_of_default: typing.Literal[True] = True) -> str | None:
+        ...
+    @typing.overload
+    def localize(self, key: str, default: str | None = None, return_none_instead_of_default: typing.Literal[False] = False) -> str:
+        ...
+
+    def localize(self, key, default=None, return_none_instead_of_default=False):
         """localize the key from the english localization files
 
         if the key is not found, the behavior depends on return_none_instead_of_default:

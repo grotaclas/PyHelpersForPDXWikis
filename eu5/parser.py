@@ -984,12 +984,6 @@ class Eu5Parser(JominiParser):
                                             localization_prefix='ARTIST_TYPE_NAME_', # Used in 12/12 Examples: {'ARTIST_TYPE_NAME_iconographer': 'Iconographer', 'ARTIST_TYPE_NAME_jurist': 'Jurist'}
                                             )
     @cached_property
-    def artist_work(self) -> dict[str, ArtistWork]:
-        return self.parse_advanced_entities('in_game/common/artist_work', ArtistWork,
-                                            # localization_prefix='', localization_suffix='', # Used in 21/21 Examples: {'novel': 'Novel', 'temple_tower': 'Temple Tower'}
-                                            description_localization_prefix='', description_localization_suffix='_desc', # Used in 21/21 Examples: {'painting_desc': 'Capturing a moment in time or giving an important moment in our history a visual representation, the art of painting on any surface is highly valued.', 'temple_tower_desc': 'A crowning piece of architecture for a religious building, a $temple_tower$ will elevate the importance of its $temple$. The Tower will be able to shape our settlements and show our devotion to the divine.'}
-                                            )
-    @cached_property
     def attribute_columns(self) -> dict[str, AttributeColumn]:
         return self.parse_advanced_entities('in_game/common/attribute_columns', AttributeColumn,
                                             )
@@ -1032,6 +1026,51 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='', # Used in 86/86 Examples: {'cb_humiliate': 'Humiliate', 'cb_chinese_unification': "Unify [ShowSubContinentNameWithNoTooltip('china')]"}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 86/86 Examples: {'cb_horde_vs_civ_desc': 'There can be no peace between tribes and settlers! Their possessions belong to the Horde!', 'cb_take_shogunate_desc': 'We have the right to become $JAPANESE_SHOGUNATE_LEADER_MALE$, let us take it.'}
                                             )
+    @cached_property
+    def starting_characters(self) -> dict[str,Character]:
+        tree = self.parser.parse_file('main_menu/setup/start/05_characters.txt')
+
+        # Annoyingly in a few instances the name is directly a string
+        def get_name(node):
+            if node is None:
+                return None
+            elif isinstance(node,Tree):
+                val = self.localize(node["name"],return_none_instead_of_default=False)
+            else:
+                val = self.localize(node,return_none_instead_of_default=False)
+            return " ".join([self.localize(name,return_none_instead_of_default=False) for name in val.split(".")])
+
+        characters = {
+            key: Character(
+                key=key,
+                first_name=get_name(node["first_name"]),
+                last_name=get_name(node.get("last_name")),
+                nickname=get_name(node.get("nickname")),
+                culture=self.cultures[node["culture"]],
+                religion=self.religions[node["religion"]],
+                birth_date=node["birth_date"],
+                birth=self.locations.get(node.get("birth")),
+                tag=node["tag"],
+                dynasty=self.dynasties.get(node.get("dynasty")),
+                death_date=node.get("death_date"),
+                adm=node.get("adm"),
+                dip=node.get("dip"),
+                mil=node.get("mil"),
+            )
+            for key, node in tree["character_db"].iterate_with_duplicates()
+        }
+
+        for character in characters.values():
+            character.display_name = character.first_name
+            if character.nickname is not None:
+                character.display_name += " " + character.nickname
+            elif character.last_name is not None:
+                character.display_name += " " + character.last_name
+            elif character.dynasty is not None:
+                character.display_name += " " + character.dynasty.display_name
+
+        return characters
+
     @cached_property
     def character_interactions(self) -> dict[str, CharacterInteraction]:
         return self.parse_advanced_entities('in_game/common/character_interactions', CharacterInteraction,
@@ -1566,6 +1605,38 @@ class Eu5Parser(JominiParser):
 
 
     @cached_property
+    def works_of_art(self) -> list[WorkOfArt]:
+        tree = self.parser.parse_file('main_menu/setup/start/11_art.txt')
+        works_of_art = [
+            WorkOfArt(
+                display_name = localized_name if (localized_name := self.localize(node["key"])) is not None else "",
+                artist=self.starting_characters.get(node.get("artist")),
+                art_type=self.work_of_art_types[art_type],
+                location=self.locations[node["location"]],
+                origin=self.locations[node["origin"]],
+                quality=int(node["quality"]),
+                creation_date=node["creation_date"],
+                key=node["key"],
+            )
+            for art_type, node in tree["work_of_art_manager"].iterate_with_duplicates()
+        ]
+        for work_of_art in works_of_art:
+            for pair in [
+                ("$bayeux$","Bayeux"),
+                ("$BYZ_ADJ$","Byzantine"),
+                ("$sutra$","Sūtra"),
+                ("$ORIGIN$",work_of_art.origin.display_name),
+            ]:
+                work_of_art.display_name = work_of_art.display_name.replace(pair[0],pair[1])
+
+        return works_of_art
+
+    @cached_property
+    def work_of_art_types(self) -> dict[str, WorkOfArtType]:
+        return self.parse_advanced_entities('in_game/common/artist_work', WorkOfArtType,
+                                            # localization_prefix='', localization_suffix='', # Used in 21/21 Examples: {'novel': 'Novel', 'temple_tower': 'Temple Tower'}
+                                            description_localization_prefix='', description_localization_suffix='_desc', # Used in 21/21 Examples: {'painting_desc': 'Capturing a moment in time or giving an important moment in our history a visual representation, the art of painting on any surface is highly valued.', 'temple_tower_desc': 'A crowning piece of architecture for a religious building, a $temple_tower$ will elevate the importance of its $temple$. The Tower will be able to shape our settlements and show our devotion to the divine.'}
+                                            )
     def historical_earthquakes(self) -> dict[str,HistoricalEarthquake]:
         events = {event_id: event for event_id, event in self.events.items() if "earthquake" in event_id}
         historical_earthquakes = {}

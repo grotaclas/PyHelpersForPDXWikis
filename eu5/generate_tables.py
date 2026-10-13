@@ -626,6 +626,7 @@ class TableGenerator(Eu5FileGenerator):
                                         one_line_per_cell=True,
                                         remove_empty_columns=True,
                                         )
+
     def generate_cabinet_actions_table(self):
         cabinet_actions = self.parser.cabinet_actions.values()
         cabinet_actions_table_data = [{
@@ -1288,6 +1289,149 @@ class TableGenerator(Eu5FileGenerator):
             one_line_per_cell=True,
             remove_empty_columns=True,
         )
+
+    def generate_works_of_art_table(self):
+        works_of_art = self.parser.works_of_art
+        works_of_art_table_data = [{
+            'Name': work_of_art.display_name,
+            'Art type': f'[[File:{work_of_art.art_type.get_wiki_filename()}|24px|{work_of_art.art_type.display_name}]] {work_of_art.art_type.display_name}',
+            'Location': work_of_art.location.display_name,
+            'Origin': work_of_art.origin.display_name,
+            'Quality':  f"{work_of_art.quality}%",
+            'Artist': work_of_art.artist.display_name if work_of_art.artist is not None else "Unknown",
+            'Creation date': work_of_art.creation_date,
+        } for work_of_art in works_of_art]
+        return self.make_wiki_table(works_of_art_table_data, table_classes=['mildtable', 'plainlist'],
+                                        one_line_per_cell=True,
+                                        remove_empty_columns=True,
+                                        )
+
+    def generate_work_of_art_types_table(self):
+        work_of_art_types = self.parser.work_of_art_types
+
+        # Recursively looks for every artist type
+        def get_artist_type(allow_tree) -> list[str]:
+            artist_type_list = []
+            for key, node in allow_tree.iterate_with_duplicates():
+                if key == "artist_type":
+                    assert isinstance(node,str)
+                    artist_type_list.append(node.capitalize())
+                elif isinstance(node,Tree):
+                    artist_type_list += get_artist_type(node)
+            return artist_type_list
+
+        def format_age_condition(key: str, tree: Tree) -> str | None:
+            ages = []
+            for key2, node in tree.iterate_with_duplicates():
+                if key2 != "current_age":
+                    return None
+                _, age_number, age_name = node.split("_")
+                ages.append((int(age_number),age_name.capitalize()))
+            ages = sorted(ages, key=lambda t: t[0]) 
+            if len(ages) == ages[-1][0] and key == "OR": # Ages 1 to X
+                return f"Age of {ages[-1][1]} (Age {ages[-1][0]}) or before"
+            elif 7-len(ages) == ages[0][0] and key == "OR":
+                return f"Age of {ages[0][1]} (Age {ages[0][0]}) or after"
+            elif len(ages) == ages[-1][0] and key == "NOR": # Ages 1 to X
+                return f"After Age of {ages[-1][1]} (Age {ages[-1][0]})"
+            elif 7-len(ages) == ages[0][0] and key == "NOR":
+                return f"Before Age of {ages[0][1]} (Age {ages[0][0]})"
+            else:
+                if key == "OR":
+                    title = "One of"
+                elif key == "NOR":
+                    title = "Neither of"
+                else:
+                    title = key.capitalize()
+                base = f"{title}:<br/>\n"
+                base += "\n".join([f"Age is {age_name.capitalize()} (Age {age_number})" for age_number, age_name in ages])
+                return base
+
+        def format_building_condition(key: str, tree: Tree) -> str | None:
+            if key != "location":
+                return None
+            buildings = []
+            for key2, node in tree["OR"].iterate_with_duplicates():
+                if key2 != "has_building_with_at_least_one_level":
+                    return None
+                buildings.append(node.capitalize())
+            return f"Location has a {' or a '.join(buildings)}"
+            
+
+        def get_extra_conditions(allow_tree) -> str:
+            base = ""
+            for key, node in allow_tree.iterate_with_duplicates():
+                if key == "artist_type":
+                    continue
+                
+                if isinstance(node,Tree):
+                    age_condition = format_age_condition(key,node)
+                    if age_condition is not None:
+                        base += age_condition
+                        continue
+
+                    building_condition = format_building_condition(key,node)
+                    if building_condition is not None:
+                        base += building_condition
+                        continue
+
+                    conditions = get_extra_conditions(node)
+                    if len(conditions):
+                        if key == "OR":
+                            title = "One of"
+                        elif key == "NOR":
+                            title = "Neither of"
+                        else:
+                            title = key.capitalize()
+                        base += f"{title}:<br/>\n"
+                        base += conditions
+                else:
+                    if key == "current_age":
+                        _, age_number, age_name = node.split("_")
+                        base += f"* Age is {age_name.capitalize()} (Age {age_number})\n"
+                    elif key == "has_building_with_at_least_one_level":
+                        base += f"* Has a {node.capitalize()}\n"
+
+            return base
+
+        def special_characteristics(work_of_art_type) -> str: 
+            base = ""
+            # I am not exactly sure what it does, commenting for now
+            # if work_of_art_type.religion_scale_modifier is not None:
+            #     base += f"{{{{#invoke:Modifier type|main|{work_of_art_type.religion_scale_modifier}|?}}}}" + "<br/>"
+            if len(work_of_art_type.location_modifier):
+                base += "Location:<br/>" + self.format_modifier_section('location_modifier', work_of_art_type)
+            # Currently none of them have a country_modifier, but the readme specifies that possibility
+            if len(work_of_art_type.country_modifier):
+                base += "Country:<br/>" + self.format_modifier_section('country_modifier', work_of_art_type)
+            requirements = get_extra_conditions(work_of_art_type.allow)
+            if len(requirements):
+                base += f"{requirements}"
+            return base
+
+
+            
+        work_of_art_types_table_data = [{
+            # 'Name': f'[[File:Work_of_art_illustration_{work_of_art_type_key}.png|24px|{work_of_art_type.display_name}]] {work_of_art_type.display_name}',
+            # Use the icon instead of the illustration
+            'Name': f'[[File:{work_of_art_type.get_wiki_filename()}|24px|{work_of_art_type.display_name}]] {work_of_art_type.display_name}',
+            'Artist type': "<br/>".join(artist_type_list) if len(artist_type_list := get_artist_type(work_of_art_type.allow)) else "Cannot be created",
+            'Capturable': '[[File:Yes.png|20px]]' if work_of_art_type.captured else '[[File:No.png|20px]]',
+            'Base worth': work_of_art_type.woa_type_worth if work_of_art_type.woa_type_worth != -1 else "Cannot be sold",
+            # I have no idea what these values do
+            # 'Gold per year': work_of_art_type.woa_age_gold_per_year,
+            # 'Tradition multiplier': work_of_art_type.woa_tradition_multiplier,
+            # 'Influence multiplier': work_of_art_type.woa_influence_multiplier,
+            'Special characteristics': special_characteristics(work_of_art_type)
+            # woa_age_tradition_per_year and woa_age_influence_per_year are always zero for now (1.3 patch)
+        } for work_of_art_type_key, work_of_art_type in work_of_art_types.items()]
+        return self.make_wiki_table(work_of_art_types_table_data, table_classes=['mildtable', 'plainlist'],
+                                        one_line_per_cell=True,
+                                        remove_empty_columns=True,
+                                        )
+
+
+
 
 
 if __name__ == '__main__':

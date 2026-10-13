@@ -10,7 +10,7 @@ from typing import Any
 
 from common.paradox_lib import GameConcept, NameableEntity, AdvancedEntity, PdxColor, ModifierType, Modifier, IconMixin, \
     ParsableObject
-from common.paradox_parser import Tree
+from common.paradox_parser import Tree, TreeWithDuplicates
 from eu5.event_target import EventTarget
 from eu5.game import eu5game
 from eu5.trigger import TriggerBlock
@@ -1962,19 +1962,6 @@ class AiDiplochance(Eu5AdvancedEntity):
 class ArtistType(Eu5AdvancedEntity):
     potential: TriggerBlock
     icon_folder = 'ARTIST_ICON_PATH' # 12 / 12 icons found
-class ArtistWork(Eu5AdvancedEntity):
-    allow: TriggerBlock
-    captured: bool
-    location_modifier: list[Eu5Modifier] = []
-    religion_scale_modifier: Eu5ModifierType = None
-    icon_folder = 'WORK_OF_ART_ICON_PATH'
-    illustration_folder = 'WORK_OF_ART_ILLUSTRATION_PATH'
-
-    def get_wiki_filename_prefix(self) -> str:
-        return 'Work of art'
-
-    def get_wiki_file_category(self) -> str:
-        return 'Work of art icons'
 
 
 class AttributeColumn(Eu5AdvancedEntity):
@@ -2068,6 +2055,26 @@ class CoatOfArms(Eu5AdvancedEntity):
     pattern: str = ''
     sub: Tree = None
     textured_emblem: list[Tree] = []
+
+@dataclass
+class Character:
+    key: str
+    first_name: str
+    culture: Culture
+    religion: Religion
+    birth_date: str
+    birth: Location
+    tag: str
+    last_name: str | None = None
+    nickname: str | None = None
+    death_date: str | None = None
+    dynasty: Dynasty | None = None
+    father: Character | None = None
+    adm: int | None = None
+    dip: int | None = None
+    mil: int | None = None
+    display_name: str | None = None
+
 class CharacterInteraction(Eu5AdvancedEntity, UnlockedByMixin('unlock_interaction')):
     ai_tick: Any = None # possible types(out of 27): <class 'str'>(26), list[str](1)
     ai_tick_frequency: int = 0
@@ -3058,6 +3065,33 @@ class Wargoal(Eu5AdvancedEntity):
     # icon_folder = 'CASUS_BELLI_ICON_PATH' # 54 / 58 icons found
 
 @dataclass
+class WorkOfArt:
+    display_name: str
+    artist: Character | None
+    art_type: WorkOfArtType
+    location: Location
+    origin: Location
+    quality: int
+    creation_date: str
+    key: str
+
+class WorkOfArtType(Eu5AdvancedEntity):
+    captured: str
+    allow: TreeWithDuplicates
+    woa_type_worth: int
+    woa_age_gold_per_year: int
+    woa_tradition_multiplier: float
+    woa_influence_multiplier: float
+    woa_age_tradition_per_year: int
+    woa_age_influence_per_year: int
+    location_modifier: list[Eu5Modifier] = []
+    country_modifier: list[Eu5Modifier] = []
+    religion_scale_modifier: str| None = None
+    icon_folder = 'WORK_OF_ART_ICON_PATH' # 21 / 21 icons found
+
+    def get_wiki_filename_prefix(self) -> str:
+        return "Work_of_art"
+
 class HistoricalEarthquake:
     event_id: str
     location: Location
