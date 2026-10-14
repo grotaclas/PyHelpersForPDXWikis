@@ -39,6 +39,7 @@ class Vic3Parser(JominiParser):
             'ep1_cosmetics': 'Sphere of Influence',
             'foreign_investment': 'Sphere of Influence',
             'power_bloc_features': 'Sphere of Influence',
+            'ep2_content': 'The Great Wave',
         }
         dlcs = []
         for key, value in conditions:
@@ -498,7 +499,7 @@ class Vic3Parser(JominiParser):
                                                       extra_data_functions={'is_template': lambda name, data: True,
                                                                             'start': self._character_start,
                                                                             'end': self._character_end,
-                                                                            })
+                                                                            }, allow_empty_entities=True)
         class RandomListWorkaround(ParsingWorkaround):
 
             def apply_to_string(self, file_contents: str):
@@ -579,3 +580,78 @@ class Vic3Parser(JominiParser):
     @cached_property
     def religions(self) -> dict[str, Religion]:
         return self.parse_advanced_entities('common/religions', Religion)
+    
+    def events(self, namespace: str) -> dict[str, Event]:
+        """Parse all events in the given namespace.
+
+        Args:
+            namespace: the event namespace (e.g. 'ryukyu_rivalry')
+
+        Returns:
+            a dict mapping event id (numeric part) to Event objects
+        """
+        events = {}
+        event_prefix = namespace + '.'
+
+        for file, data in self.parser.parse_files('events/**/*.txt'):
+            if data.get_or_default('namespace', None) != namespace:
+                continue
+
+            for key, event_data in data:
+                if not key.startswith(event_prefix):
+                    continue
+                event_id = key[len(event_prefix):]
+
+                icon_path = event_data.get_or_default('icon', 'gfx/interface/icons/event_icons/event_default.dds').split('/')
+                icon_group = None
+                if icon_path[3] == "event_icons":
+                    icon_type = icon_path[4].removeprefix('event_').removesuffix('.dds')
+                else:
+                    icon_group = icon_path[3]
+                    icon_type = icon_group.removesuffix('.dds')
+
+                options = []
+                for opt_data in event_data.find_all('option'):
+                    opt_name = opt_data.get_or_default('name', '')
+                    option = Option(
+                        name=opt_name,
+                        display_name=self.localize(opt_name),
+                        option_text=self.localize(opt_name),
+                        default=opt_data.get_or_default('default_option', False),
+                        trigger=opt_data.get_or_default('trigger', None),
+                        effect=opt_data.filter_elements(lambda k, v: k not in ('name', 'default_option', 'trigger')),
+                    )
+                    options.append(option)
+
+                event = Event(
+                    name=key,
+                    display_name=self.localize(event_data.get_or_default('title', key)),
+                    event_id=key,
+                    event_name=self.localize(event_data.get_or_default('title', key)),
+                    icon_group=icon_group if icon_group else None,
+                    icon_type=icon_type,
+                    event_text=self.localize(event_data.get_or_default('desc', '')),
+                    flavor_text=self.localize(event_data.get_or_default('flavor', '')),
+                    triggered_by=event_data.get_or_default('triggered_by', None),
+                    trigger=event_data.get_or_default('trigger', None),
+                    immediate=event_data.get_or_default('immediate', None),
+                    options=options,
+                )
+                if isinstance(event_data.get_or_default('desc', None), list):
+                    event.cond_event_text = 'yes'
+
+                events[event_id] = event
+
+        return events
+
+    def event(self, namespace: str, id: str) -> Event | None:
+        """Parse a single event from the game files.
+
+        Args:
+            namespace: the event namespace (e.g. 'ryukyu_rivalry')
+            id: the event id within the namespace (e.g. '1' or '8')
+
+        Returns:
+            an Event object, or None if not found
+        """
+        return self.events(namespace).get(id)
