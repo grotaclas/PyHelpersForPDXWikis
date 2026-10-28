@@ -440,7 +440,10 @@ class JominiParser(metaclass=ABCMeta):
                     if isinstance(color_data, list) and isinstance(color_data[-1], Tree):
                         # assume that this means that the color is defined multiple times, so we take the last definition
                         color_data = color_data[-1]
-                    named_colors[color_name] = PdxColor.new_from_parser_obj(color_data)
+                    if isinstance(color_data, str) and color_data in named_colors:
+                        named_colors[color_name] = named_colors[color_data]
+                    else:
+                        named_colors[color_name] = PdxColor.new_from_parser_obj(color_data)
         return named_colors
 
     @cached_property
