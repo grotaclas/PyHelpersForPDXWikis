@@ -745,12 +745,20 @@ class TableGenerator(Eu5FileGenerator):
                 link = 'Fate of the Phoenix (disaster)'
             else:
                 link = 'on'
+            if disaster.outcome:
+                end_reqs = []
+                for outcome in disaster.outcome:
+                    end_reqs.append(self.localize(outcome['name']) + ':')
+                    end_reqs.append(self.formatter.format_trigger(outcome['trigger']))
+                end_reqs = '\n'.join(end_reqs)
+            else:
+                end_reqs = self.formatter.format_trigger(disaster.can_end)
             disasters_table_data.append({
                 'Name': f'{{{{iconbox|{disaster.display_name}|{disaster.description}||w=300px|image={disaster.get_wiki_filename()}|link={link}}}}}',
                 'Starting Requirement': self.formatter.format_trigger(disaster.can_start),
                 'Monthly Chance': disaster.monthly_spawn_chance,
                 'Modifiers': self.format_modifier_section('modifier', disaster),
-                'Ending Requirement': self.formatter.format_trigger(disaster.can_end),
+                'Ending Requirement': end_reqs,
             })
         return self.make_wiki_table(disasters_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,

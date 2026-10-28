@@ -2174,7 +2174,7 @@ class DiplomaticCost(Eu5AdvancedEntity):
     favors: int = 0
     spy_network: int = 0
 class Disaster(Eu5AdvancedEntity):
-    can_end: TriggerBlock
+    can_end: TriggerBlock = None
     can_start: TriggerBlock
     fire_only_once: bool = False
     image: str
@@ -2183,6 +2183,7 @@ class Disaster(Eu5AdvancedEntity):
     on_end: Effect
     on_monthly: Effect
     on_start: Effect
+    outcome: list[Tree] = []  # @TODO create outcome class
     icon_folder = 'DISASTER_ICON_PATH' # 32 / 33 icons found
     # icon_folder = 'DISASTER_ILLUSTRATION_PATH' # 28 / 33 icons found
 class Disease(Eu5AdvancedEntity):
