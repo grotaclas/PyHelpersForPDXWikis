@@ -106,7 +106,7 @@ class JominiParser(metaclass=ABCMeta):
             overwrite_duplicate_keys_at_level = None
         if isinstance(folder, Tree):
             tree = folder
-        elif folder.endswith('.txt'):
+        elif folder[-4:] in ('.txt', '.gui', '.lua'):
             tree = self.parser.parse_file(folder, workarounds=parsing_workarounds)
         else:
             tree = self.parser.parse_folder_as_one_file(folder,

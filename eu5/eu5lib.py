@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from common.paradox_lib import GameConcept, NameableEntity, AdvancedEntity, PdxColor, ModifierType, Modifier, IconMixin, \
-    ParsableObject
+    ParsableObject, IconEntity
 from common.paradox_parser import Tree
 from eu5.event_target import EventTarget
 from eu5.game import eu5game
@@ -1870,6 +1870,19 @@ class BaseGame(DLC):
     def __init__(self, path):
         super().__init__(self.name, self.display_name, path=path)
 
+class IconSize(ParsableObject):
+    texture: str
+    size: tuple[int|float, int|float]
+    offset: tuple[int|float, int|float]
+    fontsize: int|float
+    uv: tuple[float, float, float, float]
+
+
+# @dataclass
+# class TextIcon:
+class TextIcon(IconEntity):
+    icon: str #name
+    iconsize: IconSize
 
 ############################################
 #                                          #

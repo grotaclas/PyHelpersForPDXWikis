@@ -1487,6 +1487,13 @@ class Eu5Parser(JominiParser):
                                             # localization_prefix='', localization_suffix='', # Used in 19/19 Examples: {'tributary': 'Tributary', 'appanage': 'Appanage'}
                                             description_localization_prefix='', description_localization_suffix='_desc', # Used in 19/19 Examples: {'trade_company_desc': "A $trade_company$ is an investment conglomerate, directed at incurring monetary benefits for itself and its [overlord|e]. They are always a [ShowGovernmentTypeName('republic')] and get increased [ShowModifierTypeName('trade_efficiency')], as well as increased payment obligations to their overlord compared to a regular [ShowSubjectTypeName('vassal')].", 'dominion_desc': "A $dominion$ is a self-governed [subject|e] with relative autonomy, exclusive for a [ShowGovernmentTypeName('monarchy')] of the same [religion_group|e] as the [overlord|e]. Additionally, to be able to create a $dominion$, both countries must be in a [union|e] or the overlord must be either $ENG$ or $GBR$. A $dominion$ enjoys increased [ShowModifierTypeName('country_cabinet_efficiency')], a bigger increase compared to a regular [ShowSubjectTypeName('vassal')]."}
                                             )
+
+    @cached_property
+    def text_icons(self):
+        return self.parse_nameable_entities('main_menu/gui/shared/font_icons.gui', TextIcon, extra_data_functions={
+            'name': lambda a, data: data['icon']
+        })
+
     @cached_property
     def town_rights(self) -> dict[str, TownRights]:
         return self.parse_advanced_entities('in_game/common/town_rights', TownRights,
@@ -1572,6 +1579,42 @@ class Eu5Parser(JominiParser):
                     'Unit illustrations',
                     f'Uploaded from {{{{path|{relative_path}|{top_folder}}}}}.',
                     True,
+                    image_reference=file,
+                    image_data_hash=hashlib.sha256(file.read_bytes()).hexdigest(),
+                ))
+
+        for work_of_art in self.artist_work.values():
+            file = work_of_art.get_illustration_path()
+            if file.exists():
+                relative_path = file.relative_to(self.parser.base_folder)
+                top_folder = relative_path.parts[0]
+                relative_path = relative_path.relative_to(top_folder)
+                image_file_references.append(WikiImageFileReference(
+                    work_of_art.get_wiki_illustration_filename(),
+                    'Work of art illustrations',
+                    f'Uploaded from {{{{path|{relative_path}|{top_folder}}}}}.',
+                    # some images are duplicates, but we can't say which is the main one
+                    # WikiImageFile uses the first file if none are the main file reference
+                    is_main_reference=False,
+                    image_reference=file,
+                    image_data_hash=hashlib.sha256(file.read_bytes()).hexdigest(),
+                ))
+
+        entities_with_default_icons = {
+            'Town rights icons': self.town_rights,
+        }
+        for category, entity_dict in entities_with_default_icons.items():
+            entity = next(iter(entity_dict.values()))
+            file = entity.get_default_icon_path()
+            if file.exists():
+                relative_path = file.relative_to(self.parser.base_folder)
+                top_folder = relative_path.parts[0]
+                relative_path = relative_path.relative_to(top_folder)
+                image_file_references.append(WikiImageFileReference(
+                    entity.get_default_wiki_filename(),
+                    category,
+                    f'Default icon for {entity.get_class_name_as_wiki_page_title()}. Uploaded from {{{{path|{relative_path}|{top_folder}}}}}.',
+                    is_main_reference=False,
                     image_reference=file,
                     image_data_hash=hashlib.sha256(file.read_bytes()).hexdigest(),
                 ))
