@@ -1011,7 +1011,7 @@ class TableGenerator(Eu5FileGenerator):
             'Cost': peace_treaty.cost.format() if hasattr(peace_treaty.cost, 'format') else peace_treaty.cost,  # cost: <class 'eu5.eu5lib.ScriptValue'>
             'Effect': self.formatter.format_effect(peace_treaty.effect),  # effect: <class 'eu5.effect.Effect'>
             'Potential': self.formatter.format_trigger(peace_treaty.potential),  # potential: <class 'eu5.trigger.Trigger'>
-            'Select Trigger': '' if peace_treaty.select_trigger is None else self.create_wiki_list([f'{k}: ...' for k in peace_treaty.select_trigger.keys()]) if peace_treaty.select_trigger else '',  # select_trigger: <class 'common.paradox_parser.Tree'>
+            'Select Trigger': '' if peace_treaty.select_trigger is None else self.create_wiki_list([f'{k}: ...' for k in peace_treaty.select_trigger.keys()]) if hasattr(peace_treaty.select_trigger, 'keys') else '',  # select_trigger: <class 'common.paradox_parser.Tree'>
         } for peace_treaty in peace_treaties]
         return self.make_wiki_table(peace_treaties_table_data, table_classes=['mildtable', 'plainlist'],
                                         one_line_per_cell=True,

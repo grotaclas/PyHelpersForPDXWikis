@@ -654,7 +654,7 @@ class Eu5Parser(JominiParser):
                                                 'historical_info': self.localize_and_format,
                                                 'option': lambda option: self.parse_advanced_entities(
                                                     Tree({
-                                                        option_data['name']: option_data
+                                                        option_data['name'] if isinstance(option_data['name'], str) else option_data['name'][0]['text']: option_data
                                                         for option_data in (
                                                             option if isinstance(option, list) else [option]
                                                         )

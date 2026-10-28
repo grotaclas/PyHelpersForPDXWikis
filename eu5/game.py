@@ -66,6 +66,8 @@ class EuropaUniversalisV(Game):
             version_by_checksum = {
                 'e41f04da33d531d0cb7ba70d4c88a2c4': '1.3.10',
                 '0d6cd6f7e3dde34d73585d4a51ef54cd': '1.3.11',
+                '22d8c0e13bc06ca7feb82da60f5fd9c8': '1.4.0',
+                'c971f8004747b05d54a4936ed180e2cc': '1.4.4',
             }
             if full_checksum in version_by_checksum:
                 return version_by_checksum[full_checksum]

@@ -86,7 +86,7 @@ class TriggerBlock:
                     if (
                             parent_key == 'AND' or
                             (parent_key == 'OR' and len(contents_of_scripted_trigger) < 2) or
-                            parent_key in ['religion']  # implicit AND
+                            parent_key in ['religion', 'original_capital']  # implicit AND
                     ):
                         for k2, v2 in contents_of_scripted_trigger.iterate_with_duplicates():
                             ordered_pairs.append((k2, v2))

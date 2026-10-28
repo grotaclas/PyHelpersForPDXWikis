@@ -241,13 +241,13 @@ class ScriptedTrigger(Eu5AdvancedEntity, TriggerBlock):
 
 
 class ScriptValue(NameableEntity):  # can't have a name, but we want to use logic of the parent class
-    direct_value: float|str = None  # if it is defined as name_of_scripted_value = value
+    direct_value: float|int|str|None = None  # if it is defined as name_of_scripted_value = value
     desc: str = ''
     value: float|str = None
     calculations:Tree = None  # everything else has to be processed in order
 
     def format(self,entity=None):
-        if self.direct_value:
+        if self.direct_value is not None:
             return self.direct_value
         elif self.value and len(self.calculations) == 0:
             return self.value
