@@ -68,6 +68,7 @@ class EuropaUniversalisV(Game):
                 '0d6cd6f7e3dde34d73585d4a51ef54cd': '1.3.11',
                 '22d8c0e13bc06ca7feb82da60f5fd9c8': '1.4.0',
                 'c971f8004747b05d54a4936ed180e2cc': '1.4.4',
+                'de9dbde36af9756d9254dc006121c0cd': '1.4.5',
             }
             if full_checksum in version_by_checksum:
                 return version_by_checksum[full_checksum]
@@ -105,6 +106,7 @@ class EuropaUniversalisV(Game):
         checksum_by_version = {
             '1.3.10': 'c764',
             '1.3.11': 'b08d',
+            '1.4.5': '200c',
         }
         if self.revision in checksum_by_rev:
             return checksum_by_rev[self.revision]
