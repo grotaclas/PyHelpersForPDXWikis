@@ -435,38 +435,46 @@ class Location(Eu5AdvancedEntity):
     def get_position_description(self):
         return f'{self.province}(`{self.province.name}`), {self.area}(`{self.area.name}`), {self.region}(`{self.region.name}`), {self.sub_continent}(`{self.sub_continent.name}`), {self.continent}(`{self.continent.name}`)'
 
+class MapDataEntity(NameableEntity):
+    not_eligible_for_dynamic_country_name: bool = False
+    _child_entities: dict
+    _parent_entity_name: str
 
-class Province(NameableEntity):
-    locations: dict[str, Location]
-    _area: str
-
+class Province(MapDataEntity):
     @cached_property
     def area(self) -> 'Area':
-        return eu5game.parser.areas[self._area]
+        return eu5game.parser.areas[self._parent_entity_name]
 
-class Area(NameableEntity):
-    provinces: dict[str, Province]
-    _region: str
+    @cached_property
+    def locations(self) -> dict[str, Location]:
+        return self._child_entities
 
+class Area(MapDataEntity):
     @cached_property
     def region(self) -> 'Region':
-        return eu5game.parser.regions[self._region]
+        return eu5game.parser.regions[self._parent_entity_name]
 
-class Region(NameableEntity):
-    areas: dict[str, Area]
-    _sub_continent: str
+    @cached_property
+    def provinces(self) -> dict[str, Province]:
+        return self._child_entities
 
+class Region(MapDataEntity):
     @cached_property
     def sub_continent(self) -> 'SubContinent':
-        return eu5game.parser.sub_continents[self._sub_continent]
-
-class SubContinent(NameableEntity):
-    regions: dict[str, Region]
-    _continent: str
+        return eu5game.parser.sub_continents[self._parent_entity_name]
 
     @cached_property
+    def areas(self) -> dict[str, Area]:
+        return self._child_entities
+
+class SubContinent(MapDataEntity):
+    @cached_property
     def continent(self) -> 'Continent':
-        return eu5game.parser.continents[self._continent]
+        return eu5game.parser.continents[self._parent_entity_name]
+
+    @cached_property
+    def regions(self) -> dict[str, Region]:
+        return self._child_entities
 
 
 class Continent(NameableEntity):
@@ -873,6 +881,11 @@ class Age(Eu5AdvancedEntity):
     def get_wiki_page_name(self) -> str:
         return self.long_name
 
+class Bookmark(Eu5AdvancedEntity):
+    # TODO: implement Date class
+    start_date: str
+    end_date: str
+    setup_folder: str
 
 class BuildingCategory(Eu5AdvancedEntity):
     icon_folder = 'building_categories'

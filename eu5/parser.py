@@ -207,6 +207,28 @@ class Eu5Parser(JominiParser):
         })
 
     @cached_property
+    def bookmarks(self) -> dict[str, Bookmark]:
+        return self.parse_advanced_entities('main_menu/common/bookmarks', Bookmark,
+                                            localization_suffix='_name',
+                                            description_localization_suffix='_desc')
+
+    @cached_property
+    def default_bookmark(self) -> Bookmark:
+        start_date = self.defines['NGame']['START_DATE']
+        if not self.bookmarks:
+            return Bookmark(
+                'default_bookmark',
+                'Dummy Bookmark for game versions which dont support multiple bookmarks',
+                start_date=start_date,
+                end_date=self.defines['NGame']['END_DATE'],
+                setup_folder='setup/start',
+            )
+        for bookmark in self.bookmarks.values():
+            if bookmark.start_date == start_date:
+                return bookmark
+        raise Exception(f'No bookmark found for NGame.START_DATE "{start_date}"')
+
+    @cached_property
     def building_category(self) -> dict[str, BuildingCategory]:
             return self.parse_advanced_entities('in_game/common/building_categories', BuildingCategory, allow_empty_entities=True)
 
@@ -257,60 +279,63 @@ class Eu5Parser(JominiParser):
         continents = {
             name: Continent(name,
                             self.formatter.strip_formatting(self.localize(name), strip_newlines=True),
-                            sub_continents=self._update_and_return_new_elements(
-                                sub_continents,
-                                self._parse_sub_continents(name, data, regions, areas, provinces)
-                            ))
+                            sub_continents=self._parse_sub_continents(name, data)
+                            )
             for name, data in self.parser.parse_file(
                 'in_game/map_data/' + self.default_map.get_or_default('setup', 'definitions.txt')
             )
         }
+        for continent in continents.values():
+            sub_continents.update(continent.sub_continents)
+            for sub_continent in continent.sub_continents.values():
+                regions.update(sub_continent.regions)
+                for region in sub_continent.regions.values():
+                    areas.update(region.areas)
+                    for area in region.areas.values():
+                        provinces.update(area.provinces)
+
         return continents, sub_continents, regions, areas, provinces
 
-    def _parse_sub_continents(self, continent_name, continent_data, regions, areas, provinces):
-        return {
-            sub: SubContinent(sub,
-                              self.formatter.strip_formatting(self.localize(sub), strip_newlines=True),
-                              _continent=continent_name,
-                              regions=self._update_and_return_new_elements(
-                                  regions,
-                                  self._parse_regions(sub, sub_data, areas, provinces)))
-            for sub, sub_data in continent_data
-        }
+    def _parse_map_definitions(self, parent_name, parent_data, map_entity_class: type[MapDataEntity],
+                               sub_entities_parser: Callable) -> dict[str, MapDataEntity]:
+        map_entities = {}
+        for entity_name, entity_data in parent_data:
+            if 'not_eligible_for_dynamic_country_name' in entity_data:
+                not_eligible_for_dynamic_country_name = entity_data['not_eligible_for_dynamic_country_name']
+                del entity_data['not_eligible_for_dynamic_country_name']
+                if len(entity_data) == 1 and 'remainder' in entity_data:
+                    entity_data = entity_data['remainder']
+            else:
+                not_eligible_for_dynamic_country_name = False
+            map_entities[entity_name] = map_entity_class(
+                entity_name,
+                self.formatter.strip_formatting(self.localize(entity_name), strip_newlines=True),
+                _parent_entity_name=parent_name,
+                _child_entities=sub_entities_parser(
+                    entity_name,
+                    entity_data
+                ),
+                not_eligible_for_dynamic_country_name=not_eligible_for_dynamic_country_name,
+            )
+        return map_entities
 
-    def _parse_regions(self, sub_continent_name, sub_continent_data, areas, provinces):
-        return {
-            region_name: Region(region_name,
-                                self.formatter.strip_formatting(self.localize(region_name), strip_newlines=True),
-                                _sub_continent=sub_continent_name,
-                                areas=self._update_and_return_new_elements(
-                                    areas,
-                                    self._parse_areas(region_name, region_data, provinces)
-                                ))
-            for region_name, region_data in sub_continent_data
-        }
+    def _parse_sub_continents(self, continent_name, continent_data):
+        return self._parse_map_definitions(continent_name, continent_data, SubContinent, self._parse_regions)
 
+    def _parse_regions(self, sub_continent_name, sub_continent_data):
+        return self._parse_map_definitions(sub_continent_name, sub_continent_data, Region, self._parse_areas)
 
-    def _parse_areas(self, region_name, region_data, provinces):
-        return {
-            area_name: Area(area_name,
-                            self.formatter.strip_formatting(self.localize(area_name), strip_newlines=True),
-                            _region=region_name,
-                            provinces=self._update_and_return_new_elements(provinces, self._parse_provinces(area_name, area_data)))
-            for area_name, area_data in region_data
-        }
+    def _parse_areas(self, region_name, region_data):
+        return self._parse_map_definitions(region_name, region_data, Area, self._parse_provinces)
+
 
     def _parse_provinces(self, area_name, area_data):
-        return {
-            province_name:
-                Province(province_name,
-                         self.formatter.strip_formatting(self.localize(province_name), strip_newlines=True),
-                         _area=area_name,
-                         locations={location: self.locations[location] for
+        return self._parse_map_definitions(area_name, area_data, Province, self._parse_locations)
+
+    def _parse_locations(self, province_name, province_data):
+        return {location: self.locations[location] for
                                     location in
-                                    locations}
-                         ) for province_name, locations in area_data
-        }
+                                    province_data}
 
     @staticmethod
     def _update_and_return_new_elements(original: dict, new_elements: dict) -> dict:
@@ -406,8 +431,9 @@ class Eu5Parser(JominiParser):
         for filename, template in template_data_without_include.items():
             template_data[filename] = self._resolve_includes(template, template_data, template_data_without_include)
 
+        setup_start_folder = f'main_menu/{self.default_bookmark.setup_folder}/'
         return self._resolve_includes(self._fix_law_values(self.parser.parse_folder_as_one_file(
-            'main_menu/setup/start/',
+            setup_start_folder,
             overwrite_duplicate_keys_at_level=None
         )),
             template_data,
