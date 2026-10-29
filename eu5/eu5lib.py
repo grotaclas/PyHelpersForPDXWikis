@@ -601,7 +601,7 @@ class Advance(Eu5AdvancedEntity):
     def unlock_lines(self) -> list[str]:
         """One formatted line per unlock"""
         unlocks = []
-        unlock_attributes = [attribute for attribute in Advance.all_annotations().keys() if attribute.startswith('unlock_')]
+        unlock_attributes = self.get_unlock_attributes()
         for unlock_attribute in unlock_attributes:
             for unlock in getattr(self, unlock_attribute):
                 if unlock_attribute == 'unlock_production_method':
@@ -614,6 +614,10 @@ class Advance(Eu5AdvancedEntity):
                     unlock_line = unlock.get_wiki_link_with_icon()
                 unlocks.append(unlock_line)
         return unlocks
+
+    @staticmethod
+    def get_unlock_attributes() -> list[Any]:
+        return [attribute for attribute in Advance.all_annotations().keys() if attribute.startswith('unlock_')]
 
 
 def UnlockedByMixin(unlock_key: str):

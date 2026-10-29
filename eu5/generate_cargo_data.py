@@ -97,26 +97,16 @@ class CargoDataGenerator(Eu5FileGenerator):
             'starting_technology_level': advance.starting_technology_level,  # int, default 0
             'tags': ';'.join(advance.tags),
             'unlocks': self._get_all_unlocks(advance),
-            'unlock_ability': ';'.join([unlock_ability.display_name for unlock_ability in advance.unlock_ability]),  # unlock_ability: list[eu5.eu5lib.UnitAbility]
-            'unlock_building': ';'.join([unlock_building.display_name for unlock_building in advance.unlock_building]),  # unlock_building: list[eu5.eu5lib.Building]
-            'unlock_cabinet_action': ';'.join([unlock_cabinet_action.display_name for unlock_cabinet_action in advance.unlock_cabinet_action]),  # unlock_cabinet_action: list[eu5.eu5lib.CabinetAction]
-            'unlock_casus_belli': ';'.join([unlock_casus_belli.display_name for unlock_casus_belli in advance.unlock_casus_belli]),  # unlock_casus_belli: list[eu5.eu5lib.CasusBelli]
-            'unlock_chivalric_order': ';'.join([unlock_chivalric_order.display_name for unlock_chivalric_order in advance.unlock_chivalric_order]),  # unlock_chivalric_order: list[eu5.eu5lib.ChivalricOrder]
-            'unlock_country_interaction': ';'.join([unlock_country_interaction.display_name for unlock_country_interaction in advance.unlock_country_interaction]),  # unlock_country_interaction: list[eu5.eu5lib.CountryInteraction]
-            'unlock_diplomacy': ';'.join([unlock_diplomacy.display_name if unlock_diplomacy else '' for unlock_diplomacy in advance.unlock_diplomacy]),  # unlock_diplomacy: list[eu5.eu5lib.Eu5GameConcept]
-            'unlock_estate_privilege': ';'.join([unlock_estate_privilege.display_name for unlock_estate_privilege in advance.unlock_estate_privilege]),  # unlock_estate_privilege: list[eu5.eu5lib.EstatePrivilege]
-            'unlock_government_reform': ';'.join([unlock_government_reform.display_name for unlock_government_reform in advance.unlock_government_reform]),  # unlock_government_reform: list[eu5.eu5lib.GovernmentReform]
-            'unlock_heir_selection': ';'.join([unlock_heir_selection.display_name for unlock_heir_selection in advance.unlock_heir_selection]),  # unlock_heir_selection: list[eu5.eu5lib.HeirSelection]
-            'unlock_interaction': ';'.join([unlock_interaction.display_name for unlock_interaction in advance.unlock_interaction]),  # unlock_interaction: list[eu5.eu5lib.CharacterInteraction]
-            'unlock_law': ';'.join([unlock_law.display_name for unlock_law in advance.unlock_law]),  # unlock_law: list[eu5.eu5lib.Law]
-            'unlock_levy': ';'.join([unlock_levy.display_name if unlock_levy else '' for unlock_levy in advance.unlock_levy]),  # unlock_levy: list[eu5.eu5lib.Levy]
-            'unlock_policy': ';'.join([unlock_policy.display_name if unlock_policy else '' for unlock_policy in advance.unlock_policy]),  # unlock_policy: list[eu5.eu5lib.LawPolicy]
-            'unlock_production_method': ';'.join([unlock_production_method.display_name for unlock_production_method in advance.unlock_production_method]),  # unlock_production_method: list[eu5.eu5lib.ProductionMethod]
-            'unlock_road_type': ';'.join([unlock_road_type.display_name for unlock_road_type in advance.unlock_road_type]),  # unlock_road_type: list[eu5.eu5lib.RoadType]
-            'unlock_subject_type': ';'.join([unlock_subject_type.display_name for unlock_subject_type in advance.unlock_subject_type]),  # unlock_subject_type: list[eu5.eu5lib.SubjectType]
-            'unlock_unit': ';'.join([unlock_unit.display_name for unlock_unit in advance.unlock_unit]),  # unlock_unit: list[eu5.eu5lib.UnitType]
-            'unlock_town_rights': ';'.join([unlock_town_rights.display_name for unlock_town_rights in advance.unlock_town_rights]),  # unlock_town_rights: list[str]
         }
+        unlock_attributes = Advance.get_unlock_attributes()
+        for unlock_attribute in sorted(unlock_attributes):
+            unlock_list = []
+            for unlock in getattr(advance, unlock_attribute):
+                if isinstance(unlock, str):
+                    unlock_list.append(unlock)
+                else:
+                    unlock_list.append(unlock.display_name)
+            advance_data_for_cargo[unlock_attribute] = ';'.join(unlock_list)
 
         return self.create_cargo_template_call('Advance', advance_data_for_cargo, include_header_level)
 
