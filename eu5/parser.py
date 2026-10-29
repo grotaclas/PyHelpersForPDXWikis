@@ -15,8 +15,20 @@ from common.wiki_image import WikiImage, WikiImageFile, WikiImageFileReference
 from eu5.eu5lib import *
 from common.jomini_parser import JominiParser
 from common.paradox_lib import NE, AE, ME
-from common.paradox_parser import ParsingWorkaround, ScriptedWorkaround, TreeWithDuplicates
+from common.paradox_parser import ParsingWorkaround, ScriptedWorkaround, TreeWithDuplicates, ParadoxParser
 from eu5.localization import Eu5Localizer
+
+class Eu5ParadoxParser(ParadoxParser):
+
+    def parse_folder_as_one_file(self, folder: str, recursive=True, file_extension='txt',
+                                 workarounds: list[ParsingWorkaround] = None,
+                                 overwrite_duplicate_keys_at_level: int | None = 0) -> 'Tree':
+        glob = '*.' + file_extension
+        if recursive:
+            glob = '**/' + glob
+        glob = f'{folder}/{glob}'
+        files = list(self.base_folder.glob(glob)) + list(self.base_folder.glob(f'dlc/*/{glob}'))
+        return self._parse_multiple_files_as_one_file(files, overwrite_duplicate_keys_at_level, workarounds)
 
 
 class Eu5Parser(JominiParser):
@@ -31,7 +43,8 @@ class Eu5Parser(JominiParser):
     localizer: Eu5Localizer
 
     def __init__(self, game_installation: Path = EU5DIR, language: str = 'english'):
-        super().__init__(game_installation / 'game' )
+        self.parser = Eu5ParadoxParser(game_installation / 'game')
+        self._entity_reference_cache = {}
         self.localizer = Eu5Localizer(game_installation, language)
 
     @cached_property

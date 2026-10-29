@@ -9,8 +9,9 @@ import json
 import os
 import re
 import subprocess
+from operator import attrgetter
 from pathlib import Path
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Iterable
 from tempfile import mkstemp
 from typing import Callable, Any, Iterator, Sequence
 
@@ -119,12 +120,17 @@ class ParadoxParser:
         Returns:
             the merged Tree
         """
-        result = Tree({})
         glob = '*.' + file_extension
         if recursive:
             glob = '**/' + glob
         glob = f'{folder}/{glob}'
-        for file in sorted(self.base_folder.glob(glob)):
+        files = self.base_folder.glob(glob)
+        return self._parse_multiple_files_as_one_file(files, overwrite_duplicate_keys_at_level, workarounds)
+
+    def _parse_multiple_files_as_one_file(self, files: Iterable[Path], overwrite_duplicate_keys_at_level: int | None,
+                                          workarounds: list[ParsingWorkaround] | None) -> Tree:
+        result = Tree({})
+        for file in sorted(files, key=attrgetter('name')):
             if overwrite_duplicate_keys_at_level == 0:
                 result.dictionary.update(self._really_parse_file(file, workarounds).dictionary)
             else:
