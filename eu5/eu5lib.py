@@ -2821,8 +2821,8 @@ class SubjectType(Eu5AdvancedEntity, UnlockedByMixin('unlock_subject_type')):
     can_attack: TriggerBlock = None
     can_be_annexed: bool = True
     can_be_force_broken_in_peace_treaty: bool = True
-    can_change_heir_selection: bool
-    can_change_rank: bool
+    can_change_heir_selection: bool =  None # no idea what the default is, but taifa doesnt have this line
+    can_change_rank: bool = None # no idea what the default is, but taifa doesnt have this line
     can_overlord_build_buildings: bool = False
     can_overlord_build_rgos: bool = False
     can_overlord_build_roads: bool = False
@@ -2833,14 +2833,14 @@ class SubjectType(Eu5AdvancedEntity, UnlockedByMixin('unlock_subject_type')):
     creation_visible: TriggerBlock = None
     diplo_chance_accept_overlord: Tree = None
     diplo_chance_accept_subject: Tree = None
-    diplomatic_capacity_cost_scale: float
+    diplomatic_capacity_cost_scale: float= None # no idea what the default is, but taifa doesnt have this line
     enabled_through_diplomacy: TriggerBlock = None
     fleet_basing_rights: bool = False
     food_access: bool = False
     government: GovernmentType = None
-    great_power_score_transfer: float
-    has_limited_diplomacy: bool
-    has_overlords_ruler: bool
+    great_power_score_transfer: float= None # no idea what the default is, but taifa doesnt have this line
+    has_limited_diplomacy: bool= None # no idea what the default is, but taifa doesnt have this line
+    has_overlords_ruler: bool= None # no idea what the default is, but taifa doesnt have this line
     institution_spread_to_overlord: ScriptValue
     institution_spread_to_subject: ScriptValue
     is_colonial_subject: bool = False
