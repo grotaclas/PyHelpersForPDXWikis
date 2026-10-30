@@ -2,6 +2,8 @@ import inspect
 import sys
 from numbers import Number
 
+import unicodedata
+
 from common.paradox_lib import Game
 from common.wiki import WikiTextFormatter
 from pyradox.filetype.table import make_table, WikiDialect
@@ -53,7 +55,7 @@ class FileGenerator:
         output_file = self.outpath / '{}{}.txt'.format(self.game.short_game_name, name)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with output_file.open('w', encoding='utf-8') as f:
-            f.write(content)
+            f.write(unicodedata.normalize('NFC', content))
 
     def _write_lines_to_text_file(self, name: str, lines: list[str]):
         self._write_text_file(name, '\n'.join(lines))
