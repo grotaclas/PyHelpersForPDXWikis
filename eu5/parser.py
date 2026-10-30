@@ -1591,7 +1591,7 @@ class Eu5Parser(JominiParser):
                     f'Unit illustration {file.stem.replace("_", " ").strip()}.png',
                     'Unit illustrations',
                     f'Uploaded from {{{{path|{relative_path}|{top_folder}}}}}.',
-                    True,
+                    False,
                     image_reference=file,
                     image_data_hash=hashlib.sha256(file.read_bytes()).hexdigest(),
                 ))
