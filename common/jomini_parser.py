@@ -137,7 +137,18 @@ class JominiParser(metaclass=ABCMeta):
                                  transform_value_functions, tree, entity_level, current_level, level_headings_keys,
                                  conditions=None, allow_empty_entities=False):
         entities = {}
+        inject_data = {}
         for heading, data in tree:
+            if heading.lower().startswith('inject:'):
+                inject_heading = heading[7:]
+                if inject_heading not in inject_data:
+                    inject_data[inject_heading] = []
+                inject_data[inject_heading].append(data)
+
+
+        for heading, data in tree:
+            if heading.lower().startswith('inject:'):
+                continue
             if heading == 'if':
                 entities.update(self._get_entities_from_level(class_attributes, entity_class, extra_data_functions,
                                                               headings, transform_value_functions,
@@ -160,6 +171,9 @@ class JominiParser(metaclass=ABCMeta):
                                                                   allow_empty_entities))
                 else:
                     if isinstance(data, Tree) or (not data and allow_empty_entities):
+                        if heading in inject_data:
+                            for injected_attributes in inject_data[heading]:
+                                data.update(injected_attributes)
                         name, entity = self._parse_entity(class_attributes, data, entity_class,
                                                           extra_data_functions, headings, level_headings_keys,
                                                           transform_value_functions, conditions)
