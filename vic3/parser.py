@@ -456,7 +456,7 @@ class Vic3Parser(JominiParser):
     @cached_property
     def achievements(self) -> dict[str, Achievement]:
         return self.parse_advanced_entities('common/achievements', Achievement, extra_data_functions={
-            'display_name': lambda name, data: self.localize(f'ACHIEVEMENT_{name}'),
+            'display_name': lambda name, data: self.formatter.strip_formatting(self.localize(f'ACHIEVEMENT_{name}'), True, True, True),
             'description': lambda name, data: self.localize(f'ACHIEVEMENT_DESC_{name}')
         })
 

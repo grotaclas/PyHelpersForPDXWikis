@@ -321,8 +321,8 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         return f'[[{link}|{display_str}]]'
 
 
-    def strip_formatting(self, text, strip_newlines=False):
-        return super().strip_formatting(self.format_localization_text(text, []), strip_newlines)
+    def strip_formatting(self, text, strip_newlines=False, strip_bold = False, strip_italics = False):
+        return super().strip_formatting(self.format_localization_text(text, []), strip_newlines, strip_bold, strip_italics)
 
     def localize_concept_name(self, concept_name):
         return self.parser.localize(concept_name)

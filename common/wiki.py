@@ -185,7 +185,7 @@ class WikiTextFormatter:
         return result
 
     @staticmethod
-    def strip_formatting(text, strip_newlines=False):
+    def strip_formatting(text, strip_newlines=False, strip_bold = False, strip_italics = False):
         """strip HTML formatting and some common wiki syntax. Replace links by their anchor texts"""
         allowed_characters_in_final_output = r'-—\w. \'&()!:'
         stripped_text = re.sub(r'\[https?:[^] ]+ ([^]]+)]', r'\1', re.sub(r'\[\[([^]|]+\|)?([^]|]+)]]', r'\2', re.sub(r'<[^<]+?>', '', re.sub(r' <[^<]+?> ', ' ', text))))
@@ -199,6 +199,12 @@ class WikiTextFormatter:
             pass
             # print(f'Could not fully strip formatting from the following text "{text}". Partially stripped version: "{stripped_text}"')
         # remove space from the beginning and end which might have been left over from the other stripping
+        if strip_bold:
+            stripped_text = re.sub(r"(?<!')'''''(?!')", "''", stripped_text)
+            stripped_text = re.sub(r"(?<!')'''(?!')", "", stripped_text)
+        if strip_italics:
+            stripped_text = re.sub(r"(?<!')'''''(?!')", "'''", stripped_text)
+            stripped_text = re.sub(r"(?<!')''(?!')", "", stripped_text)
         return stripped_text.strip()
 
     @staticmethod
