@@ -234,6 +234,7 @@ class BuildingGroup(NameableEntity):
     regional_company_headquarter: bool = False
     self_investment_chance_modifier: bool = False
     builds_ships: bool = False
+    reserves_arable_land: bool = False
 
     def __init__(self, name: str, display_name: str, parent_group: 'BuildingGroup' = None, **kwargs):
         super().__init__(name, display_name)

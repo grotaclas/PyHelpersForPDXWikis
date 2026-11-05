@@ -336,7 +336,8 @@ class Tree(MutableMapping):
             if isinstance(value, list) and len(value) > 0 and isinstance(value[0], Tree):
                 merged = Tree({})
                 for item in value:
-                    merged.dictionary.update(item.dictionary)
+                    if item:
+                        merged.dictionary.update(item.dictionary)
                 self.dictionary[key] = merged
         return self
 
