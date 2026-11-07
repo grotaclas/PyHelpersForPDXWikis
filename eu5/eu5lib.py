@@ -158,8 +158,6 @@ class Eu5ModifierType(ModifierType, Eu5AdvancedEntity):
         for k, v in self.game_data:
             setattr(self, k, v)
 
-
-
     @cached_property
     def display_name(self) -> str:
         """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
