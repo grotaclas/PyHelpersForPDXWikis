@@ -16,92 +16,6 @@ from eu5.game import eu5game
 from eu5.trigger import TriggerBlock
 from eu5.effect import Effect
 
-class Eu5ModifierType(ModifierType):
-    # unique to eu5(stored in the game_data and handled by the constructor):
-    ai: bool = False
-    bias_type: list[str]|str
-    category: str = 'all'
-    format: str = ''
-    is_societal_value_change: bool = False
-    min: int = None
-    max: int = None
-    scale_with_pop: bool = False
-    should_show_in_modifiers_tab: bool = True
-
-    # stores the data which is unique to eu5
-    game_data: Tree
-
-    # shared attributes with different defaults
-    decimals: int = 2  # vic3 has a default of 0
-
-    icon_file: str = None
-    "relative path to the icon file"
-    negative_icon_file: str = None
-    "relative path to the file for the negative icon(if any)"
-
-    def __init__(self, name: str, display_name: str, **kwargs):
-        if 'color' not in kwargs:
-            # eu5 has good as default while vic3 has neutral
-            kwargs['color'] = 'good'
-        super().__init__(name, display_name, **kwargs)
-        for k, v in self.game_data:
-            setattr(self, k, v)
-
-
-
-    @cached_property
-    def display_name(self) -> str:
-        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
-        display_name = self.parser.localize('MODIFIER_TYPE_NAME_' + self.name)
-        if display_name != '(unused)':
-            display_name = self.parser.formatter.strip_formatting(display_name, strip_newlines=True)
-        return display_name
-
-    @cached_property
-    def description(self) -> str:
-        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
-        description = self.parser.localize('MODIFIER_TYPE_DESC_' + self.name)
-        description = self.parser.formatter.format_localization_text(description, [])
-        return description
-
-    def format_value(self, value):
-        if isinstance(value, ScriptValue) and value.direct_value:
-            value = value.direct_value
-        return super().format_value(value)
-
-    def format_value_without_color(self, value):
-        if isinstance(value, ScriptValue) and value.direct_value:
-            value = value.direct_value
-        return super().format_value_without_color(value)
-
-    def get_icon_path(self) -> Path|None:
-        base_icon_folder = eu5game.game_path / 'game/main_menu'
-        if self.icon_file:
-            return base_icon_folder / self.icon_file
-        else:
-            return None
-
-    def get_wiki_filename(self) -> str:
-        if not self.icon_file:
-            return ''
-        filename = self.get_icon_path().stem + '.png'
-        filename = filename.replace(':', '')
-        filename = filename.replace('_', ' ')
-        return filename.strip().capitalize()
-
-class Eu5Modifier(Modifier):
-    modifier_type: Eu5ModifierType
-
-    def format_for_wiki(self):
-        if self.name == 'potential_trigger':
-            return 'generating of triggers not supported yet'  # @TODO
-        elif self.name == 'scale':
-            return 'generating of triggers not supported yet'  # @TODO
-        value_and_name = super().format_for_wiki()
-        if self.modifier_type.ai:
-            value_and_name = f"''{value_and_name}''<ref name=\"{self.modifier_type.name}_only_ai\">The modifier {self.modifier_type.parser.formatter.quote(self.display_name)} is only used for AI decision making and has no impact on countries played by human players</ref>"
-        return f'[[File:{self.modifier_type.get_wiki_filename()}|32px]] {value_and_name}'
-
 
 class Eu5AdvancedEntity(AdvancedEntity):
     _unformatted_description: str = ''
@@ -211,6 +125,101 @@ class Eu5AdvancedEntity(AdvancedEntity):
         if not self.has_wiki_icon():
             return ''
         return self.get_wiki_file_tag(size, link='self')
+
+
+class Eu5ModifierType(ModifierType, Eu5AdvancedEntity):
+    # unique to eu5(stored in the game_data and handled by the constructor):
+    ai: bool = False
+    bias_type: list[str]|str
+    category: str = 'all'
+    format: str = ''
+    is_societal_value_change: bool = False
+    min: int = None
+    max: int = None
+    scale_with_pop: bool = False
+    should_show_in_modifiers_tab: bool = True
+
+    # stores the data which is unique to eu5
+    game_data: Tree
+
+    # shared attributes with different defaults
+    decimals: int = 2  # vic3 has a default of 0
+
+    icon_file: str = None
+    "relative path to the icon file"
+    negative_icon_file: str = None
+    "relative path to the file for the negative icon(if any)"
+
+    def __init__(self, name: str, display_name: str, **kwargs):
+        if 'color' not in kwargs:
+            # eu5 has good as default while vic3 has neutral
+            kwargs['color'] = 'good'
+        super().__init__(name, display_name, **kwargs)
+        for k, v in self.game_data:
+            setattr(self, k, v)
+
+
+
+    @cached_property
+    def display_name(self) -> str:
+        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
+        display_name = self.parser.localize('MODIFIER_TYPE_NAME_' + self.name)
+        if display_name != '(unused)':
+            display_name = self.parser.formatter.strip_formatting(display_name, strip_newlines=True)
+        return display_name
+
+    @cached_property
+    def description(self) -> str:
+        """Lazy load to avoid infinite loop if the localization references something which needs modifiers"""
+        description = self.parser.localize('MODIFIER_TYPE_DESC_' + self.name)
+        description = self.parser.formatter.format_localization_text(description, [])
+        return description
+
+    def format_value(self, value):
+        if isinstance(value, ScriptValue) and value.direct_value:
+            value = value.direct_value
+        return super().format_value(value)
+
+    def format_value_without_color(self, value):
+        if isinstance(value, ScriptValue) and value.direct_value:
+            value = value.direct_value
+        return super().format_value_without_color(value)
+
+    @classmethod
+    def has_wiki_icon(cls):
+        return True
+
+    def get_icon_path(self) -> Path|None:
+        base_icon_folder = eu5game.game_path / 'game/main_menu'
+        if self.icon_file:
+            return base_icon_folder / self.icon_file
+        else:
+            return None
+
+    def get_wiki_filename(self) -> str:
+        if not self.icon_file:
+            return ''
+        filename = self.get_icon_path().stem + '.png'
+        filename = filename.replace(':', '')
+        filename = filename.replace('_', ' ')
+        return filename.strip().capitalize()
+
+    def get_wiki_link_target(self) -> str:
+        return self.display_name
+
+
+class Eu5Modifier(Modifier):
+    modifier_type: Eu5ModifierType
+
+    def format_for_wiki(self):
+        if self.name == 'potential_trigger':
+            return 'generating of triggers not supported yet'  # @TODO
+        elif self.name == 'scale':
+            return 'generating of triggers not supported yet'  # @TODO
+        value_and_name = super().format_for_wiki()
+        if self.modifier_type.ai:
+            value_and_name = f"''{value_and_name}''<ref name=\"{self.modifier_type.name}_only_ai\">The modifier {self.modifier_type.parser.formatter.quote(self.display_name)} is only used for AI decision making and has no impact on countries played by human players</ref>"
+        return f'{self.modifier_type.get_wiki_icon()} {value_and_name}'
 
 
 class Eu5NamedModifier(Eu5AdvancedEntity):
