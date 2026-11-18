@@ -80,9 +80,9 @@ class Eu5Parser(JominiParser):
     def parse_advanced_entities(self, folder: str|Tree, entity_class: Type[AE], extra_data_functions: dict[str, Callable[[str, Tree], Any]] = None,
                                 transform_value_functions: dict[str, Callable[[Any], Any]] = None, localization_prefix: str = '', allow_empty_entities=False,
                                 parsing_workarounds: list[ParsingWorkaround] = None,
-                                localization_suffix: str = '',
                                 description_localization_prefix: str = None,
                                 description_localization_suffix: str = '_desc',
+                                localization_suffix: str = '',
                                 ) -> dict[str, AE]:
         if extra_data_functions is None:
             extra_data_functions = {}
@@ -550,33 +550,9 @@ class Eu5Parser(JominiParser):
                                                     overwrite_duplicate_keys_at_level=1,
                                                     ).merge_duplicate_keys(), overwrite_duplicate_keys_at_level=1)
 
-    @cached_property
-    def define_commments(self):
-        class LongCommentHandling(ParsingWorkaround):
-            "Replace // with # so they are considered regular comments"
-            replacement_regexes = {r'(?m)^(\s*)[/#]+\s+(.*)$': r'LONG_COMMENT = 0 # \2'}
-        class EscapeQuotes(ParsingWorkaround):
-            "Escape quotes and \\ for Lua use"
-            replacement_regexes = {r'(?m)([\"\\])': r'\\\1'}
-        class FormatComments(ParsingWorkaround):
-            "Replace define values with their comments, if any"
-            replacement_regexes = {r'(?m)^\t(\w+)\s+=\s+0\s*#(.+)$': r'\t\1 = "\2"'}
-        class RemoveValues(ParsingWorkaround):
-            "Remove define values"
-            replacement_regexes = {r'(?m)\s+=\s+[/@\w\.;-]+(#.+)?$': r' = 0\1'}
-        class RemoveVals2(ParsingWorkaround):
-            "Remove define values"
-            replacement_regexes = {r'(?m)\s+=\s+{.+}$': r' = 0'}
-        class StripQuoteValues(ParsingWorkaround):
-            "remove quotes from values"
-            replacement_regexes = {r'(?m)=\s+"[^#]+"': r'= 0'}
-        class HandleBlocks(ParsingWorkaround):
-            replacement_regexes = {r'(?m)\t\t+[^#}]+$': ''}
-        class HandleBlocks2(ParsingWorkaround):
-            replacement_regexes = {r'(?m)\t\t+"lf\w{3}=\{.+$': ''}
-        #workaroundList = [HandleBlocks(),HandleBlocks2(),StripQuoteValues(),EscapeQuotes(),RemoveVals2(),RemoveValues(),LongCommentHandling(),FormatComments()]
-        workaroundList = [EscapeQuotes(),RemoveValues(),LongCommentHandling(),FormatComments()]
-        return self.parser.parse_folder_as_one_file('loading_screen/common/defines', workarounds=workaroundList).merge_duplicate_keys()
+    #Maybe I'll return to this some day? --CV
+    #@cached_property
+    #def define_commments(self):
     
     def get_define(self, define: str):
         """get a define by its game syntax e.g. NGame.START_DATE"""
@@ -631,101 +607,7 @@ class Eu5Parser(JominiParser):
         names.update(self.dynasties)
         return names
 
-    @cached_property
-    def diplomacy_relationships(self) -> dict[str, dict]:
-        """Parse diplomacy.txt and international_organizations.txt to extract subject/overlord relationships and IO memberships
-        
-        Returns a dict with structure:
-        {
-            'overlords': {'subject_tag': 'overlord_tag', ...},  # maps each subject to their overlord
-            'subject_types': {'subject_tag': 'subject_type', ...},  # maps each subject to their subject type (vassal, tributary, etc)
-            'io_members': {'member_tag': ['io_name1', 'io_name2'], ...},  # maps countries to list of international organizations
-        }
-        """
-        relationships = {
-            'overlords': {},
-            'subject_types': {},
-            'io_members': {},
-            # Maps member tag -> {io_type: [law_keys]}
-            'io_member_laws': {},
-        }
-        
-        try:
-            diplomacy_data = self.parser.parse_file('main_menu/setup/start/12_diplomacy.txt')
-            
-            # Extract dependency relationships (subject/overlord)
-            if 'diplomacy_manager' in diplomacy_data:
-                diplomacy_manager = diplomacy_data['diplomacy_manager']
-                for key, value in diplomacy_manager:
-                    if key == 'dependency':
-                        # Handle both single dependency and list of dependencies
-                        dependencies = value if isinstance(value, list) else [value]
-                        for dependency in dependencies:
-                            if isinstance(dependency, Tree):
-                                if 'first' in dependency and 'second' in dependency:
-                                    overlord = dependency['first']
-                                    subject = dependency['second']
-                                    subject_type = dependency.get('subject_type', 'unknown')
-                                    
-                                    relationships['overlords'][subject] = overlord
-                                    relationships['subject_types'][subject] = subject_type
-                    elif key == 'international_organization_membership' or key == 'member_of':
-                        # Handle IO memberships from diplomacy file
-                        memberships = value if isinstance(value, list) else [value]
-                        for membership in memberships:
-                            if isinstance(membership, Tree):
-                                if 'member' in membership and 'organization' in membership:
-                                    member = membership['member']
-                                    org = membership['organization']
-                                    if member not in relationships['io_members']:
-                                        relationships['io_members'][member] = []
-                                    relationships['io_members'][member].append(org)
-        except Exception as e:
-            print(f'Warning: Could not parse diplomacy relationships: {e}')
-        
-        # Parse international organizations file for member lists
-        try:
-            io_data = self.parser.parse_file('main_menu/setup/start/15_international_organizations.txt')
-            if 'international_organization_manager' in io_data:
-                io_manager = io_data['international_organization_manager']
-                for key, value in io_manager:
-                    if key == 'add_international_organization':
-                        # Handle both single IO and list of IOs
-                        ios = value if isinstance(value, list) else [value]
-                        for io_entry in ios:
-                            if isinstance(io_entry, Tree) and 'type' in io_entry and 'members' in io_entry:
-                                io_type = io_entry['type']
-                                members = io_entry['members']
-                                # Members could be a single list or multiple entries
-                                if isinstance(members, list) and len(members) > 0 and not isinstance(members[0], str):
-                                    # List of lists - flatten them
-                                    member_tags = [tag for sublist in members for tag in (sublist if isinstance(sublist, list) else [sublist])]
-                                else:
-                                    member_tags = members if isinstance(members, list) else [members]
-                                
-                                for member_tag in member_tags:
-                                    if member_tag not in relationships['io_members']:
-                                        relationships['io_members'][member_tag] = []
-                                    if io_type not in relationships['io_members'][member_tag]:
-                                        relationships['io_members'][member_tag].append(io_type)
-
-                                    # Capture per-member law selections (used by Hindu Branch)
-                                    law_values = io_entry.get('laws', [])
-                                    if isinstance(law_values, Tree):
-                                        law_values = [value for _, value in law_values]
-                                    if not isinstance(law_values, list):
-                                        law_values = [law_values]
-                                    law_values = [lv for lv in law_values if lv is not None]
-
-                                    if law_values:
-                                        member_law_map = relationships['io_member_laws'].setdefault(member_tag, {})
-                                        member_law_map[io_type] = law_values
-        except Exception as e:
-            print(f'Warning: Could not parse international organization memberships: {e}')
-        
-        return relationships
-
-    @cached_property
+   @cached_property
     def earthquakes(self) -> dict[str, Location]:
         """earthquake zone locations from the earthquakes list in game/in_game/map_data/default.map """
         return {name: self.locations[name] for name in self.default_map['earthquakes']}
