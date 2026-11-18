@@ -132,7 +132,7 @@ class Eu5Parser(JominiParser):
 
     def _parse_modifier_data(self, data: Tree,
                              modifier_class: Type[ME] = Eu5Modifier,
-                             excludes: Iterable[str] = ('potential_trigger', 'scale', 'pure_tooltip_entry', 'content_priority')
+                             excludes: Iterable[str] = ('potential_trigger', 'scale', 'pure_tooltip_entry', 'content_priority', 'is_content_highlighted')
                              ) -> list[ME]:
         """@TODO: parse potential_trigger and scale and pure_tooltip_entry"""
         return super()._parse_modifier_data(data, modifier_class, excludes)

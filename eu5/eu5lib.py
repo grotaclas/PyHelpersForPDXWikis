@@ -495,6 +495,7 @@ class Advance(Eu5AdvancedEntity):
     allow: TriggerBlock = None
     allow_children: bool = True
     content_priority: int = 0
+    is_content_highlighted: bool = False
     country_type: str = None
     depth: int = None
     age_specialization: str = None  # called "for" in the files, but that's a reserved word in python
