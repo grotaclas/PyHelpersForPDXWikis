@@ -4,11 +4,9 @@ Generates lua data modules
 
 """
 import re
-import os
 
 import luadata
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from operator import attrgetter
 from vic3.vic3_file_generator import Vic3FileGenerator
 from vic3.vic3lib import Technology

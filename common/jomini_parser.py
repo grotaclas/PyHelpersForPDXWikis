@@ -1,7 +1,5 @@
 import enum
 import inspect
-import numbers
-import re
 import typing
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable

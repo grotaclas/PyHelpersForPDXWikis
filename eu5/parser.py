@@ -607,7 +607,7 @@ class Eu5Parser(JominiParser):
         names.update(self.dynasties)
         return names
 
-   @cached_property
+    @cached_property
     def earthquakes(self) -> dict[str, Location]:
         """earthquake zone locations from the earthquakes list in game/in_game/map_data/default.map """
         return {name: self.locations[name] for name in self.default_map['earthquakes']}
