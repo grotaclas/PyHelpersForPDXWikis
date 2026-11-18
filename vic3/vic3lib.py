@@ -196,11 +196,12 @@ class Country(NameableEntity):
     def get_wiki_link_with_icon(self):
         return '{{flag|' + self.display_name + '}}'
 
-    def starting_laws(self):
-        return vic3game.parser.starting_laws[self.name] if self.exists else {}
+    #TBD functions
+    #def starting_laws(self):
+    #    return vic3game.parser.starting_laws[self.name] if self.exists else {}
     
-    def starting_technology(self):
-        return vic3game.parser.starting_technology[self.name] if self.exists else {}
+    #def starting_technology(self):
+    #    return vic3game.parser.starting_technology[self.name] if self.exists else {}
 
 class Culture(Vic3AdvancedEntity):
     """Cultures"""
