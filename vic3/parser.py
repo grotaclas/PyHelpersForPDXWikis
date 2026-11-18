@@ -49,6 +49,7 @@ class Vic3Parser(JominiParser):
             'ip3_cosmetics': 'National Awakening',
             'ip4_content': 'Iberian Twilight',
             'ep2_content': 'The Great Wave',
+            'ip5_content': 'State and Revolution',
         }
         dlcs = []
         for key, value in conditions:
@@ -727,10 +728,13 @@ class Vic3Parser(JominiParser):
 
     @cached_property
     def state_traits(self) -> dict[str, StateTrait]:
-        return self.parse_advanced_entities('common/state_traits', StateTrait, extra_data_functions={
+        state_traits = self.parse_advanced_entities('common/state_traits', StateTrait, extra_data_functions={
             'disabling_technologies': lambda name, data: self.parse_technologies_section('', data, 'disabling_technologies'),
             'required_techs_for_colonization': lambda name, data: self.parse_technologies_section('', data, 'required_techs_for_colonization')
         })
+        for state_trait in state_traits.values():
+            state_trait.display_name = self.formatter.resolve_nested_localizations(state_trait.display_name)
+        return state_traits
 
     @cached_property
     def decrees(self) -> dict[str, Decree]:

@@ -121,6 +121,7 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
                         'clothes': 'clothes',
                         'coal': 'coal',
                         'coffee': 'coffee',
+                        'copper': 'copper',
                         'dye': 'dye',
                         'electricity': 'electricity',
                         'engines': 'engines',
@@ -325,7 +326,8 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
         # else:
         #     return f'[[{link}|{display_str}]]'
         # return f'[[#{link}|{display_str}]]'
-        return f'[[{link}|{display_str}]]'
+        #return f'[[{link}|{display_str}]]'
+        return display_str
 
 
     def strip_formatting(self, text, strip_newlines=False, strip_bold = False, strip_italics = False):

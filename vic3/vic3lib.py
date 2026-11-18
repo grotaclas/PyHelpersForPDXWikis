@@ -20,8 +20,9 @@ class Vic3AdvancedEntity(AdvancedEntity):
 
 class Vic3ModifierType(ModifierType):
 
-    def _get_fully_localized_display_name_and_desc(self) -> tuple[str, str]:
-        display_name, description = super()._get_fully_localized_display_name_and_desc()
+    @cached_property
+    def display_name(self) -> str:
+        display_name = super().display_name
         if display_name == self.name:
             # modifiers which are named like state_catholic_standard_of_living_add
             sol = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
@@ -31,6 +32,14 @@ class Vic3ModifierType(ModifierType):
                 pop = sol.group(1)
                 pop_loc = self.parser.localize(pop)
                 display_name = f'Standard of Living for {pop_loc} Pops'
+            if acpt:
+                pop = acpt.group(1)
+                pop_loc = self.parser.localize(pop)
+                display_name = f'Acceptance of {pop_loc} Culture'
+            if ferv:
+                pop = ferv.group(1)
+                pop_loc = self.parser.localize(pop)
+                display_name = f'Proportional Fervor for the {pop_loc} Culture'
         return display_name
 
     @cached_property
@@ -38,19 +47,19 @@ class Vic3ModifierType(ModifierType):
         description = super().description
         if description == self.name + '_desc':
             # modifiers which are named like state_catholic_standard_of_living_add
-            match = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
-            if match:
+            sol = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
+            acpt = re.fullmatch(r'country_([^ ]*)_cultural_acceptance_add', self.name)
+            ferv = re.fullmatch(r'country_fervor_target_([^ ]*)_add', self.name)
+            if sol:
                 description = self.parser.localize('state_standard_of_living_add_desc')
             if acpt:
                 pop = acpt.group(1)
                 pop_loc = self.parser.localize(pop)
-                display_name = f'Acceptance of {pop_loc} Culture'
                 if description == self.name + '_desc':
                     description = f"A bonus or penalty to acceptance of {pop_loc}"
             if ferv:
                 pop = ferv.group(1)
                 pop_loc = self.parser.localize(pop)
-                display_name = f'Proportional Fervor for the {pop_loc} Culture'
                 if description == self.name + '_desc':
                     description = f"A bonus or penalty to the fervor of {pop_loc}, to be proportioned according the percentage of the {pop_loc} Pops that reside in the affected Country."
         return description
@@ -597,6 +606,18 @@ class Character(NameableEntity):
             result = f'{result} - {self.end}'
         return result
 
+class CharacterRole(Vic3AdvancedEntity):
+    type: str = ''
+    priority: int
+    auto_assigned: bool = False
+    can_be_interest_group_leader: bool = True
+    career_length: Tree = None
+    on_career_end: Tree = None
+    should_use_title_in_name: bool = False
+    title_format: str = 'from_name'
+    title_preposition: str = "PREP_IN"
+    spawn_characters_to_pool: bool = False
+    character_modifier: dict[str, list[Modifier]] = {}
 
 class PrincipleGroup(Vic3AdvancedEntity):
     blocking_identity: str = None

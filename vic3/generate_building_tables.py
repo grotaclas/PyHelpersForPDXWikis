@@ -396,7 +396,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
                    'bg_government' in b.building_groups_names_with_parents and 'bg_monuments' not in b.building_groups_names_with_parents], one_table_per_building=False)
         sections['production_methods_trade'] = self.generate_building_pms_helper('bg_trade', one_table_per_building=False)
         sections['production_methods_infrastructure'] = self.generate_building_pms_helper('bg_infrastructure', one_table_per_building=False)
-        sections['production_methods_logistics'] = self.generate_building_pms_helper(buildings=['building_naval_logistics_center', 'building_land_logistics_center'])
+        sections['production_methods_logistics'] = self.generate_building_pms_helper(buildings=['building_naval_logistics_center', 'building_army_logistics_center'])
         sections['production_methods_naval'] = self.generate_building_pms_helper(buildings=['building_shipyard', 'building_naval_administration', 'building_naval_fortification'])
         sections['production_methods_barracks'] = self.generate_building_pms_helper(buildings=['building_barrack', 'building_conscription_center'])
         sections['production_methods_conscription_center'] = self.generate_building_pms_helper(buildings=['building_conscription_center'])
