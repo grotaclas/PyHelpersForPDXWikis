@@ -13,7 +13,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
     def generate_all_buildings(self):
         sections = {}
         for category in ['development', 'rural', 'urban']:
-            sections[f'{category}_buildings_list'] = self.generate_building_table(category=category)
+            sections[f'{category}_buildings_list'] = self.generate_building_table(category=category,excluded_groups=['bg_monuments'])
         sections['monument_buildings_list'] = self.generate_building_table(group='bg_monuments')
 
         return sections
@@ -49,6 +49,7 @@ class BuildingTableGenerator(Vic3FileGenerator):
             'is_government_funded': 'Is government-funded',
             'created_by_trade_routes': 'Gets created by trade routes',
             'always_self_owning': 'Always workforce-owned',
+            'builds_ships': 'Constructs ships',
         }
         for attribute, message in notes_for_building_groups.items():
             if hasattr(building.building_group, attribute) and getattr(building.building_group, attribute) != \
@@ -332,34 +333,46 @@ class BuildingTableGenerator(Vic3FileGenerator):
         if len(pm.unlocking_laws) == 1:
             requirements.append(pm.unlocking_laws[0].get_wiki_link_with_icon())
         if len(pm.unlocking_laws) > 1:
-            requirements.append('One of the following laws:\n' + self.parser.formatter.create_wiki_list(
+            requirements.append('One of the following laws:' + self.parser.formatter.create_wiki_list(
                 [law.get_wiki_link_with_icon() for law in pm.unlocking_laws], 2))
         if len(pm.disallowing_laws) == 1:
-            requirements.append("''Does not have the law ''" + pm.disallowing_laws[0].get_wiki_link_with_icon())
+            requirements.append("Does ''not'' have the law " + pm.disallowing_laws[0].get_wiki_link_with_icon())
         if len(pm.disallowing_laws) > 1:
-            requirements.append("Has ''none'' of the following laws:\n" + self.parser.formatter.create_wiki_list(
+            requirements.append("Has ''none'' of the following laws:" + self.parser.formatter.create_wiki_list(
                 [law.get_wiki_link_with_icon() for law in pm.disallowing_laws], 2))
         if len(pm.unlocking_production_methods) > 1:
-            requirements.append('The building also has one of the following production methods:\n' +
+            requirements.append('The building also has one of the following production methods:' +
                                 self.parser.formatter.create_wiki_list([unlocking_pm.get_wiki_link_with_icon()
-                                                       for unlocking_pm in pm.unlocking_production_methods]))
+                                                       for unlocking_pm in pm.unlocking_production_methods], 2))
         if len(pm.unlocking_production_methods) == 1:
             requirements.append('The building also has the production methods ' + pm.unlocking_production_methods[
                 0].get_wiki_link_with_icon())
+        if len(pm.unlocking_geographic_regions) > 1:
+            requirements.append('The building is in one of the following geographic regions:' +
+                                self.parser.formatter.create_wiki_list([unlocking_geographic_region.display_name
+                                                        for unlocking_geographic_region in pm.unlocking_geographic_regions], 2))
+        if len(pm.unlocking_geographic_regions) == 1:
+            requirements.append('The building is in the geographic region ' + pm.unlocking_geographic_regions[
+                0].display_name)
+        if len(pm.unlocking_company_categories) > 1:
+            requirements.append('The company has any of:' +
+                                self.parser.formatter.create_wiki_list([self.parser.localize('company_category_' + unlocking_company_category)
+                                                        for unlocking_company_category in pm.unlocking_company_categories], 2))
+        if len(pm.unlocking_company_categories) == 1:
+            requirements.append('The company has ' + self.parser.localize('company_category_' + pm.unlocking_company_categories[0]))
         for religion in pm.unlocking_religions:
-            requirements.append('State religion is ' + religion)
+            requirements.append('State religion is ' + religion.display_name)
         for principle in pm.unlocking_principles:
             requirements.append(f'{{{{principle|{principle.group.display_name}|{self.parser.formatter.format_roman(principle.level)}|1|w=24px}}}}')
         if pm.replacement_if_valid:
-            for principle in self.parser.production_methods[pm.replacement_if_valid].unlocking_principles:
-                requirements.append(f'Does not have {{{{principle|{principle.group.display_name}|{self.parser.formatter.format_roman(principle.level)}|1|w=24px}}}}')
+            requirements.append(self.parser.production_methods[pm.replacement_if_valid].get_wiki_link_with_icon() + " is ''not'' available")
 
         return self.parser.formatter.create_wiki_list(requirements)
 
     def generate_all_production_methods(self):
         parser = self.parser
         sections = {}
-        sections['production_methods_manufacturing'] = self.generate_building_pms_helper('bg_manufacturing', one_table_per_building=True)
+        sections['production_methods_manufacturing'] = self.generate_building_pms_helper('bg_manufacturing', one_table_per_building=False, excluded_buildings=['building_shipyard'])
         sections['production_methods_farms'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
                    'bg_agriculture' in b.building_groups_names_with_parents and 'bg_subsistence_agriculture' not in b.building_groups_names_with_parents])
         sections['production_methods_ranching'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
@@ -369,32 +382,35 @@ class BuildingTableGenerator(Vic3FileGenerator):
         sections['production_methods_plantations'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if 'bg_plantations' in b.building_groups_names_with_parents or b.name == 'building_rubber_plantation'])
         sections['production_methods_mining'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
                    'bg_mining' in b.building_groups_names_with_parents and 'building_gold_fields' not in b.name])
-        sections['production_methods_gold_fields'] = self.generate_building_pms_helper('bg_gold_fields', one_table_per_building=True)
-        sections['production_methods_oil_extraction'] = self.generate_building_pms_helper('bg_oil_extraction', one_table_per_building=True)
-        sections['production_methods_logging'] = self.generate_building_pms_helper('bg_logging', one_table_per_building=True)
-        sections['production_methods_whaling'] = self.generate_building_pms_helper('bg_whaling', one_table_per_building=True)
-        sections['production_methods_fishing'] = self.generate_building_pms_helper('bg_fishing', one_table_per_building=True)
+        sections['production_methods_gold_fields'] = self.generate_building_pms_helper('bg_gold_fields', one_table_per_building=False)
+        sections['production_methods_oil_extraction'] = self.generate_building_pms_helper('bg_oil_extraction', one_table_per_building=False)
+        sections['production_methods_logging'] = self.generate_building_pms_helper('bg_logging', one_table_per_building=False)
+        sections['production_methods_whaling'] = self.generate_building_pms_helper('bg_whaling', one_table_per_building=False)
+        sections['production_methods_fishing'] = self.generate_building_pms_helper('bg_fishing', one_table_per_building=False)
 
-        sections['production_methods_service'] = self.generate_building_pms_helper('bg_service', one_table_per_building=True)
+        sections['production_methods_service'] = self.generate_building_pms_helper('bg_service', one_table_per_building=False)
+        sections['production_methods_ownership'] = self.generate_building_pms_helper('bg_owner_buildings', one_table_per_building=False)
         sections['production_methods_arts'] = self.generate_building_pms_helper('bg_arts', one_table_per_building=True)
-        sections['production_methods_power'] = self.generate_building_pms_helper('bg_power', one_table_per_building=True)
+        sections['production_methods_power'] = self.generate_building_pms_helper('bg_power', one_table_per_building=False)
         sections['production_methods_government'] = self.generate_building_pms_helper(buildings=[b for b in parser.buildings.values() if
-                   'bg_government' in b.building_groups_names_with_parents and 'bg_monuments' not in b.building_groups_names_with_parents], one_table_per_building=True)
-        sections['production_methods_trade'] = self.generate_building_pms_helper('bg_trade', one_table_per_building=True)
-        sections['production_methods_infrastructure'] = self.generate_building_pms_helper('bg_infrastructure', one_table_per_building=True)
-        sections['production_methods_barracks'] = self.generate_building_pms_helper(buildings=['building_barrack'])
+                   'bg_government' in b.building_groups_names_with_parents and 'bg_monuments' not in b.building_groups_names_with_parents], one_table_per_building=False)
+        sections['production_methods_trade'] = self.generate_building_pms_helper('bg_trade', one_table_per_building=False)
+        sections['production_methods_infrastructure'] = self.generate_building_pms_helper('bg_infrastructure', one_table_per_building=False)
+        sections['production_methods_logistics'] = self.generate_building_pms_helper(buildings=['building_naval_logistics_center', 'building_army_logistics_center'])
+        sections['production_methods_naval'] = self.generate_building_pms_helper(buildings=['building_shipyard', 'building_naval_administration', 'building_naval_fortification'])
+        sections['production_methods_barracks'] = self.generate_building_pms_helper(buildings=['building_barrack', 'building_conscription_center'])
         sections['production_methods_conscription_center'] = self.generate_building_pms_helper(buildings=['building_conscription_center'])
-        sections['production_methods_naval_base'] = self.generate_building_pms_helper(buildings=['building_naval_base'])
+        #sections['production_methods_naval_base'] = self.generate_building_pms_helper(buildings=['building_naval_base'])
         sections['production_methods_monuments_basic'] = self.generate_building_pms_for_specific_pms(
             [b for b in parser.buildings.values() if 'bg_monuments' in b.building_groups_names_with_parents],
             [parser.production_methods['pm_monument_prestige_only'], parser.production_methods['pm_monument_no_effects']]) + '\n'
         sections['production_methods_monuments_normal'] = self.generate_building_pms([b for b in sorted(parser.buildings.values(), key=attrgetter('display_name')) if 'bg_monuments' in b.building_groups_names_with_parents], excluded_pms=['pm_monument_prestige_only', 'pm_monument_no_effects'])
         return sections
 
-    def generate_building_pms_helper(self, building_group: str = None, buildings: list = None, one_table_per_building=False):
+    def generate_building_pms_helper(self, building_group: str = None, buildings: list = None, one_table_per_building=False, excluded_buildings: list = []):
         if building_group:
             buildings = [b for b in self.parser.buildings.values() if
-                         building_group in b.building_groups_names_with_parents]
+                         building_group in b.building_groups_names_with_parents and b.name not in excluded_buildings]
         if isinstance(buildings[0], str):
             buildings = [self.parser.buildings[b] for b in buildings]
         buildings = sorted(buildings, key=attrgetter('display_name'))
@@ -403,9 +419,9 @@ class BuildingTableGenerator(Vic3FileGenerator):
             for building in buildings:
                 if len(buildings) > 1:
                     result += f'=== {building.display_name} ===\n'
-                result += self.generate_building_pms([building], split_up_modifiers=True) + '\n'
+                result += self.generate_building_pms([building], split_up_modifiers=False) + '\n'
         else:
-            result = self.generate_building_pms(buildings, split_up_modifiers=True, one_table_per_pm_group=True) + '\n'
+            result = self.generate_building_pms(buildings, split_up_modifiers=False, one_table_per_pm_group=False) + '\n'
         return result
 
 

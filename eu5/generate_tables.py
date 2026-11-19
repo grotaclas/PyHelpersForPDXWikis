@@ -1348,6 +1348,48 @@ class TableGenerator(Eu5FileGenerator):
             remove_empty_columns=True,
         )
 
-
+    def generate_country_count(self):
+        count = {
+            'province': {},
+            'area': {},
+            'region': {},
+            'sub_continent': {},
+            'continent': { 'pop': 0, 'non-existant': 0 },
+        }
+        countries = self.parser.countries.values()
+        for country in countries:
+            if not country.capital:
+                if country.type == 'pop':
+                    count['continent']['pop'] += 1
+                else:
+                    count['continent']['non-existant'] += 1
+                continue
+            capital = country.capital
+            
+            if capital.province:
+                if capital.province.display_name not in count['province']: count['province'][capital.province.display_name] = 0
+                count['province'][capital.province.display_name] += 1
+            if capital.area:
+                if capital.area.display_name not in count['area']: count['area'][capital.area.display_name] = 0
+                count['area'][capital.area.display_name] += 1
+            if capital.region:
+                if capital.region.display_name not in count['region']: count['region'][capital.region.display_name] = 0
+                count['region'][capital.region.display_name] += 1
+            if capital.sub_continent:
+                if capital.sub_continent.display_name not in count['sub_continent']: count['sub_continent'][capital.sub_continent.display_name] = 0
+                count['sub_continent'][capital.sub_continent.display_name] += 1
+            if capital.continent:
+                if capital.continent.display_name not in count['continent']: count['continent'][capital.continent.display_name] = 0
+                count['continent'][capital.continent.display_name] += 1
+        table = {}
+        result = ''
+        for ctype in count.keys():
+            table = [{
+                ctype.capitalize(): name,
+                'Count': count[ctype][name]
+            } for name in count[ctype]]
+            result += self.make_wiki_table(table)
+        return result
+    
 if __name__ == '__main__':
     TableGenerator().run(sys.argv)

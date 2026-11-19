@@ -396,11 +396,13 @@ class AttributeEntity:
 
 
 class ModifierType(NameableEntity):
+    """Modifier type definitions"""
     percent: bool = False
     already_percent: bool = False  # used by ck3 and eu5
     boolean: bool = False
     decimals: int = None
     good: bool = None
+    script_only: bool = None
     neutral: bool = None
     prefix: str = None
     postfix: str = None
@@ -546,6 +548,7 @@ class ModifierType(NameableEntity):
 
 
 class Modifier(NameableEntity):
+    """Modifier type instance"""
     modifier_type: ModifierType
     value: Any
 
