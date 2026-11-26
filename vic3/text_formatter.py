@@ -320,14 +320,11 @@ class Vic3WikiTextFormatter(WikiTextFormatter):
             display_str = self.resolve_nested_localizations(display_str)
         if match.group('formatting') == '|l':
             display_str = display_str[0].lower() + display_str[1:]
-
         # if display_str == link:
         #     return f'[[{link}]]'
         # else:
         #     return f'[[{link}|{display_str}]]'
-        # return f'[[#{link}|{display_str}]]'
-        #return f'[[{link}|{display_str}]]'
-        return display_str
+        return f'[[#{link}|{display_str}]]'
 
 
     def strip_formatting(self, text, strip_newlines=False, strip_bold = False, strip_italics = False):
