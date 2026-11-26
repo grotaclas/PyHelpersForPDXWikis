@@ -25,11 +25,21 @@ class Vic3ModifierType(ModifierType):
         display_name = super().display_name
         if display_name == self.name:
             # modifiers which are named like state_catholic_standard_of_living_add
-            match = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
-            if match:
-                pop = match.group(1)
+            sol = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
+            acpt = re.fullmatch(r'country_([^ ]*)_cultural_acceptance_add', self.name)
+            ferv = re.fullmatch(r'country_fervor_target_([^ ]*)_add', self.name)
+            if sol:
+                pop = sol.group(1)
                 pop_loc = self.parser.localize(pop)
                 display_name = f'Standard of Living for {pop_loc} Pops'
+            if acpt:
+                pop = acpt.group(1)
+                pop_loc = self.parser.localize(pop)
+                display_name = f'Acceptance of {pop_loc} Culture'
+            if ferv:
+                pop = ferv.group(1)
+                pop_loc = self.parser.localize(pop)
+                display_name = f'Proportional Fervor for the {pop_loc} Culture'
         return display_name
 
     @cached_property
@@ -37,9 +47,21 @@ class Vic3ModifierType(ModifierType):
         description = super().description
         if description == self.name + '_desc':
             # modifiers which are named like state_catholic_standard_of_living_add
-            match = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
-            if match:
+            sol = re.fullmatch(r'state_([^ ]*)_standard_of_living_add', self.name)
+            acpt = re.fullmatch(r'country_([^ ]*)_cultural_acceptance_add', self.name)
+            ferv = re.fullmatch(r'country_fervor_target_([^ ]*)_add', self.name)
+            if sol:
                 description = self.parser.localize('state_standard_of_living_add_desc')
+            if acpt:
+                pop = acpt.group(1)
+                pop_loc = self.parser.localize(pop)
+                if description == self.name + '_desc':
+                    description = f"A bonus or penalty to acceptance of {pop_loc}"
+            if ferv:
+                pop = ferv.group(1)
+                pop_loc = self.parser.localize(pop)
+                if description == self.name + '_desc':
+                    description = f"A bonus or penalty to the fervor of {pop_loc}, to be proportioned according the percentage of the {pop_loc} Pops that reside in the affected Country."
         return description
 
 
@@ -59,6 +81,7 @@ class NamedModifier(Vic3AdvancedEntity):
 
 
 class StateResource:
+    """Resources available in state regions"""
     def __init__(self, building: str, amount: int = 0, undiscovered_amount: int = 0, is_arable: bool = False,
                  is_capped: bool = False, is_discoverable: bool = False):
         self.building = building
@@ -73,12 +96,13 @@ class StateResource:
 
 
 class State(NameableEntity):
+    """State regions"""
     id: int
     arable_land: int = 0
     # arable_resources: list[str]
     # capped_resources: Tree
     provinces: list[str]
-    resources: dict[str, StateResource] = []
+    resources: dict[str, StateResource] = {}
     subsistence_building: str
     traits: list['StateTrait'] = []
     owners: list[str]
@@ -86,12 +110,16 @@ class State(NameableEntity):
 
     def get_strategic_region(self):
         return vic3game.parser.state_to_strategic_region_map[self.name]
+    
+    def get_geographic_regions(self) -> list:
+        return vic3game.parser.state_to_geographic_region_map.get(self.name, [])
 
     def is_water(self):
         return self.get_strategic_region().is_water
 
 
 class StateTrait(Vic3AdvancedEntity):
+    """State traits"""
     def __init__(self, name: str, display_name: str,
                  disabling_technologies: list['Technology'] = None,
                  required_techs_for_colonization: list['Technology'] = None, **kwargs):
@@ -100,7 +128,7 @@ class StateTrait(Vic3AdvancedEntity):
         self.disabling_technologies = disabling_technologies
         self.required_techs_for_colonization = required_techs_for_colonization
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     @cached_property
@@ -109,6 +137,7 @@ class StateTrait(Vic3AdvancedEntity):
 
 
 class StrategicRegion(NameableEntity):
+    """Strategic regions"""
     states: list[State]
     is_water = False
 
@@ -117,11 +146,25 @@ class StrategicRegion(NameableEntity):
         all_countries = vic3game.parser.countries
         return sorted({all_countries[country] for state in self.states for country in state.owners}, key=attrgetter('display_name'))
 
+class GeographicRegion(NameableEntity):
+    """Geographic regions"""
+    states: list[State]
+    regions: list[StrategicRegion]
+    short_key: str = ""
+
+    @cached_property
+    def countries(self) -> list['Country']:
+        all_countries = vic3game.parser.countries
+        region_countries = []
+        {region_countries.append(country) for region in self.regions for state in region.states for country in state.owners}
+        {region_countries.append(country) for state in self.states for country in state.owners if country not in region_countries}
+        return sorted({all_countries[country] for country in region_countries}, key=attrgetter('display_name'))
 
 class Country(NameableEntity):
+    """Countries"""
 
     def __init__(self, tag: str, display_name: str, color: PdxColor, country_type: str, tier: str, capital_state: State,
-                 cultures: list[str]):
+                 cultures: list[Culture], religion: Religion):
         super().__init__(tag, display_name)
         self.tag = tag
         self.color = color
@@ -129,6 +172,7 @@ class Country(NameableEntity):
         self.tier = tier
         self.capital_state = capital_state
         self.cultures = cultures
+        self.religion = religion
 
     def exists(self):
         """exists at the start of the game"""
@@ -137,19 +181,37 @@ class Country(NameableEntity):
     def is_formable(self):
         return self.tag in vic3game.parser.formable_tags
 
-    def is_event_formable(self):
-        return self.tag in vic3game.parser.event_formed_tags
+    def is_effect_formable(self):
+        return self.tag in vic3game.parser.effect_formable_tags
 
     def is_releasable(self):
         return self.tag in vic3game.parser.releasable_tags
 
-    def is_event_releasable(self):
-        return self.tag in vic3game.parser.event_releasable_tags
+    def is_effect_releasable(self):
+        return self.tag in vic3game.parser.effect_releasable_tags
+    
+    def is_decentralized(self):
+        return self.type == 'decentralized'
 
     def get_wiki_link_with_icon(self):
         return '{{flag|' + self.display_name + '}}'
 
+    #TBD functions
+    #def starting_laws(self):
+    #    return vic3game.parser.starting_laws[self.name] if self.exists else {}
+    
+    #def starting_technology(self):
+    #    return vic3game.parser.starting_technology[self.name] if self.exists else {}
+
+class Culture(Vic3AdvancedEntity):
+    """Cultures"""
+    color: PdxColor
+    religion: Religion
+    heritage: str
+    language: str
+    
 class LawGroup(NameableEntity):
+    """Law groups"""
     laws: list['Law']
     law_category_wiki_pages = {
         'power_structure': 'Power structure laws',
@@ -170,16 +232,44 @@ class LawGroup(NameableEntity):
 
 
 class Law(Vic3AdvancedEntity):
+    """Laws"""
     group: LawGroup = None
+    category: str = None
+    unlocking_laws: list['Law'] = None
+    disallowing_laws: list['Law'] = None
+    parent: 'Law' = None
+    can_enact: Tree = None
+    is_visible: Tree = None
+    on_enact: Tree = None
+    on_activate: Tree = None
+    on_deactivate: Tree = None
+    institution: 'Institution' = None
+    institution_modifier: dict[str, list[Modifier]] = {}
 
     def get_wiki_page_name(self) -> str:
         return self.group.get_wiki_page()
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
 
+class Amendment(Vic3AdvancedEntity):
+    """Amendments"""
+    parent: Law = None
+    allowed_laws: list['Law'] = []
+    institution: 'Institution' = None
+    #modifier: dict[str, list[Modifier]] = {}
+    institution_modifier: list[Modifier] = []
+    sponsor_modifier: list[Modifier] = []
+    possible: Tree = None
+    on_activate: Tree = None
+    on_deactivate: Tree = None
+    would_sponsor: Tree = None
+    can_repeal: Tree = None
+    
+
 class Technology(Vic3AdvancedEntity):
+    """Technologies"""
     wiki_pages = {'production': 'Production technology', 'military': 'Military technology', 'society': 'Society technology'}
 
     category: str
@@ -191,7 +281,7 @@ class Technology(Vic3AdvancedEntity):
     def get_wiki_filename_prefix(self):
         return 'Invention'
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -199,6 +289,7 @@ class Technology(Vic3AdvancedEntity):
 
 
 class BuildingGroup(NameableEntity):
+    """Building groups"""
     parent_group: 'BuildingGroup' = None
     category: str = None
     always_possible: bool = False
@@ -251,6 +342,7 @@ class BuildingGroup(NameableEntity):
 
 
 class Building(Vic3AdvancedEntity):
+    """Buildings"""
     building_group: BuildingGroup
     production_method_groups: list[str] = None
     required_construction: int = None
@@ -264,7 +356,7 @@ class Building(Vic3AdvancedEntity):
     expandable: bool = True
     location: State = None
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -288,10 +380,12 @@ class Building(Vic3AdvancedEntity):
 
 
 class ProductionMethodGroup(Vic3AdvancedEntity):
+    """PMGs"""
     production_methods: list[str] = None
 
 
 class ProductionMethod(Vic3AdvancedEntity):
+    """PMs"""
     building_modifiers: dict[str, list[Modifier]] = {}
     country_modifiers: dict[str, list[Modifier]] = {}
     state_modifiers: dict[str, list[Modifier]] = {}
@@ -299,9 +393,11 @@ class ProductionMethod(Vic3AdvancedEntity):
     disallowing_laws: list[Law] = []
     unlocking_laws: list[Law] = []
     unlocking_production_methods: list['ProductionMethod'] = []
-    unlocking_religions: list[str] = []
+    unlocking_religions: list['Religion'] = []
     unlocking_principles: list['Principle'] = []
-    replacement_if_valid: str = None
+    unlocking_geographic_regions: list['GeographicRegion'] = []
+    unlocking_company_categories: list[str] = []
+    replacement_if_valid: 'ProductionMethod' = None
 
     @cached_property
     def groups(self) -> list[ProductionMethodGroup]:
@@ -314,7 +410,7 @@ class ProductionMethod(Vic3AdvancedEntity):
         return [building for building in vic3game.parser.buildings.values()
                 if not group_names.isdisjoint(set(building.production_method_groups))]
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_filename_prefix(self) -> str:
@@ -325,13 +421,14 @@ class ProductionMethod(Vic3AdvancedEntity):
 
 
 class Decree(Vic3AdvancedEntity):
+    """Decrees"""
     cost: int = 0
     valid: Tree = None  # old
     country_trigger: Tree = None
     state_trigger: Tree = None
     unlocking_laws: list[Law] = []  # currently unused
 
-    def get_wiki_icon(self) -> str:
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -339,7 +436,8 @@ class Decree(Vic3AdvancedEntity):
 
 
 class DiplomaticAction(Vic3AdvancedEntity):
-    def get_wiki_icon(self) -> str:
+    """Diplo actions"""
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -348,9 +446,21 @@ class DiplomaticAction(Vic3AdvancedEntity):
     def get_wiki_filename(self) -> str:
         return f'Diplomacy {self.display_name.lower()}.png'
 
+class TreatyArticle(Vic3AdvancedEntity):
+    """Treaty articles"""
+    def get_wiki_icon(self, size: str = '') -> str:
+        return self.get_wiki_file_tag()
+
+    def get_wiki_page_name(self) -> str:
+        return 'Treaty'
+
+    def get_wiki_filename(self) -> str:
+        return f'Treaty {self.display_name.lower()}.png'
+
 
 class Party(Vic3AdvancedEntity):
-    def get_wiki_icon(self) -> str:
+    """Political parties"""
+    def get_wiki_icon(self, size: str = '') -> str:
         return self.get_wiki_file_tag()
 
     def get_wiki_page_name(self) -> str:
@@ -358,18 +468,68 @@ class Party(Vic3AdvancedEntity):
 
 
 class Ideology(Vic3AdvancedEntity):
+    """Ideologies"""
     character_ideology: bool = False
     priority: int = 0
     show_in_list: bool = True
     leader_weight: Tree
-    possible: Tree
+    #possible: Tree
     law_approvals: dict[Law, str]
 
 
+class Movement(Vic3AdvancedEntity):
+    """Political movements"""
+    #creation_trigger: Tree
+    character_ideologies: dict[Ideology, str]
+
+
 class InterestGroup(Vic3AdvancedEntity):
+    """IGs"""
     def get_wiki_link_with_icon(self) -> str:
         return self.get_wiki_icon() + ' ' + self.display_name
 
+
+class MobilizationOption(Vic3AdvancedEntity):
+    possible: Tree
+    def get_wiki_icon(self, size: str = '') -> str:
+        return self.get_wiki_file_tag()
+
+
+class Unit(Vic3AdvancedEntity):
+    """Military units"""
+    max_manpower: int
+    battle_modifier: dict[str, list[Modifier]] = {}
+    upkeep_modifier: dict[str, list[Modifier]] = {}
+    formation_modifier: dict[str, list[Modifier]] = {}
+    conscript_peasant_levies: bool = False
+    upgrades: list[Unit] = []
+    group: UnitGroup = None
+    combat_unit_image: Tree
+    def get_wiki_icon(self, size: str = '') -> str:
+        return self.get_wiki_file_tag()
+
+
+class UnitGroup(Vic3AdvancedEntity):
+    units: list['Unit']
+    unit_type_wiki_pages = {
+        'army': 'Land warfare',
+        'navy': 'Naval warfare',
+    }
+
+    def __init__(self, name: str, display_name: str, unit_group_type: str):
+        super().__init__(name, display_name)
+        self.unit_group_type = unit_group_type
+        self.units = []
+
+    def add_unit(self, unit: 'Unit'):
+        self.units.append(unit)
+
+    def get_wiki_icon(self, size: str = '') -> str:
+        return self.get_wiki_file_tag()
+    
+    def get_wiki_page(self) -> str:
+        return self.unit_type_wiki_pages[self.unit_group_type]
+    
 
 class PopType(Vic3AdvancedEntity):
     display_name_without_icon: str
@@ -384,6 +544,7 @@ class Achievement(Vic3AdvancedEntity):
 
 
 class Character(NameableEntity):
+    """Characters"""
     first_name: str = ''
     last_name: str = ''
     country: Country = None
@@ -446,6 +607,18 @@ class Character(NameableEntity):
             result = f'{result} - {self.end}'
         return result
 
+class CharacterRole(Vic3AdvancedEntity):
+    type: str = ''
+    priority: int
+    auto_assigned: bool = False
+    can_be_interest_group_leader: bool = True
+    career_length: Tree = None
+    on_career_end: Tree = None
+    should_use_title_in_name: bool = False
+    title_format: str = 'from_name'
+    title_preposition: str = "PREP_IN"
+    spawn_characters_to_pool: bool = False
+    character_modifier: dict[str, list[Modifier]] = {}
 
 class PrincipleGroup(Vic3AdvancedEntity):
     blocking_identity: str = None
@@ -474,5 +647,9 @@ class Principle(Vic3AdvancedEntity):
 
 
 class Religion(Vic3AdvancedEntity):
+    """Religions"""
     traits: list[str]
     taboos: list[str]
+
+class Institution(Vic3AdvancedEntity):
+    pass

@@ -550,6 +550,10 @@ class Eu5Parser(JominiParser):
                                                     overwrite_duplicate_keys_at_level=1,
                                                     ).merge_duplicate_keys(), overwrite_duplicate_keys_at_level=1)
 
+    #Maybe I'll return to this some day? --CV
+    #@cached_property
+    #def define_commments(self):
+    
     def get_define(self, define: str):
         """get a define by its game syntax e.g. NGame.START_DATE"""
         result = self.defines
